@@ -1,0 +1,314 @@
+import { useState } from 'react';
+import { Upload, Plus, Trash2, CalendarPlus, Lock } from 'lucide-react';
+import { clsx } from 'clsx';
+import { RoleGate } from '../components/shared/RoleGate';
+import { Button } from '../components/shared/Button';
+import { WORKLOAD_STANDARDS, PROTOTYPE_CATEGORIES, ALLOCATION_RULES } from '../fixtures/admin';
+import { K_EURO_RATES, CYCLES } from '../fixtures/cycles';
+import { useUIStore } from '../store/uiStore';
+import { formatDate } from '../lib/format';
+import type { Metier } from '../types';
+
+type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles';
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'workload', label: 'Workload Standards' },
+  { key: 'categories', label: 'Categorías' },
+  { key: 'rules', label: 'Reglas de Allocation' },
+  { key: 'rates', label: 'Rates k€' },
+  { key: 'cycles', label: 'Cycles' },
+];
+
+export function AdminPage() {
+  return (
+    <RoleGate permission="view:admin">
+      <AdminContent />
+    </RoleGate>
+  );
+}
+
+function AdminContent() {
+  const [tab, setTab] = useState<Tab>('workload');
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">Admin</h1>
+        <p className="text-sm text-slate-600">Configuración del sistema. Solo accesible para Admin.</p>
+      </div>
+      <div className="flex flex-wrap gap-1 border-b border-slate-200">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={clsx(
+              'rounded-t-md border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+              tab === t.key
+                ? 'border-brand-600 text-brand-700'
+                : 'border-transparent text-slate-500 hover:text-slate-800',
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {tab === 'workload' && <WorkloadStandardsTab />}
+      {tab === 'categories' && <CategoriesTab />}
+      {tab === 'rules' && <RulesTab />}
+      {tab === 'rates' && <RatesTab />}
+      {tab === 'cycles' && <CyclesTab />}
+    </div>
+  );
+}
+
+function WorkloadStandardsTab() {
+  const [items, setItems] = useState(WORKLOAD_STANDARDS);
+  const [metier, setMetier] = useState<Metier>('Backend');
+  const pushToast = useUIStore((s) => s.pushToast);
+
+  function handleUpload() {
+    const id = `ws-${Date.now()}`;
+    setItems((i) => [
+      { id, metier, fileName: `${metier.toLowerCase()}-uploaded-${Date.now()}.xlsx`, uploadedAt: new Date().toISOString(), rowCount: 100 },
+      ...i,
+    ]);
+    pushToast(`Archivo cargado para métier ${metier}`, 'success');
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-slate-200 bg-white p-4">
+        <h3 className="mb-2 font-semibold text-slate-800">Subir nuevo estándar</h3>
+        <div className="flex items-end gap-2">
+          <div className="flex flex-col">
+            <label className="text-xs font-medium text-slate-500">Métier</label>
+            <select
+              value={metier}
+              onChange={(e) => setMetier(e.target.value as Metier)}
+              className="mt-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
+            >
+              {(['Backend', 'Frontend', 'Data', 'DevOps', 'QA', 'Mobile'] as Metier[]).map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          </div>
+          <Button onClick={handleUpload}>
+            <Upload size={14} /> Subir XLSX (mock)
+          </Button>
+        </div>
+      </div>
+      <table className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white text-sm">
+        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th className="px-3 py-2 text-left font-medium">Métier</th>
+            <th className="px-3 py-2 text-left font-medium">Archivo</th>
+            <th className="px-3 py-2 text-right font-medium">Filas</th>
+            <th className="px-3 py-2 text-left font-medium">Subido</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((w) => (
+            <tr key={w.id} className="border-t border-slate-100">
+              <td className="px-3 py-2.5">{w.metier}</td>
+              <td className="px-3 py-2.5 font-mono text-xs text-slate-600">{w.fileName}</td>
+              <td className="px-3 py-2.5 text-right">{w.rowCount}</td>
+              <td className="px-3 py-2.5 text-xs text-slate-500">{formatDate(w.uploadedAt)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CategoriesTab() {
+  const [items, setItems] = useState(PROTOTYPE_CATEGORIES);
+  const [name, setName] = useState('');
+  const [desc, setDesc] = useState('');
+  const pushToast = useUIStore((s) => s.pushToast);
+
+  function add() {
+    if (!name.trim()) return;
+    setItems((i) => [...i, { id: `cat-${Date.now()}`, name, description: desc }]);
+    pushToast(`Categoría "${name}" creada`, 'success');
+    setName('');
+    setDesc('');
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-slate-200 bg-white p-3">
+        <div className="flex flex-wrap items-end gap-2">
+          <input
+            placeholder="Nombre"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+          />
+          <input
+            placeholder="Descripción"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            className="flex-[2] rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+          />
+          <Button onClick={add}>
+            <Plus size={14} /> Agregar
+          </Button>
+        </div>
+      </div>
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">Categoría</th>
+              <th className="px-3 py-2 text-left font-medium">Descripción</th>
+              <th className="w-12" />
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((c) => (
+              <tr key={c.id} className="border-t border-slate-100">
+                <td className="px-3 py-2.5 font-medium text-slate-800">{c.name}</td>
+                <td className="px-3 py-2.5 text-slate-600">{c.description}</td>
+                <td className="px-2">
+                  <button
+                    onClick={() => setItems((x) => x.filter((y) => y.id !== c.id))}
+                    className="text-slate-400 hover:text-red-600"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function RulesTab() {
+  const [items] = useState(ALLOCATION_RULES);
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th className="px-3 py-2 text-left font-medium">Regla</th>
+            <th className="px-3 py-2 text-left font-medium">Métier</th>
+            <th className="px-3 py-2 text-left font-medium">Condición</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((r) => (
+            <tr key={r.id} className="border-t border-slate-100">
+              <td className="px-3 py-2.5 font-medium text-slate-800">{r.name}</td>
+              <td className="px-3 py-2.5">{r.metier}</td>
+              <td className="px-3 py-2.5 text-slate-600">{r.rule}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function RatesTab() {
+  const [rates, setRates] = useState(K_EURO_RATES);
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th className="px-3 py-2 text-left font-medium">Métier</th>
+            <th className="px-3 py-2 text-left font-medium">Cycle</th>
+            <th className="px-3 py-2 text-right font-medium">Rate (k€/día)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rates.map((r, idx) => (
+            <tr key={r.metier} className="border-t border-slate-100">
+              <td className="px-3 py-2.5 font-medium text-slate-800">{r.metier}</td>
+              <td className="px-3 py-2.5 text-slate-600">{r.cycleId}</td>
+              <td className="px-3 py-2.5 text-right">
+                <input
+                  type="number"
+                  step={0.05}
+                  value={r.rate}
+                  onChange={(e) =>
+                    setRates((x) => x.map((v, i) => (i === idx ? { ...v, rate: Number(e.target.value) } : v)))
+                  }
+                  className="w-24 rounded border border-slate-300 px-2 py-1 text-right text-sm"
+                />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CyclesTab() {
+  const [cycles, setCycles] = useState(CYCLES);
+  const pushToast = useUIStore((s) => s.pushToast);
+
+  function createCycle() {
+    const id = `cyc-new-${Date.now()}`;
+    setCycles((c) => [...c, { id, name: `Nuevo cycle`, status: 'draft', startDate: '2027-01-01', endDate: '2027-06-30' }]);
+    pushToast('Nuevo cycle creado en estado draft', 'success');
+  }
+
+  function closeCycle(id: string) {
+    setCycles((c) => c.map((x) => (x.id === id ? { ...x, status: 'closed' } : x)));
+    pushToast('Cycle cerrado', 'info');
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button onClick={createCycle}>
+          <CalendarPlus size={14} /> Crear cycle
+        </Button>
+      </div>
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">Cycle</th>
+              <th className="px-3 py-2 text-left font-medium">Periodo</th>
+              <th className="px-3 py-2 text-left font-medium">Status</th>
+              <th className="px-3 py-2 text-right font-medium">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cycles.map((c) => (
+              <tr key={c.id} className="border-t border-slate-100">
+                <td className="px-3 py-2.5 font-medium text-slate-800">{c.name}</td>
+                <td className="px-3 py-2.5 text-slate-600">{c.startDate} → {c.endDate}</td>
+                <td className="px-3 py-2.5">
+                  <span
+                    className={clsx(
+                      'rounded-full border px-2 py-0.5 text-xs font-medium',
+                      c.status === 'open' && 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                      c.status === 'draft' && 'border-amber-200 bg-amber-50 text-amber-700',
+                      c.status === 'closed' && 'border-slate-200 bg-slate-100 text-slate-600',
+                    )}
+                  >
+                    {c.status}
+                  </span>
+                </td>
+                <td className="px-3 py-2.5 text-right">
+                  {c.status !== 'closed' && (
+                    <Button size="sm" variant="secondary" onClick={() => closeCycle(c.id)}>
+                      <Lock size={14} /> Cerrar
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}

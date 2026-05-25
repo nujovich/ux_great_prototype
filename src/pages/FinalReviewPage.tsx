@@ -1,0 +1,109 @@
+import { useMemo } from 'react';
+import { Download } from 'lucide-react';
+import { useDataStore } from '../store/dataStore';
+import { useRoleStore } from '../store/roleStore';
+import { useUIStore } from '../store/uiStore';
+import { RoleGate } from '../components/shared/RoleGate';
+import { Button } from '../components/shared/Button';
+import { formatDays, formatKEuro } from '../lib/format';
+import type { Metier } from '../types';
+
+export function FinalReviewPage() {
+  return (
+    <RoleGate permission="view:final-review">
+      <FinalReviewContent />
+    </RoleGate>
+  );
+}
+
+function FinalReviewContent() {
+  const lines = useDataStore((s) => s.lines);
+  const can = useRoleStore((s) => s.can);
+  const pushToast = useUIStore((s) => s.pushToast);
+
+  const byMetier = useMemo(() => {
+    const map = new Map<Metier, { count: number; days: number; kEuro: number }>();
+    lines.forEach((l) => {
+      if (l.estimatedDays == null) return;
+      const cur = map.get(l.metier) ?? { count: 0, days: 0, kEuro: 0 };
+      cur.count += 1;
+      cur.days += l.estimatedDays;
+      cur.kEuro += l.estimatedKEuro ?? 0;
+      map.set(l.metier, cur);
+    });
+    return [...map.entries()].sort((a, b) => b[1].kEuro - a[1].kEuro);
+  }, [lines]);
+
+  const totals = byMetier.reduce(
+    (acc, [, v]) => ({ count: acc.count + v.count, days: acc.days + v.days, kEuro: acc.kEuro + v.kEuro }),
+    { count: 0, days: 0, kEuro: 0 },
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">Final Review</h1>
+          <p className="text-sm text-slate-600">
+            Agregación por métier sobre las líneas con estimación. Listo para reportar.
+          </p>
+        </div>
+        {can('export:final-review') && (
+          <Button onClick={() => pushToast('Reporte generado (mock) — descargá el PDF', 'success')}>
+            <Download size={14} /> Exportar reporte
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <Stat label="Líneas estimadas" value={String(totals.count)} />
+        <Stat label="Total días" value={formatDays(totals.days)} />
+        <Stat label="Total k€" value={formatKEuro(totals.kEuro)} />
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">Métier</th>
+              <th className="px-3 py-2 text-right font-medium">Líneas</th>
+              <th className="px-3 py-2 text-right font-medium">Días</th>
+              <th className="px-3 py-2 text-right font-medium">k€</th>
+              <th className="px-3 py-2 text-left font-medium">Distribución</th>
+            </tr>
+          </thead>
+          <tbody>
+            {byMetier.map(([m, v]) => {
+              const pct = totals.kEuro > 0 ? (v.kEuro / totals.kEuro) * 100 : 0;
+              return (
+                <tr key={m} className="border-t border-slate-100">
+                  <td className="px-3 py-2.5 font-medium text-slate-800">{m}</td>
+                  <td className="px-3 py-2.5 text-right">{v.count}</td>
+                  <td className="px-3 py-2.5 text-right">{formatDays(v.days)}</td>
+                  <td className="px-3 py-2.5 text-right font-medium">{formatKEuro(v.kEuro)}</td>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                        <div className="h-full bg-brand-500" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="w-12 text-right text-xs text-slate-500">{pct.toFixed(0)}%</span>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="text-xs uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="mt-1 text-2xl font-bold text-slate-900">{value}</div>
+    </div>
+  );
+}
