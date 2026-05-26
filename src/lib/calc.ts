@@ -1,14 +1,24 @@
-import type { InductorValue, CustomJU, Metier } from '../types';
+import type { InductorSelection, JobUnit, CustomJU, Metier } from '../types';
 import { K_EURO_RATES, CURRENT_CYCLE_ID } from '../fixtures/cycles';
 
 export function calcTotalDays(
-  inductors: InductorValue[],
+  selections: InductorSelection[],
+  jobUnits: JobUnit[],
   customJUs: CustomJU[],
-  occurrences: number,
+  globalOccurrences: number,
 ): number {
-  const indDays = inductors.reduce((acc, iv) => acc + iv.quantity * iv.factor, 0);
+  const inductorDays = selections.reduce((acc, sel) => {
+    if (!sel.selectedCranId) return acc;
+    const cranJUs = jobUnits.filter((ju) => ju.cranId === sel.selectedCranId);
+    const selDays = cranJUs.reduce((sum, ju) => {
+      const juOcc = sel.juOccurrences.find((o) => o.juId === ju.id);
+      const occ = juOcc?.occurrence ?? sel.inductorOccurrence;
+      return sum + occ * ju.variable + ju.fixed;
+    }, 0);
+    return acc + selDays;
+  }, 0);
   const customDays = customJUs.reduce((acc, j) => acc + j.days, 0);
-  return (indDays + customDays) * Math.max(occurrences, 1);
+  return (inductorDays + customDays) * Math.max(globalOccurrences, 1);
 }
 
 export function calcKEuro(days: number, metier: Metier): number {
@@ -17,7 +27,6 @@ export function calcKEuro(days: number, metier: Metier): number {
 }
 
 export function yearlyBreakdown(totalDays: number): number[] {
-  // Distribución visual simple: peso mayor en meses 2-9
   const weights = [0.5, 1, 1.2, 1.3, 1.4, 1.4, 1.2, 1.1, 1, 0.9, 0.6, 0.4];
   const sum = weights.reduce((a, b) => a + b, 0);
   return weights.map((w) => Number(((w / sum) * totalDays).toFixed(2)));
