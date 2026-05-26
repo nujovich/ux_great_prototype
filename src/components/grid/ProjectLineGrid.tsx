@@ -24,17 +24,17 @@ export function ProjectLineGrid({
 }: Props) {
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+      <table className="w-full text-xs">
+        <thead className="bg-slate-50 text-[10px] uppercase tracking-wider text-slate-500">
           <tr>
-            {showSelection && <th className="w-8 px-3 py-2.5" />}
-            <th className="px-3 py-2.5 text-left font-medium">ID</th>
-            <th className="px-3 py-2.5 text-left font-medium">Proyecto / Línea</th>
-            <th className="px-3 py-2.5 text-left font-medium">Métier</th>
-            <th className="px-3 py-2.5 text-left font-medium">Engineer</th>
-            <th className="px-3 py-2.5 text-left font-medium">Status</th>
-            <th className="px-3 py-2.5 text-right font-medium">Días</th>
-            {showKEuro && <th className="px-3 py-2.5 text-right font-medium">k€</th>}
+            {showSelection && <th className="w-7 px-2 py-1.5" />}
+            <th className="px-2 py-1.5 text-left font-medium">ID</th>
+            <th className="px-2 py-1.5 text-left font-medium">Proyecto / Línea</th>
+            <th className="px-2 py-1.5 text-left font-medium">Métier</th>
+            <th className="px-2 py-1.5 text-left font-medium">Engineer</th>
+            <th className="px-2 py-1.5 text-left font-medium">Status</th>
+            <th className="px-2 py-1.5 text-right font-medium">Días</th>
+            {showKEuro && <th className="px-2 py-1.5 text-right font-medium">k€</th>}
           </tr>
         </thead>
         <tbody>
@@ -52,34 +52,34 @@ export function ProjectLineGrid({
                 onClick={() => onRowClick(line.id)}
               >
                 {showSelection && (
-                  <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-2 py-1" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selected}
                       onChange={() => onToggleSelect(line.id)}
-                      className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
                     />
                   </td>
                 )}
-                <td className="px-3 py-2.5 font-mono text-xs text-slate-500">{line.id}</td>
-                <td className="px-3 py-2.5">
+                <td className="px-2 py-1 font-mono text-[10px] text-slate-400">{line.id}</td>
+                <td className="px-2 py-1">
                   <div className="font-medium text-slate-900">{line.lineName}</div>
-                  <div className="text-xs text-slate-500">{line.projectName}</div>
+                  <div className="text-[9px] text-slate-400">{line.projectName}</div>
                   {line.status === 'rejected' && line.rejectionComment && (
-                    <div className="mt-1 flex items-start gap-1 text-xs text-red-700">
-                      <MessageSquareWarning size={12} className="mt-0.5 shrink-0" />
+                    <div className="mt-0.5 flex items-start gap-1 text-[10px] text-red-700">
+                      <MessageSquareWarning size={10} className="mt-0.5 shrink-0" />
                       <span className="line-clamp-1">{line.rejectionComment}</span>
                     </div>
                   )}
                 </td>
-                <td className="px-3 py-2.5 text-slate-600">{line.metier}</td>
-                <td className="px-3 py-2.5 text-slate-600">{eng?.name ?? '—'}</td>
-                <td className="px-3 py-2.5">
+                <td className="px-2 py-1 text-slate-500">{line.metier}</td>
+                <td className="px-2 py-1 text-slate-500">{eng?.name ?? '—'}</td>
+                <td className="px-2 py-1">
                   <StatusBadge status={line.status} />
                 </td>
-                <td className="px-3 py-2.5 text-right text-slate-700">{formatDays(line.estimatedDays)}</td>
+                <td className="px-2 py-1 text-right text-slate-600">{formatDays(line.estimatedDays)}</td>
                 {showKEuro && (
-                  <td className="px-3 py-2.5 text-right font-medium text-slate-700">
+                  <td className="px-2 py-1 text-right font-medium text-slate-600">
                     {formatKEuro(line.estimatedKEuro)}
                   </td>
                 )}
