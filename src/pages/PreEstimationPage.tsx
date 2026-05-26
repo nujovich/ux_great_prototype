@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { LayoutGrid } from 'lucide-react';
 import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
 import { useUIStore } from '../store/uiStore';
@@ -8,7 +9,9 @@ import { BulkActionsBar } from '../components/grid/BulkActionsBar';
 import { EstimationPanel } from '../components/estimation/EstimationPanel';
 import { EmptyState } from '../components/shared/EmptyState';
 import { RoleGate } from '../components/shared/RoleGate';
+import { Button } from '../components/shared/Button';
 import { checkCompatibility } from '../lib/compatibility';
+import type { Metier } from '../types';
 
 export function PreEstimationPage() {
   return (
@@ -29,10 +32,10 @@ function PreEstimationContent() {
     clearSelection,
     estimationPanelLineId,
     openEstimationPanel,
-    openBulkEstimation,
   } = useUIStore();
 
   const [filters, setFilters] = useState<GridFilters>({ status: 'all', metier: 'all', search: '' });
+  const [compatibleMode, setCompatibleMode] = useState(false);
 
   const visibleLines = useMemo(() => {
     let list = lines;
@@ -64,6 +67,23 @@ function PreEstimationContent() {
 
   const currentLine = lines.find((l) => l.id === estimationPanelLineId) ?? null;
 
+  const compatibleGroups = useMemo(() => {
+    if (!compatibleMode) return null;
+    const groups = new Map<Metier, typeof visibleLines>();
+    for (const line of visibleLines) {
+      const group = groups.get(line.metier) ?? [];
+      group.push(line);
+      groups.set(line.metier, group);
+    }
+    return [...groups.entries()].map(([metier, groupLines]) => ({ metier, lines: groupLines }));
+  }, [visibleLines, compatibleMode]);
+
+  function handleBulkEstimate() {
+    if (selectedLineIds.length > 0) {
+      openEstimationPanel(selectedLineIds[0]);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between">
@@ -72,9 +92,17 @@ function PreEstimationContent() {
           <p className="text-sm text-slate-600">
             {can('view:own-lines-only')
               ? 'Tus project lines asignadas. Click en una fila para estimar.'
-              : 'Todas las project lines del portfolio. Filtros, multi-line y bulk actions habilitados.'}
+              : 'Todas las project lines del portfolio.'}
           </p>
         </div>
+        <Button
+          variant={compatibleMode ? 'primary' : 'secondary'}
+          size="sm"
+          onClick={() => setCompatibleMode((v) => !v)}
+        >
+          <LayoutGrid size={14} />
+          Modo compatibles
+        </Button>
       </div>
 
       <GridFiltersBar value={filters} onChange={setFilters} />
@@ -84,7 +112,7 @@ function PreEstimationContent() {
           count={selectedLineIds.length}
           compatibility={compatibility}
           onClear={clearSelection}
-          onBulkEstimate={role !== 'Engineer' ? () => openBulkEstimation(selectedLineIds) : undefined}
+          onBulkEstimate={role !== 'Engineer' ? handleBulkEstimate : undefined}
         />
       )}
 
@@ -97,6 +125,28 @@ function PreEstimationContent() {
               : 'Sin resultados para los filtros aplicados.'
           }
         />
+      ) : compatibleGroups ? (
+        <div className="space-y-6">
+          {compatibleGroups.map(({ metier, lines: groupLines }) => (
+            <div key={metier}>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  {metier}
+                </span>
+                <span className="text-xs text-slate-400">({groupLines.length} líneas)</span>
+                <div className="flex-1 border-t border-slate-200" />
+              </div>
+              <ProjectLineGrid
+                lines={groupLines}
+                selectedIds={selectedLineIds}
+                onToggleSelect={toggleSelect}
+                onRowClick={(id) => openEstimationPanel(id)}
+                showSelection={showSelection}
+                showKEuro={showKEuro}
+              />
+            </div>
+          ))}
+        </div>
       ) : (
         <ProjectLineGrid
           lines={visibleLines}
