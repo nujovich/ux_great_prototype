@@ -49,6 +49,8 @@ export function EstimationPanel({ line, onClose }: Props) {
     }
     setSearch('');
     setViewMode('inductors');
+    setExpanded(new Set());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line?.id]);
 
   const locked = !line || line.status === 'estimated' || line.status === 'approved' || line.status === 'allocated';
@@ -64,9 +66,9 @@ export function EstimationPanel({ line, onClose }: Props) {
 
   function addInductors(ids: string[]) {
     setSelections((prev) => {
-      const existing = prev.map((s) => s.inductorId);
+      const existingIds = prev.map((s) => s.inductorId);
       const toAdd: InductorSelection[] = ids
-        .filter((id) => !existing.includes(id))
+        .filter((id) => !existingIds.includes(id))
         .map((id) => ({ inductorId: id, selectedCranId: null, inductorOccurrence: 1, juOccurrences: [] }));
       const toKeep = prev.filter((s) => ids.includes(s.inductorId));
       return [...toKeep, ...toAdd];
@@ -327,7 +329,7 @@ export function EstimationPanel({ line, onClose }: Props) {
                   type="number"
                   min={1}
                   value={globalOccurrences}
-                  onChange={(e) => setGlobalOccurrences(Math.max(1, Number(e.target.value)))}
+                  onChange={(e) => setGlobalOccurrences(Math.max(1, Number(e.target.value) || 1))}
                   disabled={!canEdit}
                   className="w-16 rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:bg-slate-50 focus:border-brand-500 focus:outline-none"
                 />
@@ -511,7 +513,7 @@ function InductorTreeView({
                 type="number"
                 min={1}
                 value={sel.inductorOccurrence}
-                onChange={(e) => onUpdateInductorOccurrence(sel.inductorId, Math.max(1, Number(e.target.value)))}
+                onChange={(e) => onUpdateInductorOccurrence(sel.inductorId, Math.max(1, Number(e.target.value) || 1))}
                 disabled={!canEdit}
                 className="w-12 rounded border border-slate-300 px-1.5 py-0.5 text-right text-xs disabled:bg-slate-50 focus:border-brand-400 focus:outline-none"
               />
@@ -548,7 +550,7 @@ function InductorTreeView({
                     type="number"
                     min={1}
                     value={jo.occurrence}
-                    onChange={(e) => onUpdateJUOccurrence(sel.inductorId, ju.id, Math.max(1, Number(e.target.value)))}
+                    onChange={(e) => onUpdateJUOccurrence(sel.inductorId, ju.id, Math.max(1, Number(e.target.value) || 1))}
                     disabled={!canEdit}
                     className={`w-12 rounded border px-1.5 py-0.5 text-right text-xs focus:outline-none disabled:opacity-60 ${
                       jo.locked
@@ -644,7 +646,7 @@ function FlatJUView({
                     type="number"
                     min={1}
                     value={jo.occurrence}
-                    onChange={(e) => onUpdateOccurrence(sel.inductorId, ju.id, Math.max(1, Number(e.target.value)))}
+                    onChange={(e) => onUpdateOccurrence(sel.inductorId, ju.id, Math.max(1, Number(e.target.value) || 1))}
                     disabled={!canEdit}
                     className={`w-12 rounded border px-1.5 py-0.5 text-right text-xs focus:outline-none disabled:opacity-60 ${
                       jo.locked
