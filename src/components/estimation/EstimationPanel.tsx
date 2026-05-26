@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Lock, Copy, Plus, Trash2, X } from 'lucide-react';
-import type { CustomJU, InductorValue, ProjectLine } from '../../types';
+import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search } from 'lucide-react';
+import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine } from '../../types';
 import { INDUCTORS } from '../../fixtures/inductors';
-import { calcKEuro, calcTotalDays, yearlyBreakdown } from '../../lib/calc';
+import { CRANS } from '../../fixtures/crans';
+import { JOB_UNITS } from '../../fixtures/jobUnits';
+import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
 import { formatDays, formatKEuro } from '../../lib/format';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
@@ -10,6 +12,7 @@ import { useRoleStore } from '../../store/roleStore';
 import { useDataStore } from '../../store/dataStore';
 import { useUIStore } from '../../store/uiStore';
 import { CopyEstimationModal } from './CopyEstimationModal';
+import { ManageInductorsModal } from './ManageInductorsModal';
 
 interface Props {
   line: ProjectLine | null;
@@ -23,64 +26,170 @@ export function EstimationPanel({ line, onClose }: Props) {
   const setLineStatus = useDataStore((s) => s.setLineStatus);
   const pushToast = useUIStore((s) => s.pushToast);
 
-  const [occurrences, setOccurrences] = useState(1);
-  const [values, setValues] = useState<InductorValue[]>([]);
+  const [selections, setSelections] = useState<InductorSelection[]>([]);
   const [customJUs, setCustomJUs] = useState<CustomJU[]>([]);
+  const [globalOccurrences, setGlobalOccurrences] = useState(1);
+  const [viewMode, setViewMode] = useState<'inductors' | 'flat'>('inductors');
+  const [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [showManage, setShowManage] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [confirmPromote, setConfirmPromote] = useState(false);
 
   useEffect(() => {
     if (!line) return;
     if (existing) {
-      setOccurrences(existing.occurrences);
-      setValues(existing.inductorValues);
+      setSelections(existing.inductorSelections);
       setCustomJUs(existing.customJUs);
+      setGlobalOccurrences(existing.globalOccurrences);
     } else {
-      setOccurrences(1);
-      setValues([]);
+      setSelections([]);
       setCustomJUs([]);
+      setGlobalOccurrences(1);
     }
+    setSearch('');
+    setViewMode('inductors');
   }, [line?.id]);
 
   const locked = !line || line.status === 'estimated' || line.status === 'approved' || line.status === 'allocated';
   const canEdit = can('edit:estimation') && !locked;
   const canEditCustomJU = can('edit:custom-jus');
 
-  const totalDays = useMemo(() => calcTotalDays(values, customJUs, occurrences), [values, customJUs, occurrences]);
+  const totalDays = useMemo(
+    () => calcTotalDays(selections, JOB_UNITS, customJUs, globalOccurrences),
+    [selections, customJUs, globalOccurrences],
+  );
   const totalKEuro = useMemo(() => (line ? calcKEuro(totalDays, line.metier) : 0), [totalDays, line]);
   const breakdown = useMemo(() => yearlyBreakdown(totalDays), [totalDays]);
 
-  if (!line) return null;
-
-  const hasMinimumForDraft = occurrences > 0;
-  const hasMinimumForDefinitive = occurrences > 0 && (values.some((v) => v.quantity > 0) || customJUs.length > 0);
-
-  function addInductor(id: string) {
-    if (values.some((v) => v.inductorId === id)) return;
-    const ind = INDUCTORS.find((i) => i.id === id);
-    if (!ind) return;
-    setValues((v) => [...v, { inductorId: id, quantity: 1, factor: ind.defaultFactor }]);
+  function addInductors(ids: string[]) {
+    setSelections((prev) => {
+      const existing = prev.map((s) => s.inductorId);
+      const toAdd: InductorSelection[] = ids
+        .filter((id) => !existing.includes(id))
+        .map((id) => ({ inductorId: id, selectedCranId: null, inductorOccurrence: 1, juOccurrences: [] }));
+      const toKeep = prev.filter((s) => ids.includes(s.inductorId));
+      return [...toKeep, ...toAdd];
+    });
   }
 
-  function updateInductor(idx: number, patch: Partial<InductorValue>) {
-    setValues((v) => v.map((x, i) => (i === idx ? { ...x, ...patch } : x)));
+  function removeInductor(inductorId: string) {
+    setSelections((prev) => prev.filter((s) => s.inductorId !== inductorId));
   }
 
-  function removeInductor(idx: number) {
-    setValues((v) => v.filter((_, i) => i !== idx));
+  function selectCran(inductorId: string, cranId: string) {
+    const cranJUs = JOB_UNITS.filter((ju) => ju.cranId === cranId);
+    setSelections((prev) =>
+      prev.map((sel) => {
+        if (sel.inductorId !== inductorId) return sel;
+        return {
+          ...sel,
+          selectedCranId: cranId,
+          juOccurrences: cranJUs.map((ju) => ({
+            juId: ju.id,
+            occurrence: sel.inductorOccurrence,
+            locked: false,
+          })),
+        };
+      }),
+    );
   }
+
+  function updateInductorOccurrence(inductorId: string, occ: number) {
+    setSelections((prev) =>
+      prev.map((sel) => {
+        if (sel.inductorId !== inductorId) return sel;
+        return {
+          ...sel,
+          inductorOccurrence: occ,
+          juOccurrences: sel.juOccurrences.map((jo) =>
+            jo.locked ? jo : { ...jo, occurrence: occ },
+          ),
+        };
+      }),
+    );
+  }
+
+  function updateJUOccurrence(inductorId: string, juId: string, occ: number) {
+    setSelections((prev) =>
+      prev.map((sel) => {
+        if (sel.inductorId !== inductorId) return sel;
+        return {
+          ...sel,
+          juOccurrences: sel.juOccurrences.map((jo) =>
+            jo.juId === juId ? { ...jo, occurrence: occ } : jo,
+          ),
+        };
+      }),
+    );
+  }
+
+  function toggleJULock(inductorId: string, juId: string) {
+    setSelections((prev) =>
+      prev.map((sel) => {
+        if (sel.inductorId !== inductorId) return sel;
+        return {
+          ...sel,
+          juOccurrences: sel.juOccurrences.map((jo) =>
+            jo.juId === juId ? { ...jo, locked: !jo.locked } : jo,
+          ),
+        };
+      }),
+    );
+  }
+
+  function toggleExpanded(inductorId: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(inductorId) ? next.delete(inductorId) : next.add(inductorId);
+      return next;
+    });
+  }
+
+  const q = search.trim().toLowerCase();
+
+  const filteredSelections = useMemo(() => {
+    if (!q) return selections;
+    return selections.filter((sel) => {
+      const ind = INDUCTORS.find((i) => i.id === sel.inductorId);
+      if (ind?.name.toLowerCase().includes(q)) return true;
+      if (!sel.selectedCranId) return false;
+      const cranJUs = JOB_UNITS.filter((ju) => ju.cranId === sel.selectedCranId);
+      return cranJUs.some(
+        (ju) => ju.shortName.toLowerCase().includes(q) || ju.description.toLowerCase().includes(q),
+      );
+    });
+  }, [selections, q]);
+
+  const flatJUs = useMemo(() => {
+    const rows: Array<{ ju: (typeof JOB_UNITS)[0]; sel: InductorSelection; jo: JUOccurrence }> = [];
+    for (const sel of selections) {
+      if (!sel.selectedCranId) continue;
+      for (const jo of sel.juOccurrences) {
+        const ju = JOB_UNITS.find((j) => j.id === jo.juId);
+        if (ju) rows.push({ ju, sel, jo });
+      }
+    }
+    if (!q) return rows;
+    return rows.filter(
+      ({ ju }) =>
+        ju.shortName.toLowerCase().includes(q) || ju.description.toLowerCase().includes(q),
+    );
+  }, [selections, q]);
 
   function persist(status: 'draft' | 'estimated') {
     setEstimation(line!.id, {
       lineId: line!.id,
-      inductorValues: values,
+      inductorSelections: selections,
       customJUs,
-      occurrences,
+      globalOccurrences,
       yearlyBreakdown: breakdown,
       totalDays,
       totalKEuro,
       status,
-      ...(status === 'draft' ? { draftedAt: new Date().toISOString() } : { estimatedAt: new Date().toISOString() }),
+      ...(status === 'draft'
+        ? { draftedAt: new Date().toISOString() }
+        : { estimatedAt: new Date().toISOString() }),
     });
     setLineStatus(line!.id, status, { estimatedDays: totalDays, estimatedKEuro: totalKEuro });
   }
@@ -98,277 +207,204 @@ export function EstimationPanel({ line, onClose }: Props) {
     onClose();
   }
 
-  const availableInductors = INDUCTORS.filter((i) => !values.some((v) => v.inductorId === i.id));
+  const hasMinimumForDraft = globalOccurrences > 0;
+  const hasMinimumForDefinitive =
+    globalOccurrences > 0 &&
+    selections.some((s) => s.selectedCranId !== null && s.juOccurrences.length > 0);
+
+  if (!line) return null;
 
   return (
     <>
-      <div className="fixed inset-0 z-40 bg-black/30" onClick={onClose} />
-      <aside className="fixed inset-y-0 right-0 z-40 flex w-full max-w-2xl flex-col bg-white shadow-2xl">
-        <div className="flex items-start justify-between border-b border-slate-200 px-6 py-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold text-slate-900">{line.lineName}</h2>
-              {locked && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-                  <Lock size={12} /> Bloqueada
-                </span>
-              )}
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
+
+      {/* Centered modal */}
+      <div className="fixed inset-0 z-40 flex items-center justify-center p-6">
+        <div className="flex h-full w-full max-w-[90vw] flex-col rounded-xl bg-white shadow-2xl" style={{ maxHeight: '88vh' }}>
+
+          {/* Header */}
+          <div className="flex flex-shrink-0 items-start justify-between border-b border-slate-200 px-6 py-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-slate-900">{line.lineName}</h2>
+                {locked && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                    <Lock size={12} /> Bloqueada
+                  </span>
+                )}
+              </div>
+              <div className="mt-0.5 text-xs text-slate-500">
+                {line.id} · {line.projectName} · {line.metier}
+              </div>
             </div>
-            <div className="mt-0.5 text-xs text-slate-500">
-              {line.id} · {line.projectName} · {line.metier}
-            </div>
+            <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+              <X size={18} />
+            </button>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
-            <X size={20} />
-          </button>
-        </div>
 
-        {line.status === 'rejected' && line.rejectionComment && (
-          <div className="mx-6 mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-            <div className="font-semibold">Comentario del CPO (rechazo)</div>
-            <p className="mt-1">{line.rejectionComment}</p>
-            <p className="mt-2 text-xs text-amber-700">Editá los inductores y guardá como borrador para re-someter.</p>
-          </div>
-        )}
-
-        <div className="flex-1 overflow-auto p-6 space-y-6">
-          <section>
-            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Ocurrencias anuales
-            </label>
-            <input
-              type="number"
-              min={1}
-              value={occurrences}
-              onChange={(e) => setOccurrences(Math.max(1, Number(e.target.value)))}
-              disabled={!canEdit}
-              className="mt-1 w-28 rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:bg-slate-100 focus:border-brand-500 focus:outline-none"
-            />
-            <p className="mt-1 text-xs text-slate-500">Multiplicador aplicado al total estimado.</p>
-          </section>
-
-          <section>
-            <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">Inductores</label>
-              {canEdit && availableInductors.length > 0 && (
-                <select
-                  onChange={(e) => {
-                    if (e.target.value) addInductor(e.target.value);
-                    e.target.value = '';
-                  }}
-                  className="rounded-md border border-slate-300 px-2 py-1 text-xs focus:border-brand-500 focus:outline-none"
-                  defaultValue=""
-                >
-                  <option value="" disabled>+ Agregar inductor…</option>
-                  {availableInductors.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.name} ({i.category})
-                    </option>
-                  ))}
-                </select>
-              )}
+          {/* Rejection banner */}
+          {line.status === 'rejected' && line.rejectionComment && (
+            <div className="mx-6 mt-3 flex-shrink-0 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+              <div className="font-semibold">Comentario del CPO (rechazo)</div>
+              <p className="mt-1">{line.rejectionComment}</p>
             </div>
-            {values.length === 0 ? (
-              <div className="rounded-md border border-dashed border-slate-300 p-4 text-center text-xs text-slate-500">
-                Sin inductores. Agregá al menos uno para promover a definitiva.
-              </div>
-            ) : (
-              <table className="w-full overflow-hidden rounded-md border border-slate-200 text-sm">
-                <thead className="bg-slate-50 text-xs text-slate-500">
-                  <tr>
-                    <th className="px-3 py-2 text-left font-medium">Inductor</th>
-                    <th className="px-3 py-2 text-right font-medium">Cantidad</th>
-                    <th className="px-3 py-2 text-right font-medium">Factor (d/u)</th>
-                    <th className="px-3 py-2 text-right font-medium">Días</th>
-                    {canEdit && <th className="w-8" />}
-                  </tr>
-                </thead>
-                <tbody>
-                  {values.map((iv, idx) => {
-                    const ind = INDUCTORS.find((i) => i.id === iv.inductorId)!;
-                    return (
-                      <tr key={iv.inductorId} className="border-t border-slate-100">
-                        <td className="px-3 py-2">
-                          <div className="font-medium text-slate-800">{ind.name}</div>
-                          <div className="text-xs text-slate-500">{ind.unit}</div>
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <input
-                            type="number"
-                            min={0}
-                            value={iv.quantity}
-                            onChange={(e) => updateInductor(idx, { quantity: Number(e.target.value) })}
-                            disabled={!canEdit}
-                            className="w-20 rounded border border-slate-300 px-2 py-1 text-right disabled:bg-slate-100"
-                          />
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <input
-                            type="number"
-                            min={0}
-                            step={0.1}
-                            value={iv.factor}
-                            onChange={(e) => updateInductor(idx, { factor: Number(e.target.value) })}
-                            disabled={!canEdit}
-                            className="w-20 rounded border border-slate-300 px-2 py-1 text-right disabled:bg-slate-100"
-                          />
-                        </td>
-                        <td className="px-3 py-2 text-right font-mono text-slate-700">
-                          {(iv.quantity * iv.factor).toFixed(1)}
-                        </td>
-                        {canEdit && (
-                          <td className="px-2">
-                            <button
-                              onClick={() => removeInductor(idx)}
-                              className="text-slate-400 hover:text-red-600"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </section>
+          )}
 
-          <section>
-            <div className="mb-2 flex items-center justify-between">
-              <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Custom JUs
-              </label>
-              {canEdit && canEditCustomJU && (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() =>
-                    setCustomJUs((j) => [
-                      ...j,
-                      { id: `ju-${Date.now()}`, description: '', days: 1 },
-                    ])
-                  }
-                >
-                  <Plus size={14} /> Agregar JU
-                </Button>
-              )}
+          {/* Toolbar */}
+          <div className="flex flex-shrink-0 items-center gap-2 border-b border-slate-100 bg-slate-50 px-6 py-2">
+            <div className="flex overflow-hidden rounded-md border border-slate-200">
+              <button
+                onClick={() => setViewMode('inductors')}
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'inductors' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              >
+                Inductores
+              </button>
+              <button
+                onClick={() => setViewMode('flat')}
+                className={`border-l border-slate-200 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'flat' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              >
+                Job Units
+              </button>
             </div>
-            {!canEditCustomJU && customJUs.length === 0 ? (
-              <div className="rounded-md border border-dashed border-slate-300 p-3 text-center text-xs text-slate-500">
-                Solo PMO/Admin pueden agregar Custom JUs.
-              </div>
-            ) : customJUs.length === 0 ? (
-              <div className="rounded-md border border-dashed border-slate-300 p-3 text-center text-xs text-slate-500">
-                Sin JUs custom.
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {customJUs.map((ju, idx) => (
-                  <div key={ju.id} className="flex items-center gap-2">
-                    <input
-                      value={ju.description}
-                      placeholder="Descripción"
-                      onChange={(e) =>
-                        setCustomJUs((j) => j.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)))
-                      }
-                      disabled={!canEdit || !canEditCustomJU}
-                      className="flex-1 rounded border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-100"
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      step={0.5}
-                      value={ju.days}
-                      onChange={(e) =>
-                        setCustomJUs((j) => j.map((x, i) => (i === idx ? { ...x, days: Number(e.target.value) } : x)))
-                      }
-                      disabled={!canEdit || !canEditCustomJU}
-                      className="w-20 rounded border border-slate-300 px-2 py-1 text-right text-sm disabled:bg-slate-100"
-                    />
-                    {canEdit && canEditCustomJU && (
-                      <button
-                        onClick={() => setCustomJUs((j) => j.filter((_, i) => i !== idx))}
-                        className="text-slate-400 hover:text-red-600"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-xs text-slate-500">Total días</div>
-                <div className="text-2xl font-bold text-slate-900">{formatDays(totalDays)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-slate-500">Total k€</div>
-                <div className="text-2xl font-bold text-slate-900">{formatKEuro(totalKEuro)}</div>
-              </div>
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar inductor o JU…"
+                className="w-52 rounded-md border border-slate-200 py-1.5 pl-8 pr-3 text-xs focus:border-brand-400 focus:outline-none"
+              />
             </div>
-            <div className="mt-4">
-              <div className="mb-2 text-xs font-semibold uppercase text-slate-500">Distribución anual</div>
-              <div className="flex items-end gap-1">
-                {breakdown.map((m, i) => {
-                  const max = Math.max(...breakdown, 0.01);
-                  const h = (m / max) * 56;
-                  return (
-                    <div key={i} className="flex flex-1 flex-col items-center">
-                      <div
-                        className="w-full rounded-t bg-brand-500"
-                        style={{ height: `${Math.max(h, 2)}px` }}
-                        title={`Mes ${i + 1}: ${m.toFixed(1)}d`}
-                      />
-                      <div className="mt-1 text-[10px] text-slate-400">
-                        {['E', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][i]}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div className="flex items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3">
-          <div className="flex items-center gap-2">
-            {existing && canEdit && (
-              <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
-                <Copy size={14} /> Copiar a otras líneas
+            <div className="flex-1" />
+            {canEdit && (
+              <Button size="sm" variant="secondary" onClick={() => setShowManage(true)}>
+                Manage Inductors
               </Button>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="md" variant="ghost" onClick={onClose}>Cerrar</Button>
-            {canEdit && (
-              <>
-                <Button
-                  size="md"
-                  variant="secondary"
-                  onClick={handleSaveDraft}
-                  disabled={!hasMinimumForDraft}
-                >
-                  Guardar borrador
+
+          {/* Body */}
+          <div className="flex min-h-0 flex-1">
+            {/* Left: inductor tree or flat JU table */}
+            <div className="flex-1 overflow-y-auto border-r border-slate-100 px-6 py-4">
+              {viewMode === 'inductors' ? (
+                <InductorTreeView
+                  selections={filteredSelections}
+                  expanded={expanded}
+                  canEdit={canEdit}
+                  onToggleExpanded={toggleExpanded}
+                  onSelectCran={selectCran}
+                  onUpdateInductorOccurrence={updateInductorOccurrence}
+                  onUpdateJUOccurrence={updateJUOccurrence}
+                  onToggleJULock={toggleJULock}
+                  onRemoveInductor={removeInductor}
+                />
+              ) : (
+                <FlatJUView
+                  rows={flatJUs}
+                  canEdit={canEdit}
+                  onUpdateOccurrence={updateJUOccurrence}
+                  onToggleLock={toggleJULock}
+                />
+              )}
+
+              <CustomJUSection
+                customJUs={customJUs}
+                canEdit={canEdit}
+                canEditCustomJU={canEditCustomJU}
+                onChange={setCustomJUs}
+              />
+            </div>
+
+            {/* Right: summary */}
+            <div className="w-52 flex-shrink-0 overflow-y-auto px-4 py-4">
+              <div className="mb-3">
+                <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                  Ocurr. global
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  value={globalOccurrences}
+                  onChange={(e) => setGlobalOccurrences(Math.max(1, Number(e.target.value)))}
+                  disabled={!canEdit}
+                  className="w-16 rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:bg-slate-50 focus:border-brand-500 focus:outline-none"
+                />
+                <p className="mt-1 text-[10px] text-slate-400">Multiplicador final</p>
+              </div>
+
+              <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="text-[10px] text-slate-500">Total días</div>
+                <div className="text-xl font-bold text-slate-900">{formatDays(totalDays)}</div>
+              </div>
+              <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="text-[10px] text-slate-500">Total k€</div>
+                <div className="text-xl font-bold text-slate-900">{formatKEuro(totalKEuro)}</div>
+              </div>
+
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="mb-1.5 text-[10px] font-semibold uppercase text-slate-500">Distribución anual</div>
+                <div className="flex items-end gap-0.5" style={{ height: 48 }}>
+                  {breakdown.map((m, i) => {
+                    const max = Math.max(...breakdown, 0.01);
+                    const h = (m / max) * 44;
+                    return (
+                      <div key={i} className="flex flex-1 flex-col items-center">
+                        <div
+                          className="w-full rounded-t bg-brand-500"
+                          style={{ height: `${Math.max(h, 2)}px` }}
+                          title={`Mes ${i + 1}: ${m.toFixed(1)}d`}
+                        />
+                        <div className="mt-0.5 text-[8px] text-slate-400">
+                          {['E','F','M','A','M','J','J','A','S','O','N','D'][i]}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-1">
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                  <div className="h-2.5 w-2.5 rounded-sm border border-blue-300 bg-blue-100" />
+                  Hereda ocurr. inductor
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                  <div className="h-2.5 w-2.5 rounded-sm border border-amber-400 bg-amber-100" />
+                  Bloqueada 🔒
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex flex-shrink-0 items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3">
+            <div>
+              {existing && canEdit && (
+                <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
+                  <Copy size={14} /> Copiar a otras líneas
                 </Button>
-                <Button
-                  size="md"
-                  variant="primary"
-                  onClick={() => setConfirmPromote(true)}
-                  disabled={!hasMinimumForDefinitive}
-                >
-                  Promover a definitiva
-                </Button>
-              </>
-            )}
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="md" variant="ghost" onClick={onClose}>Cerrar</Button>
+              {canEdit && (
+                <>
+                  <Button size="md" variant="secondary" onClick={handleSaveDraft} disabled={!hasMinimumForDraft}>
+                    Guardar borrador
+                  </Button>
+                  <Button size="md" variant="primary" onClick={() => setConfirmPromote(true)} disabled={!hasMinimumForDefinitive}>
+                    Promover a definitiva
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </aside>
+      </div>
 
+      {/* Confirm promote modal */}
       <Modal
         open={confirmPromote}
         onClose={() => setConfirmPromote(false)}
@@ -381,22 +417,323 @@ export function EstimationPanel({ line, onClose }: Props) {
         }
       >
         <p className="text-sm text-slate-700">
-          La línea <strong>{line.id}</strong> pasará a estado <strong>Estimada</strong> y quedará
-          bloqueada hasta que un CPO la apruebe o rechace.
+          La línea <strong>{line.id}</strong> pasará a estado <strong>Estimada</strong>.
         </p>
         <ul className="mt-3 space-y-1 text-sm text-slate-600">
           <li>• Total días: <strong>{formatDays(totalDays)}</strong></li>
           <li>• Total k€: <strong>{formatKEuro(totalKEuro)}</strong></li>
-          <li>• Inductores: <strong>{values.length}</strong> + {customJUs.length} JU custom</li>
         </ul>
       </Modal>
 
-      {showCopyModal && (
-        <CopyEstimationModal
-          sourceLine={line}
-          onClose={() => setShowCopyModal(false)}
+      {showCopyModal && <CopyEstimationModal sourceLine={line} onClose={() => setShowCopyModal(false)} />}
+      {showManage && (
+        <ManageInductorsModal
+          activeInductorIds={selections.map((s) => s.inductorId)}
+          onApply={(ids) => { addInductors(ids); setShowManage(false); }}
+          onClose={() => setShowManage(false)}
         />
       )}
     </>
+  );
+}
+
+// ─────────────────────────────────────────────
+// InductorTreeView
+// ─────────────────────────────────────────────
+interface TreeProps {
+  selections: InductorSelection[];
+  expanded: Set<string>;
+  canEdit: boolean;
+  onToggleExpanded: (id: string) => void;
+  onSelectCran: (inductorId: string, cranId: string) => void;
+  onUpdateInductorOccurrence: (inductorId: string, occ: number) => void;
+  onUpdateJUOccurrence: (inductorId: string, juId: string, occ: number) => void;
+  onToggleJULock: (inductorId: string, juId: string) => void;
+  onRemoveInductor: (inductorId: string) => void;
+}
+
+function InductorTreeView({
+  selections, expanded, canEdit,
+  onToggleExpanded, onSelectCran, onUpdateInductorOccurrence,
+  onUpdateJUOccurrence, onToggleJULock, onRemoveInductor,
+}: TreeProps) {
+  if (selections.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
+        Sin inductores. Usá "Manage Inductors" para añadir.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      {selections.map((sel) => {
+        const ind = INDUCTORS.find((i) => i.id === sel.inductorId)!;
+        const availableCrans = CRANS.filter((c) => c.inductorId === sel.inductorId);
+        const isExpanded = expanded.has(sel.inductorId);
+        const cranJUs = sel.selectedCranId
+          ? JOB_UNITS.filter((ju) => ju.cranId === sel.selectedCranId)
+          : [];
+
+        const indDays = cranJUs.reduce((acc, ju) => {
+          const jo = sel.juOccurrences.find((o) => o.juId === ju.id);
+          const occ = jo?.occurrence ?? sel.inductorOccurrence;
+          return acc + occ * ju.variable + ju.fixed;
+        }, 0);
+
+        return (
+          <div key={sel.inductorId} className="overflow-hidden rounded-lg border border-slate-200">
+            <div className="flex items-center gap-2 bg-slate-50 px-3 py-2">
+              <button
+                onClick={() => onToggleExpanded(sel.inductorId)}
+                className="text-slate-400 hover:text-slate-600"
+                disabled={!sel.selectedCranId}
+              >
+                {isExpanded && sel.selectedCranId ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+              <div className="flex-1">
+                <span className="text-xs font-semibold text-slate-800">{ind.name}</span>
+                <span className="ml-2 text-[10px] text-slate-400">{ind.category}</span>
+              </div>
+              <span className="text-[10px] text-slate-400">Cran:</span>
+              <select
+                value={sel.selectedCranId ?? ''}
+                onChange={(e) => e.target.value && onSelectCran(sel.inductorId, e.target.value)}
+                disabled={!canEdit}
+                className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs focus:border-brand-400 focus:outline-none disabled:bg-slate-50"
+              >
+                <option value="">— seleccionar —</option>
+                {availableCrans.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <span className="text-[10px] text-slate-400">Ocurr.</span>
+              <input
+                type="number"
+                min={1}
+                value={sel.inductorOccurrence}
+                onChange={(e) => onUpdateInductorOccurrence(sel.inductorId, Math.max(1, Number(e.target.value)))}
+                disabled={!canEdit}
+                className="w-12 rounded border border-slate-300 px-1.5 py-0.5 text-right text-xs disabled:bg-slate-50 focus:border-brand-400 focus:outline-none"
+              />
+              <span className="w-14 text-right text-xs font-semibold text-brand-700">{formatDays(indDays)}</span>
+              {canEdit && (
+                <button onClick={() => onRemoveInductor(sel.inductorId)} className="text-slate-300 hover:text-red-500">
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
+
+            {!sel.selectedCranId && (
+              <div className="border-t border-amber-100 bg-amber-50 px-4 py-1.5 text-[10px] text-amber-700">
+                ⚠ Seleccioná un cran para cargar las Job Units
+              </div>
+            )}
+
+            {sel.selectedCranId && isExpanded && cranJUs.map((ju) => {
+              const jo = sel.juOccurrences.find((o) => o.juId === ju.id) ?? {
+                juId: ju.id, occurrence: sel.inductorOccurrence, locked: false,
+              };
+              const juDays = jo.occurrence * ju.variable + ju.fixed;
+              return (
+                <div
+                  key={ju.id}
+                  className={`flex items-center gap-2 border-t border-slate-100 px-3 py-1.5 pl-8 ${jo.locked ? 'bg-amber-50' : 'bg-white'}`}
+                >
+                  <span className="w-16 font-mono text-[10px] text-slate-400">{ju.shortName}</span>
+                  <span className="flex-1 text-xs text-slate-700">{ju.description}</span>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {ju.variable > 0 ? `×${ju.variable}` : ''}{ju.fixed > 0 ? `+${ju.fixed}` : ''}
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={jo.occurrence}
+                    onChange={(e) => onUpdateJUOccurrence(sel.inductorId, ju.id, Math.max(1, Number(e.target.value)))}
+                    disabled={!canEdit}
+                    className={`w-12 rounded border px-1.5 py-0.5 text-right text-xs focus:outline-none disabled:opacity-60 ${
+                      jo.locked
+                        ? 'border-amber-400 bg-amber-50 focus:border-amber-500'
+                        : 'border-blue-200 bg-blue-50 focus:border-brand-400'
+                    }`}
+                  />
+                  <span className="w-12 text-right text-[10px] font-semibold text-brand-700 font-mono">{formatDays(juDays)}</span>
+                  {canEdit && (
+                    <button
+                      onClick={() => onToggleJULock(sel.inductorId, ju.id)}
+                      className={`rounded p-0.5 text-xs transition-colors ${jo.locked ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}`}
+                      title={jo.locked ? 'Desbloquear JU' : 'Bloquear JU'}
+                    >
+                      <Lock size={12} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+
+            {sel.selectedCranId && !isExpanded && (
+              <div
+                className="cursor-pointer border-t border-slate-100 bg-white px-4 py-1 text-[10px] text-slate-400 hover:text-slate-600"
+                onClick={() => onToggleExpanded(sel.inductorId)}
+              >
+                {cranJUs.length} JU{cranJUs.length !== 1 ? 's' : ''} · clic para expandir
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// FlatJUView
+// ─────────────────────────────────────────────
+interface FlatRow {
+  ju: (typeof JOB_UNITS)[0];
+  sel: InductorSelection;
+  jo: JUOccurrence;
+}
+
+function FlatJUView({
+  rows, canEdit, onUpdateOccurrence, onToggleLock,
+}: {
+  rows: FlatRow[];
+  canEdit: boolean;
+  onUpdateOccurrence: (inductorId: string, juId: string, occ: number) => void;
+  onToggleLock: (inductorId: string, juId: string) => void;
+}) {
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
+        Sin Job Units. Añadí inductores y seleccioná un cran primero.
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200">
+      <table className="w-full text-xs">
+        <thead className="bg-slate-50 text-[10px] uppercase text-slate-500">
+          <tr>
+            <th className="px-3 py-2 text-left font-medium">Short</th>
+            <th className="px-3 py-2 text-left font-medium">Job Unit</th>
+            <th className="px-3 py-2 text-left font-medium">Inductor / Cran</th>
+            <th className="px-3 py-2 text-right font-medium">Ocurr.</th>
+            <th className="px-3 py-2 text-right font-medium">Var.</th>
+            <th className="px-3 py-2 text-right font-medium">Fixed</th>
+            <th className="px-3 py-2 text-right font-medium">Días</th>
+            {canEdit && <th className="w-8" />}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ ju, sel, jo }) => {
+            const ind = INDUCTORS.find((i) => i.id === sel.inductorId);
+            const cran = CRANS.find((c) => c.id === sel.selectedCranId);
+            const juDays = jo.occurrence * ju.variable + ju.fixed;
+            return (
+              <tr
+                key={ju.id}
+                className={`border-t border-slate-100 ${jo.locked ? 'bg-amber-50' : ''}`}
+              >
+                <td className="px-3 py-1.5 font-mono text-[10px] text-slate-400">{ju.shortName}</td>
+                <td className="px-3 py-1.5 text-slate-700">{ju.description}</td>
+                <td className="px-3 py-1.5 text-[10px] text-slate-400">
+                  {ind?.name} / {cran?.name}
+                </td>
+                <td className="px-3 py-1.5 text-right">
+                  <input
+                    type="number"
+                    min={1}
+                    value={jo.occurrence}
+                    onChange={(e) => onUpdateOccurrence(sel.inductorId, ju.id, Math.max(1, Number(e.target.value)))}
+                    disabled={!canEdit}
+                    className={`w-12 rounded border px-1.5 py-0.5 text-right text-xs focus:outline-none disabled:opacity-60 ${
+                      jo.locked
+                        ? 'border-amber-400 bg-amber-50'
+                        : 'border-blue-200 bg-blue-50'
+                    }`}
+                  />
+                </td>
+                <td className="px-3 py-1.5 text-right font-mono text-[10px] text-slate-400">{ju.variable}</td>
+                <td className="px-3 py-1.5 text-right font-mono text-[10px] text-slate-400">{ju.fixed}</td>
+                <td className="px-3 py-1.5 text-right font-semibold text-brand-700">{formatDays(juDays)}</td>
+                {canEdit && (
+                  <td className="px-2">
+                    <button
+                      onClick={() => onToggleLock(sel.inductorId, ju.id)}
+                      className={`rounded p-0.5 ${jo.locked ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}`}
+                      title={jo.locked ? 'Desbloquear' : 'Bloquear'}
+                    >
+                      <Lock size={12} />
+                    </button>
+                  </td>
+                )}
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// CustomJUSection
+// ─────────────────────────────────────────────
+function CustomJUSection({
+  customJUs, canEdit, canEditCustomJU, onChange,
+}: {
+  customJUs: CustomJU[];
+  canEdit: boolean;
+  canEditCustomJU: boolean;
+  onChange: React.Dispatch<React.SetStateAction<CustomJU[]>>;
+}) {
+  return (
+    <div className="mt-6 border-t border-slate-100 pt-4">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Custom JUs</span>
+        {canEdit && canEditCustomJU && (
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => onChange((j) => [...j, { id: `ju-${Date.now()}`, description: '', days: 1 }])}
+          >
+            + Agregar JU
+          </Button>
+        )}
+      </div>
+      {customJUs.length === 0 ? (
+        <div className="rounded-md border border-dashed border-slate-200 p-3 text-center text-[10px] text-slate-400">
+          {canEditCustomJU ? 'Sin JUs custom.' : 'Solo PMO/Admin pueden agregar Custom JUs.'}
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {customJUs.map((ju, idx) => (
+            <div key={ju.id} className="flex items-center gap-2">
+              <input
+                value={ju.description}
+                placeholder="Descripción"
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)))}
+                disabled={!canEdit || !canEditCustomJU}
+                className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-50"
+              />
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={ju.days}
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, days: Number(e.target.value) } : x)))}
+                disabled={!canEdit || !canEditCustomJU}
+                className="w-16 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50"
+              />
+              {canEdit && canEditCustomJU && (
+                <button onClick={() => onChange((j) => j.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500">
+                  <Trash2 size={13} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
