@@ -40,10 +40,39 @@ export interface Inductor {
   unit: string;
 }
 
-export interface InductorValue {
+export interface Cran {
+  id: string;
   inductorId: string;
-  quantity: number;
-  factor: number;
+  name: string;
+}
+
+export interface JobUnit {
+  id: string;
+  cranId: string;
+  inductorId: string;
+  shortName: string;
+  description: string;
+  variable: number;
+  fixed: number;
+  unitType: 'ManDay' | 'BenchHours' | 'Kilometres' | 'KEuros';
+  fmm?: string;
+  smm?: string;
+  dmm?: string;
+  genericProfile?: string;
+  comment?: string;
+}
+
+export interface JUOccurrence {
+  juId: string;
+  occurrence: number;
+  locked: boolean;
+}
+
+export interface InductorSelection {
+  inductorId: string;
+  selectedCranId: string | null;
+  inductorOccurrence: number;
+  juOccurrences: JUOccurrence[];
 }
 
 export interface CustomJU {
@@ -54,9 +83,9 @@ export interface CustomJU {
 
 export interface Estimation {
   lineId: string;
-  inductorValues: InductorValue[];
+  inductorSelections: InductorSelection[];
   customJUs: CustomJU[];
-  occurrences: number;
+  globalOccurrences: number;
   yearlyBreakdown: number[];
   totalDays: number;
   totalKEuro: number;
