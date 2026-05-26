@@ -1,0 +1,1 @@
+Before generating code, load sdd-kit/AGENTS.md. Business rules are in sdd-kit/great_dspy/specs/ (78 rules, 6 views). Always run pytest sdd-kit/tests/ -v to validate compliance.
