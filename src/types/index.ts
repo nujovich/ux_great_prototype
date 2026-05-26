@@ -30,6 +30,15 @@ export interface ProjectLine {
   rejectionComment?: string;
   lastUpdatedBy: string;
   lastUpdatedAt: string;
+
+  // SDD Kit fields (from pre_estimation_specs.py)
+  organType?: string;
+  energyFuelType?: string;
+  projectRanking?: string;
+  injectionSystem?: string | null;
+  spDate?: string;                // YYYY-MM-DD, always 1st of month
+  durationMonths?: number;
+  description?: string;
 }
 
 export interface Inductor {
