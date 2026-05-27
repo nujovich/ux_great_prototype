@@ -43,7 +43,7 @@ export function checkCompatibility(lines: ProjectLine[]): CompatibilityResult {
 
     for (const line of lines) {
       const val = line[field] ?? null;
-      values.set(val, (values.get(val) ?? 0) + 1);
+      values.set(val as string | null, (values.get(val as string | null) ?? 0) + 1);
     }
 
     // If all values are the same, this field is compatible
