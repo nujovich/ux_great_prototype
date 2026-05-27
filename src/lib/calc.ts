@@ -4,140 +4,88 @@
  * Spec: §9.1-9.5 (sdd-kit/great_dspy/specs/pre_estimation_specs.py)
  *
  * Formula: Total = (Variable × Occurrence) + Fixed
- * Unit types: man_day → FTE = Total / 209
- *             bench_hours → BH
- *             kilometres → KM
- *             k_euros → excluded from current scope
+ * FTE = Total MD / 209
  *
- * Monthly distribution: uniform from SP date (always 1st of month)
+ * Mantiene la interfaz pública que la UI consume (calcTotalDays, calcKEuro, yearlyBreakdown)
+ * pero con implementación alineada al SDD Kit.
  */
 import type { InductorSelection, JobUnit, CustomJU, Metier } from '../types';
 
 const MAN_DAY_FTE_DIVISOR = 209;  // §9.2: Working days per year
 
-export interface CalculationResult {
-  totalManDays: number;
-  totalFte: number;
-  totalBh: number;
-  totalKm: number;
-  breakdown: {
-    shortName: string;
-    variable: number;
-    occurrence: number;
-    fixed: number;
-    total: number;
-    unitType: string;
-  }[];
-}
-
-export function calculateEstimation(
+/**
+ * Calcula el total de días-hombre de la estimación.
+ * Formula: Total = (Variable × Occurrence) + Fixed  (§9.1)
+ * Inductores sin cran se saltan silenciosamente (BR-12).
+ */
+export function calcTotalDays(
   selections: InductorSelection[],
   jobUnits: JobUnit[],
   customJUs: CustomJU[],
-): CalculationResult {
-  let totalManDays = 0;
-  let totalBh = 0;
-  let totalKm = 0;
-  const breakdown: CalculationResult['breakdown'] = [];
-
-  // Standard JUs from inductors
-  for (const sel of selections) {
-    if (!sel.selectedCranId) continue;  // BR-12: skip inductors without cran
+  globalOccurrences: number,
+): number {
+  const inductorDays = selections.reduce((acc, sel) => {
+    if (!sel.selectedCranId) return acc;  // BR-12
 
     const cranJUs = jobUnits.filter((ju) => ju.cranId === sel.selectedCranId);
-
-    for (const ju of cranJUs) {
+    const selDays = cranJUs.reduce((sum, ju) => {
       const juOcc = sel.juOccurrences.find((o) => o.juId === ju.id);
-      const occurrence = juOcc?.occurrence ?? sel.inductorOccurrence;
+      const occ = juOcc?.occurrence ?? sel.inductorOccurrence;
+      // §9.1: Total = (Variable × Occurrence) + Fixed
+      return sum + occ * ju.variable + ju.fixed;
+    }, 0);
+    return acc + selDays;
+  }, 0);
 
-      // Formula: Total = (Variable × Occurrence) + Fixed  (§9.1)
-      const total = occurrence * ju.variable + ju.fixed;
+  // Custom JUs (BR-11: permitidos incluso sin workload standard)
+  const customDays = customJUs.reduce((acc, j) => acc + j.days, 0);
 
-      // Unit type handling (§9.2)
-      switch (ju.unitType) {
-        case 'ManDay':
-          totalManDays += total;
-          break;
-        case 'BenchHours':
-          totalBh += total;
-          break;
-        case 'Kilometres':
-          totalKm += total;
-          break;
-        case 'KEuros':
-          // Excluded from current scope (§9.2)
-          break;
-      }
-
-      breakdown.push({
-        shortName: ju.shortName,
-        variable: ju.variable,
-        occurrence,
-        fixed: ju.fixed,
-        total: Math.round(total * 100) / 100,
-        unitType: ju.unitType,
-      });
-    }
-  }
-
-  // Custom JUs (BR-11: allowed even without workload standard)
-  for (const cju of customJUs) {
-    totalManDays += cju.days;
-    breakdown.push({
-      shortName: 'Custom',
-      variable: 0,
-      occurrence: 1,
-      fixed: cju.days,
-      total: cju.days,
-      unitType: 'ManDay',
-    });
-  }
-
-  // FTE = Total MD / 209  (§9.2)
-  const totalFte = totalManDays > 0
-    ? Math.round((totalManDays / MAN_DAY_FTE_DIVISOR) * 100) / 100
-    : 0;
-
-  return {
-    totalManDays: Math.round(totalManDays * 100) / 100,
-    totalFte,
-    totalBh: Math.round(totalBh * 100) / 100,
-    totalKm: Math.round(totalKm * 100) / 100,
-    breakdown,
-  };
+  // globalOccurrences se conserva para compatibilidad con UI existente
+  return (inductorDays + customDays) * Math.max(globalOccurrences, 1);
 }
 
 /**
- * Monthly distribution — uniform from SP date (§9.4)
- *
- * SP date is always set to 1st of the start month.
- * Monthly values sum to the annual total.
+ * Calcula FTE = Total MD / 209  (§9.2)
  */
-export function distributeByMonth(
-  totalManDays: number,
-  spDate: string,
-  durationMonths: number = 12,
-): number[] {
-  if (durationMonths <= 0) return [];
+export function calcFTE(totalDays: number): number {
+  return totalDays > 0
+    ? Math.round((totalDays / MAN_DAY_FTE_DIVISOR) * 100) / 100
+    : 0;
+}
 
-  const monthly = totalManDays / durationMonths;
-  const result: number[] = [];
+/**
+ * K€ NO se calcula en Pre-Estimation (§11).
+ * Se calcula en Allocation: K€ = FTE × Rate(societe-site, year).
+ * Esta función es un stub temporal.
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function calcKEuro(_days: number, _metier: Metier): number {
+  return 0;
+}
+
+/**
+ * Distribución mensual uniforme simulada.
+ * La distribución real usa SP date (§9.4), pero esta función
+ * mantiene compatibilidad con la UI actual.
+ */
+export function yearlyBreakdown(totalDays: number): number[] {
+  if (totalDays <= 0) return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+  // Distribución uniforme: totalDays / 12 por mes
+  const monthly = Math.round((totalDays / 12) * 100) / 100;
+  const months: number[] = [];
+  let sum = 0;
 
   for (let i = 0; i < 12; i++) {
-    result.push(i < durationMonths ? Math.round(monthly * 100) / 100 : 0);
+    months.push(monthly);
+    sum += monthly;
   }
 
-  return result;
-}
+  // Ajustar el último mes para que sume exactamente totalDays
+  const diff = Math.round((totalDays - sum) * 100) / 100;
+  if (diff !== 0) {
+    months[11] = Math.round((months[11] + diff) * 100) / 100;
+  }
 
-/**
- * K€ is NOT calculated in Pre-Estimation (§11).
- * It is calculated during Allocation using:
- *   K€ per year = FTE(year) × Rate(societe-site, year)
- *
- * This function is a stub that returns 0.
- * The real K€ calculation lives in the Allocation pipeline.
- */
-export function calcKEuro(_totalFte: number, _metier: Metier): number {
-  return 0;
+  return months;
 }

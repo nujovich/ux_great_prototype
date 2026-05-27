@@ -281,7 +281,7 @@ export function EstimationPanel({ line, onClose }: Props) {
             <div className="flex-1" />
             {canEdit && (
               <Button size="sm" variant="secondary" onClick={() => setShowManage(true)}>
-                Manage Inductors
+                Carga de Inductores
               </Button>
             )}
           </div>
@@ -431,7 +431,7 @@ export function EstimationPanel({ line, onClose }: Props) {
       {showManage && (
         <ManageInductorsModal
           activeInductorIds={selections.map((s) => s.inductorId)}
-          onApply={(ids) => { addInductors(ids); setShowManage(false); }}
+          onApply={(ids: string[]) => { addInductors(ids); setShowManage(false); }}
           onClose={() => setShowManage(false)}
         />
       )}
@@ -462,7 +462,7 @@ function InductorTreeView({
   if (selections.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
-        Sin inductores. Usá "Manage Inductors" para añadir.
+        Sin inductores. Usá "Carga de Inductores" para añadir.
       </div>
     );
   }
