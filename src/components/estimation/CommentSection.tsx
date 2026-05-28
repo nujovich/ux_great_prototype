@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MessageSquare, Send } from 'lucide-react';
 import { Button } from '../shared/Button';
+import { useT } from '../../i18n/useT';
 import type { EstimationComment, Metier } from '../../types';
 
 interface Props {
@@ -12,6 +13,7 @@ interface Props {
 
 export function CommentSection({ comments, metier, onAdd, readOnly }: Props) {
   const [text, setText] = useState('');
+  const t = useT();
   const filtered = comments.filter((c) => c.metier === metier);
 
   function handleSubmit() {
@@ -24,11 +26,11 @@ export function CommentSection({ comments, metier, onAdd, readOnly }: Props) {
   return (
     <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
       <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        <MessageSquare size={12} /> Comentarios — {metier}
+        <MessageSquare size={12} /> {t('comments.title', { metier })}
       </h4>
 
       {filtered.length === 0 && (
-        <p className="text-xs text-slate-400">Sin comentarios para este métier.</p>
+        <p className="text-xs text-slate-400">{t('comments.empty')}</p>
       )}
 
       {filtered.map((c) => (
@@ -52,7 +54,7 @@ export function CommentSection({ comments, metier, onAdd, readOnly }: Props) {
                 handleSubmit();
               }
             }}
-            placeholder="Agregar comentario... (Enter para enviar)"
+            placeholder={t('comments.placeholder')}
             className="flex-1 rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
           />
           <Button size="sm" variant="secondary" onClick={handleSubmit} disabled={!text.trim()}>
