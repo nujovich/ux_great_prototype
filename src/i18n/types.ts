@@ -200,6 +200,7 @@ export interface Translations {
     jobUnits: string;
     searchPlaceholder: string;
     loadInductors: string;
+    editInductors: string;
     globalOccurrence: string;
     globalOccurrenceHint: string;
     totalDays: string;

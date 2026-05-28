@@ -306,7 +306,9 @@ export function EstimationPanel({ line, onClose }: Props) {
             <div className="flex-1" />
             {canEdit && (
               <Button size="sm" variant="secondary" onClick={() => setShowManage(true)}>
-                {t('panel.loadInductors')}
+                {selections.length > 0
+                  ? t('panel.editInductors', { n: selections.length })
+                  : t('panel.loadInductors')}
               </Button>
             )}
           </div>

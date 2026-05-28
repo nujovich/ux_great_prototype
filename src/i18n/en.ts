@@ -200,6 +200,7 @@ export const en: Translations = {
     jobUnits: 'Job Units',
     searchPlaceholder: 'Search inductor or JU…',
     loadInductors: 'Load Inductors',
+    editInductors: 'Inductors ({n})',
     globalOccurrence: 'Global Occ.',
     globalOccurrenceHint: 'Final multiplier',
     totalDays: 'Total days',
