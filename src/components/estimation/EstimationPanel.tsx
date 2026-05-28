@@ -16,6 +16,7 @@ import { CopyEstimationModal } from './CopyEstimationModal';
 import { ManageInductorsModal } from './ManageInductorsModal';
 import { CommentSection } from './CommentSection';
 import { PrototypeEstimationForm } from './PrototypeEstimationForm';
+import { useT } from '../../i18n/useT';
 
 interface Props {
   line: ProjectLine | null;
@@ -232,6 +233,7 @@ export function EstimationPanel({ line, onClose }: Props) {
     onClose();
   }
 
+  const t = useT();
   const hasMinimumForDraft = globalOccurrences > 0;
   const hasMinimumForDefinitive =
     globalOccurrences > 0 &&
@@ -255,7 +257,7 @@ export function EstimationPanel({ line, onClose }: Props) {
                 <h2 className="text-base font-semibold text-slate-900">{line.lineName}</h2>
                 {locked && (
                   <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-                    <Lock size={12} /> Bloqueada
+                    <Lock size={12} /> {t('panel.locked')}
                   </span>
                 )}
               </div>
@@ -271,7 +273,7 @@ export function EstimationPanel({ line, onClose }: Props) {
           {/* Rejection banner */}
           {line.status === 'rejected' && line.rejectionComment && (
             <div className="mx-6 mt-3 flex-shrink-0 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-              <div className="font-semibold">Comentario del CPO (rechazo)</div>
+              <div className="font-semibold">{t('panel.rejectionBanner')}</div>
               <p className="mt-1">{line.rejectionComment}</p>
             </div>
           )}
@@ -283,13 +285,13 @@ export function EstimationPanel({ line, onClose }: Props) {
                 onClick={() => setViewMode('inductors')}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'inductors' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
               >
-                Inductores
+                {t('panel.inductors')}
               </button>
               <button
                 onClick={() => setViewMode('flat')}
                 className={`border-l border-slate-200 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'flat' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
               >
-                Job Units
+                {t('panel.jobUnits')}
               </button>
             </div>
             <div className="relative">
@@ -297,14 +299,14 @@ export function EstimationPanel({ line, onClose }: Props) {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar inductor o JU…"
+                placeholder={t('panel.searchPlaceholder')}
                 className="w-52 rounded-md border border-slate-200 py-1.5 pl-8 pr-3 text-xs focus:border-brand-400 focus:outline-none"
               />
             </div>
             <div className="flex-1" />
             {canEdit && (
               <Button size="sm" variant="secondary" onClick={() => setShowManage(true)}>
-                Carga de Inductores
+                {t('panel.loadInductors')}
               </Button>
             )}
           </div>
@@ -371,7 +373,7 @@ export function EstimationPanel({ line, onClose }: Props) {
             <div className="w-52 flex-shrink-0 overflow-y-auto px-4 py-4">
               <div className="mb-3">
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  Ocurr. global
+                  {t('panel.globalOccurrence')}
                 </label>
                 <input
                   type="number"
@@ -381,20 +383,20 @@ export function EstimationPanel({ line, onClose }: Props) {
                   disabled={!canEdit}
                   className="w-16 rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:bg-slate-50 focus:border-brand-500 focus:outline-none"
                 />
-                <p className="mt-1 text-[10px] text-slate-400">Multiplicador final</p>
+                <p className="mt-1 text-[10px] text-slate-400">{t('panel.globalOccurrenceHint')}</p>
               </div>
 
               <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[10px] text-slate-500">Total días</div>
+                <div className="text-[10px] text-slate-500">{t('panel.totalDays')}</div>
                 <div className="text-xl font-bold text-slate-900">{formatDays(totalDays)}</div>
               </div>
               <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[10px] text-slate-500">Total k€</div>
+                <div className="text-[10px] text-slate-500">{t('panel.totalKeuro')}</div>
                 <div className="text-xl font-bold text-slate-900">{formatKEuro(totalKEuro)}</div>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-1.5 text-[10px] font-semibold uppercase text-slate-500">Distribución anual</div>
+                <div className="mb-1.5 text-[10px] font-semibold uppercase text-slate-500">{t('panel.yearlyDist')}</div>
                 <div className="flex items-end gap-0.5" style={{ height: 48 }}>
                   {breakdown.map((m, i) => {
                     const max = Math.max(...breakdown, 0.01);
@@ -418,11 +420,11 @@ export function EstimationPanel({ line, onClose }: Props) {
               <div className="mt-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                   <div className="h-2.5 w-2.5 rounded-sm border border-blue-300 bg-blue-100" />
-                  Hereda ocurr. inductor
+                  {t('panel.legendInherits')}
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                   <div className="h-2.5 w-2.5 rounded-sm border border-amber-400 bg-amber-100" />
-                  Bloqueada 🔒
+                  {t('panel.legendLocked')}
                 </div>
               </div>
             </div>
@@ -433,25 +435,25 @@ export function EstimationPanel({ line, onClose }: Props) {
             <div>
               {existing && canEdit && (
                 <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
-                  <Copy size={14} /> Copiar a otras líneas
+                  <Copy size={14} /> {t('panel.copyToLines')}
                 </Button>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button size="md" variant="ghost" onClick={onClose}>Cerrar</Button>
+              <Button size="md" variant="ghost" onClick={onClose}>{t('panel.close')}</Button>
               {canEdit && (
                 <>
                   <Button size="md" variant="secondary" onClick={handleSaveDraft} disabled={!hasMinimumForDraft}>
-                    Guardar borrador
+                    {t('panel.saveDraft')}
                   </Button>
                   <Button
                     size="md"
                     variant="primary"
                     onClick={() => setConfirmPromote(true)}
                     disabled={!hasMinimumForDefinitive || !hasDraftedThisSession}
-                    title={!hasDraftedThisSession ? 'Primero guardá como Borrador en esta sesión (BR-02)' : undefined}
+                    title={!hasDraftedThisSession ? t('panel.draftBtnTitle') : undefined}
                   >
-                    Promover a definitiva
+                    {t('panel.promote')}
                   </Button>
                 </>
               )}
@@ -464,20 +466,20 @@ export function EstimationPanel({ line, onClose }: Props) {
       <Modal
         open={confirmPromote}
         onClose={() => setConfirmPromote(false)}
-        title="Promover a estimación definitiva"
+        title={t('panel.confirmTitle')}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setConfirmPromote(false)}>Cancelar</Button>
-            <Button variant="primary" onClick={handlePromote}>Promover</Button>
+            <Button variant="secondary" onClick={() => setConfirmPromote(false)}>{t('panel.confirmCancel')}</Button>
+            <Button variant="primary" onClick={handlePromote}>{t('panel.confirmPromote')}</Button>
           </>
         }
       >
         <p className="text-sm text-slate-700">
-          La línea <strong>{line.id}</strong> pasará a estado <strong>Estimada</strong>.
+          {t('panel.confirmBody', { id: line.id })}
         </p>
         <ul className="mt-3 space-y-1 text-sm text-slate-600">
-          <li>• Total días: <strong>{formatDays(totalDays)}</strong></li>
-          <li>• Total k€: <strong>{formatKEuro(totalKEuro)}</strong></li>
+          <li>• {t('panel.confirmDays', { n: formatDays(totalDays) })}</li>
+          <li>• {t('panel.confirmKeuro', { n: formatKEuro(totalKEuro) })}</li>
         </ul>
       </Modal>
 
@@ -513,10 +515,11 @@ function InductorTreeView({
   onToggleExpanded, onSelectCran, onUpdateInductorOccurrence,
   onUpdateJUOccurrence, onToggleJULock, onRemoveInductor,
 }: TreeProps) {
+  const t = useT();
   if (selections.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
-        Sin inductores. Usá "Carga de Inductores" para añadir.
+        {t('panel.noInductors')}
       </div>
     );
   }
@@ -550,19 +553,19 @@ function InductorTreeView({
                 <span className="text-xs font-semibold text-slate-800">{ind.name}</span>
                 <span className="ml-2 text-[10px] text-slate-400">{ind.category}</span>
               </div>
-              <span className="text-[10px] text-slate-400">Cran:</span>
+              <span className="text-[10px] text-slate-400">{t('panel.cranLabel')}</span>
               <select
                 value={sel.selectedCranId ?? ''}
                 onChange={(e) => e.target.value && onSelectCran(sel.inductorId, e.target.value)}
                 disabled={!canEdit}
                 className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs focus:border-brand-400 focus:outline-none disabled:bg-slate-50"
               >
-                <option value="">— seleccionar —</option>
+                <option value="">{t('panel.selectCran')}</option>
                 {availableCrans.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-              <span className="text-[10px] text-slate-400">Ocurr.</span>
+              <span className="text-[10px] text-slate-400">{t('panel.occLabel')}</span>
               <input
                 type="number"
                 min={1}
@@ -581,7 +584,7 @@ function InductorTreeView({
 
             {!sel.selectedCranId && (
               <div className="border-t border-amber-100 bg-amber-50 px-4 py-1.5 text-[10px] text-amber-700">
-                ⚠ Seleccioná un cran para cargar las Job Units
+                {t('panel.selectCranWarning')}
               </div>
             )}
 
@@ -617,7 +620,7 @@ function InductorTreeView({
                     <button
                       onClick={() => onToggleJULock(sel.inductorId, ju.id)}
                       className={`rounded p-0.5 text-xs transition-colors ${jo.locked ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}`}
-                      title={jo.locked ? 'Desbloquear JU' : 'Bloquear JU'}
+                      title={jo.locked ? t('panel.unlockTitle') : t('panel.lockTitle')}
                     >
                       <Lock size={12} />
                     </button>
@@ -631,7 +634,7 @@ function InductorTreeView({
                 className="cursor-pointer border-t border-slate-100 bg-white px-4 py-1 text-[10px] text-slate-400 hover:text-slate-600"
                 onClick={() => onToggleExpanded(sel.inductorId)}
               >
-                {cranJUs.length} JU{cranJUs.length !== 1 ? 's' : ''} · clic para expandir
+                {t('panel.expandHint', { n: cranJUs.length, s: cranJUs.length !== 1 ? 's' : '' })}
               </div>
             )}
           </div>
@@ -658,10 +661,11 @@ function FlatJUView({
   onUpdateOccurrence: (inductorId: string, juId: string, occ: number) => void;
   onToggleLock: (inductorId: string, juId: string) => void;
 }) {
+  const t = useT();
   if (rows.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
-        Sin Job Units. Añadí inductores y seleccioná un cran primero.
+        {t('panel.noJobUnits')}
       </div>
     );
   }
@@ -670,13 +674,13 @@ function FlatJUView({
       <table className="w-full text-xs">
         <thead className="bg-slate-50 text-[10px] uppercase text-slate-500">
           <tr>
-            <th className="px-3 py-2 text-left font-medium">Short</th>
-            <th className="px-3 py-2 text-left font-medium">Job Unit</th>
-            <th className="px-3 py-2 text-left font-medium">Inductor / Cran</th>
-            <th className="px-3 py-2 text-right font-medium">Ocurr.</th>
-            <th className="px-3 py-2 text-right font-medium">Var.</th>
-            <th className="px-3 py-2 text-right font-medium">Fixed</th>
-            <th className="px-3 py-2 text-right font-medium">Días</th>
+            <th className="px-3 py-2 text-left font-medium">{t('panel.colShort')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('panel.colJobUnit')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('panel.colInductorCran')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('panel.colOcc')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('panel.colVar')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('panel.colFixed')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('panel.colDays')}</th>
             {canEdit && <th className="w-8" />}
           </tr>
         </thead>
@@ -717,7 +721,7 @@ function FlatJUView({
                     <button
                       onClick={() => onToggleLock(sel.inductorId, ju.id)}
                       className={`rounded p-0.5 ${jo.locked ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}`}
-                      title={jo.locked ? 'Desbloquear' : 'Bloquear'}
+                      title={jo.locked ? t('panel.unlockTitle') : t('panel.lockTitle')}
                     >
                       <Lock size={12} />
                     </button>
