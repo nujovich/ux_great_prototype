@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation } from '../types';
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
+import { canTransition } from '../lib/stateMachine';
 
 interface DataState {
   lines: ProjectLine[];
@@ -25,19 +26,31 @@ export const useDataStore = create<DataState>((set, get) => ({
       lines: s.lines.map((l) => (l.id === id ? { ...l, ...patch, lastUpdatedAt: new Date().toISOString() } : l)),
     })),
   setLineStatus: (id, status, extra = {}) =>
-    set((s) => ({
-      lines: s.lines.map((l) =>
-        l.id === id ? { ...l, status, ...extra, lastUpdatedAt: new Date().toISOString() } : l,
-      ),
-    })),
+    set((s) => {
+      const line = s.lines.find((l) => l.id === id);
+      if (!line) return s;
+      if (!canTransition(line.status, status)) {
+        console.warn(`[GREAT] Illegal transition ${line.status} → ${status} on line ${id} — ignored`);
+        return s;
+      }
+      return {
+        lines: s.lines.map((l) =>
+          l.id === id ? { ...l, status, ...extra, lastUpdatedAt: new Date().toISOString() } : l,
+        ),
+      };
+    }),
   rejectLine: (id, comment) =>
-    set((s) => ({
-      lines: s.lines.map((l) =>
-        l.id === id
-          ? { ...l, status: 'rejected', rejectionComment: comment, lastUpdatedAt: new Date().toISOString(), lastUpdatedBy: 'CPO' }
-          : l,
-      ),
-    })),
+    set((s) => {
+      const line = s.lines.find((l) => l.id === id);
+      if (!line || !canTransition(line.status, 'rejected')) return s;
+      return {
+        lines: s.lines.map((l) =>
+          l.id === id
+            ? { ...l, status: 'rejected', rejectionComment: comment, lastUpdatedAt: new Date().toISOString(), lastUpdatedBy: 'CPO' }
+            : l,
+        ),
+      };
+    }),
   setEstimation: (lineId, est) =>
     set((s) => ({ estimations: { ...s.estimations, [lineId]: est } })),
   copyEstimation: (sourceId, targetIds) => {
