@@ -25,26 +25,35 @@ function ReviewContent() {
   const setLineStatus = useDataStore((s) => s.setLineStatus);
   const rejectLine = useDataStore((s) => s.rejectLine);
   const can = useRoleStore((s) => s.can);
+  const currentRole = useRoleStore((s) => s.currentRole);
+  const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
   const pushToast = useUIStore((s) => s.pushToast);
 
   const [rejectTarget, setRejectTarget] = useState<ProjectLine | null>(null);
   const [rejectComment, setRejectComment] = useState('');
 
-  const groups = useMemo(() => {
-    return {
-      estimated: lines.filter((l) => l.status === 'estimated'),
-      rejected: lines.filter((l) => l.status === 'rejected'),
-      approved: lines.filter((l) => l.status === 'approved'),
-    };
-  }, [lines]);
+  const visibleLines = useMemo(() => {
+    if (currentRole === 'Engineer' && activeEngineerId) {
+      return lines.filter((l) => l.assignedEngineerId === activeEngineerId);
+    }
+    return lines;
+  }, [lines, currentRole, activeEngineerId]);
 
-  function handleApprove(line: ProjectLine) {
-    setLineStatus(line.id, 'approved');
-    pushToast(`${line.id} aprobada`, 'success');
+  const groups = useMemo(() => ({
+    estimated: visibleLines.filter((l) => l.status === 'estimated'),
+    sent:      visibleLines.filter((l) => l.status === 'sent'),
+    rejected:  visibleLines.filter((l) => l.status === 'rejected'),
+    approved:  visibleLines.filter((l) => l.status === 'approved'),
+  }), [visibleLines]);
+
+  function handleSendToHVT(line: ProjectLine) {
+    setLineStatus(line.id, 'sent');
+    pushToast(`${line.lineName} enviada al HVT — estado: Enviada (BR-16)`, 'info');
   }
 
-  function handleSendToCPO(line: ProjectLine) {
-    pushToast(`${line.id} enviada al CPO para aprobación final`, 'info');
+  function handleSendAllToHVT() {
+    groups.estimated.forEach((l) => setLineStatus(l.id, 'sent'));
+    pushToast(`${groups.estimated.length} línea(s) enviadas al HVT`, 'success');
   }
 
   function submitReject() {
@@ -64,6 +73,17 @@ function ReviewContent() {
         </p>
       </div>
 
+      {groups.estimated.length > 0 && can('send:hvt') && (
+        <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5">
+          <span className="text-sm text-blue-700">
+            {groups.estimated.length} estimación(es) elegibles para enviar al HVT.
+          </span>
+          <Button size="sm" variant="primary" onClick={handleSendAllToHVT}>
+            <Send size={14} /> Enviar todas ({groups.estimated.length})
+          </Button>
+        </div>
+      )}
+
       <Section
         title="Pendientes de revisión"
         description="Líneas con estimación definitiva esperando aprobación."
@@ -71,14 +91,9 @@ function ReviewContent() {
         emptyText="No hay estimaciones pendientes de revisión."
         renderActions={(l) => (
           <div className="flex gap-2">
-            {can('approve:estimation') && (
-              <Button size="sm" variant="primary" onClick={() => handleApprove(l)}>
-                <CheckCircle2 size={14} /> Aprobar
-              </Button>
-            )}
             {can('send:hvt') && (
-              <Button size="sm" variant="secondary" onClick={() => handleSendToCPO(l)}>
-                <Send size={14} /> Enviar a CPO
+              <Button size="sm" variant="secondary" onClick={() => handleSendToHVT(l)}>
+                <Send size={14} /> Enviar a HVT
               </Button>
             )}
             {can('reject:estimation') && (
@@ -89,6 +104,39 @@ function ReviewContent() {
           </div>
         )}
       />
+
+      <Section
+        title="Enviadas al HVT — Esperando CPO"
+        description="Bloqueadas en GREAT hasta respuesta del CPO (BR-16). No se puede cancelar ni editar."
+        lines={groups.sent}
+        emptyText="Ninguna línea esperando al CPO."
+      />
+
+      {can('reject:estimation') && groups.sent.length > 0 && (
+        <Section
+          title="[CPO] Respuesta a líneas enviadas"
+          description="En producción, esto llega vía callback de HVT. Visible solo para CPO en el prototipo."
+          lines={groups.sent}
+          renderActions={(l) => (
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => { setLineStatus(l.id, 'approved'); pushToast(`${l.lineName} aprobada por CPO`, 'success'); }}
+              >
+                <CheckCircle2 size={14} /> Aprobar
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => setRejectTarget(l)}
+              >
+                <XCircle size={14} /> Rechazar
+              </Button>
+            </div>
+          )}
+        />
+      )}
 
       <Section
         title="Rechazadas (en rework)"
