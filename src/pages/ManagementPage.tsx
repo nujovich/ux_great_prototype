@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useDataStore } from '../store/dataStore';
 import { RoleGate } from '../components/shared/RoleGate';
 import { StatusBadge } from '../components/shared/StatusBadge';
+import { StatusPieChart } from '../components/management/StatusPieChart';
 import { CYCLES } from '../fixtures/cycles';
 import type { LineStatus, Metier } from '../types';
 
@@ -44,6 +45,14 @@ function ManagementContent() {
     return m;
   }, [filtered]);
 
+  const statusTotals = useMemo(() => {
+    const totals: Partial<Record<LineStatus, number>> = {};
+    filtered.forEach((l) => {
+      totals[l.status] = (totals[l.status] ?? 0) + 1;
+    });
+    return totals;
+  }, [filtered]);
+
   return (
     <div className="space-y-4">
       <div>
@@ -68,6 +77,11 @@ function ManagementContent() {
           {METIERS.map((m) => (<option key={m} value={m}>{m}</option>))}
         </FilterSelect>
       </div>
+
+      <StatusPieChart
+        data={statusTotals}
+        title="Distribución por Status — pares (PL × Métier)"
+      />
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
