@@ -15,6 +15,7 @@ import { useUIStore } from '../../store/uiStore';
 import { CopyEstimationModal } from './CopyEstimationModal';
 import { ManageInductorsModal } from './ManageInductorsModal';
 import { CommentSection } from './CommentSection';
+import { PrototypeEstimationForm } from './PrototypeEstimationForm';
 
 interface Props {
   line: ProjectLine | null;
@@ -29,6 +30,8 @@ export function EstimationPanel({ line, onClose }: Props) {
   const setEstimation = useDataStore((s) => s.setEstimation);
   const setLineStatus = useDataStore((s) => s.setLineStatus);
   const addComment = useDataStore((s) => s.addComment);
+  const protoEst = useDataStore((s) => (line ? s.prototypeEstimations[line.id] : undefined));
+  const setPrototypeEstimation = useDataStore((s) => s.setPrototypeEstimation);
   const pushToast = useUIStore((s) => s.pushToast);
 
   const [selections, setSelections] = useState<InductorSelection[]>([]);
@@ -350,6 +353,15 @@ export function EstimationPanel({ line, onClose }: Props) {
                       authorId: activeEngineerId ?? currentRole,
                     })
                   }
+                  readOnly={locked}
+                />
+              )}
+
+              {line && (
+                <PrototypeEstimationForm
+                  lineId={line.id}
+                  initial={protoEst}
+                  onSave={setPrototypeEstimation}
                   readOnly={locked}
                 />
               )}

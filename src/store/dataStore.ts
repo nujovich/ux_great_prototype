@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation, EstimationComment, Cycle } from '../types';
+import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation, EstimationComment, Cycle, PrototypeEstimation } from '../types';
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
 import { CYCLES } from '../fixtures/cycles';
@@ -17,6 +17,8 @@ interface DataState {
   copyEstimation: (sourceId: string, targetIds: string[]) => void;
   addComment: (comment: Omit<EstimationComment, 'id' | 'createdAt'>) => void;
   createCycle: (name: string, startDate: string, endDate: string) => void;
+  prototypeEstimations: Record<string, PrototypeEstimation>;
+  setPrototypeEstimation: (lineId: string, est: PrototypeEstimation) => void;
   setAllocation: (lineId: string, splits: AllocationSplit[]) => void;
   bulkAssign: (lineIds: string[], engineerId: string) => void;
 }
@@ -26,6 +28,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   allocations: structuredClone(ALLOCATIONS),
   estimations: {},
   cycles: structuredClone(CYCLES),
+  prototypeEstimations: {},
   updateLine: (id, patch) =>
     set((s) => ({
       lines: s.lines.map((l) => (l.id === id ? { ...l, ...patch, lastUpdatedAt: new Date().toISOString() } : l)),
@@ -103,6 +106,10 @@ export const useDataStore = create<DataState>((set, get) => ({
         ...s.cycles.map((c) => ({ ...c, isActive: false })), // CYCLE-BR-04: deactivate all existing
         { id: `cyc-${Date.now()}`, name, isActive: true, startDate, endDate },
       ],
+    })),
+  setPrototypeEstimation: (lineId, est) =>
+    set((s) => ({
+      prototypeEstimations: { ...s.prototypeEstimations, [lineId]: est },
     })),
   setAllocation: (lineId, splits) =>
     set((s) => {
