@@ -116,6 +116,7 @@ function ReviewContent() {
         <Section
           title={t('estReview.cpoPanel')}
           description={t('estReview.cpoPanelDesc')}
+          emptyText={t('estReview.noSent')}
           lines={groups.sent}
           renderActions={(l) => (
             <div className="flex gap-2">

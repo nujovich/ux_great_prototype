@@ -363,7 +363,7 @@ export function EstimationPanel({ line, onClose }: Props) {
                 <PrototypeEstimationForm
                   lineId={line.id}
                   initial={protoEst}
-                  onSave={setPrototypeEstimation}
+                  onSave={(est) => setPrototypeEstimation(line.id, est)}
                   readOnly={locked}
                 />
               )}
