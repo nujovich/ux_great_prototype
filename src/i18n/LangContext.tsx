@@ -9,14 +9,14 @@ interface LangContextValue {
 }
 
 const LangContext = createContext<LangContextValue>({
-  lang: 'es',
+  lang: 'en',
   toggleLang: () => {},
 });
 
 export function LangProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored === 'en' ? 'en' : 'es';
+    return stored === 'es' ? 'es' : 'en';
   });
 
   function toggleLang() {
