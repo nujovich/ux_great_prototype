@@ -11,6 +11,7 @@ import { EmptyState } from '../components/shared/EmptyState';
 import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { checkCompatibility } from '../lib/compatibility';
+import { useT } from '../i18n/useT';
 import type { Metier } from '../types';
 
 export function PreEstimationPage() {
@@ -34,6 +35,7 @@ function PreEstimationContent() {
     openEstimationPanel,
   } = useUIStore();
 
+  const t = useT();
   const [filters, setFilters] = useState<GridFilters>({ status: 'all', metier: 'all', search: '' });
   const [compatibleMode, setCompatibleMode] = useState(false);
 
@@ -88,11 +90,9 @@ function PreEstimationContent() {
     <div className="space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Pre-Estimation</h1>
+          <h1 className="text-xl font-bold text-slate-900">{t('preEst.title')}</h1>
           <p className="text-sm text-slate-600">
-            {can('view:own-lines-only')
-              ? 'Tus project lines asignadas. Click en una fila para estimar.'
-              : 'Todas las project lines del portfolio.'}
+            {can('view:own-lines-only') ? t('preEst.descOwn') : t('preEst.descAll')}
           </p>
         </div>
         <Button
@@ -101,7 +101,7 @@ function PreEstimationContent() {
           onClick={() => setCompatibleMode((v) => !v)}
         >
           <LayoutGrid size={14} />
-          Modo compatibles
+          {t('preEst.compatibleMode')}
         </Button>
       </div>
 
@@ -118,12 +118,8 @@ function PreEstimationContent() {
 
       {visibleLines.length === 0 ? (
         <EmptyState
-          title="No hay project lines"
-          description={
-            can('view:own-lines-only')
-              ? 'No tenés líneas asignadas con los filtros actuales.'
-              : 'Sin resultados para los filtros aplicados.'
-          }
+          title={t('preEst.noLines')}
+          description={can('view:own-lines-only') ? t('preEst.noLinesOwn') : t('preEst.noLinesAll')}
         />
       ) : compatibleGroups ? (
         <div className="space-y-6">
@@ -133,7 +129,7 @@ function PreEstimationContent() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                   {metier}
                 </span>
-                <span className="text-xs text-slate-400">({groupLines.length} líneas)</span>
+                <span className="text-xs text-slate-400">({t('preEst.lines', { n: groupLines.length })})</span>
                 <div className="flex-1 border-t border-slate-200" />
               </div>
               <ProjectLineGrid
