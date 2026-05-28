@@ -368,6 +368,7 @@ export function EstimationPanel({ line, onClose }: Props) {
                   readOnly={locked}
                 />
               )}
+            </div>
 
             {/* Right: summary */}
             <div className="w-52 flex-shrink-0 overflow-y-auto px-4 py-4">
