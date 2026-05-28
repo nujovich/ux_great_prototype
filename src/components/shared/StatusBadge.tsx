@@ -1,14 +1,6 @@
 import { clsx } from 'clsx';
 import type { LineStatus } from '../../types';
-
-const labels: Record<LineStatus, string> = {
-  to_do:     'Sin estimar',
-  draft:     'Borrador',
-  estimated: 'Estimada',
-  sent:      'Enviada',
-  rejected:  'Rechazada',
-  approved:  'Aprobada',
-};
+import { useT } from '../../i18n/useT';
 
 const classes: Record<LineStatus, string> = {
   to_do:     'bg-slate-100 text-slate-600 border-slate-200',
@@ -20,6 +12,7 @@ const classes: Record<LineStatus, string> = {
 };
 
 export function StatusBadge({ status }: { status: LineStatus }) {
+  const t = useT();
   return (
     <span
       className={clsx(
@@ -27,7 +20,7 @@ export function StatusBadge({ status }: { status: LineStatus }) {
         classes[status],
       )}
     >
-      {labels[status]}
+      {t(`status.${status}`)}
     </span>
   );
 }
