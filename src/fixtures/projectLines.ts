@@ -7,7 +7,7 @@ export const PROJECT_LINES: ProjectLine[] = [
   // ── Empty (8) ──────────────────────────────────────────────
   // Auth Platform - Backend (Thermal Engine, Gasoline, Mother, Direct Injection)
   {
-    id: 'PL-001', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'API refactor de autenticación',
+    id: 'PL-001', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'Authentication API refactor',
     metier: 'Backend', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-1',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-10T09:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
@@ -23,7 +23,7 @@ export const PROJECT_LINES: ProjectLine[] = [
     description: 'Integrate Google, GitHub, and Microsoft OAuth providers for SSO login',
   },
   {
-    id: 'PL-003', projectId: 'P-PAY', projectName: 'Payments', lineName: 'Webhook de Stripe',
+    id: 'PL-003', projectId: 'P-PAY', projectName: 'Payments', lineName: 'Stripe webhook',
     metier: 'Backend', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-2',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-09T10:00:00Z',
     organType: 'Electric Motor', energyFuelType: 'Electric', projectRanking: 'Child',
@@ -44,7 +44,7 @@ export const PROJECT_LINES: ProjectLine[] = [
     injectionSystem: null, spDate: '2026-05-01', durationMonths: 4,
   },
   {
-    id: 'PL-006', projectId: 'P-DATA', projectName: 'Data Platform', lineName: 'Pipeline de eventos',
+    id: 'PL-006', projectId: 'P-DATA', projectName: 'Data Platform', lineName: 'Event pipeline',
     metier: 'Data', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-5',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-08T11:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
@@ -58,7 +58,7 @@ export const PROJECT_LINES: ProjectLine[] = [
     injectionSystem: null, spDate: '2026-07-01', durationMonths: 3,
   },
   {
-    id: 'PL-008', projectId: 'P-INFRA', projectName: 'Infra', lineName: 'Migración a Kubernetes',
+    id: 'PL-008', projectId: 'P-INFRA', projectName: 'Infra', lineName: 'Kubernetes migration',
     metier: 'DevOps', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-7',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-07T11:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
@@ -67,7 +67,7 @@ export const PROJECT_LINES: ProjectLine[] = [
 
   // ── Draft (6) ──────────────────────────────────────────────
   {
-    id: 'PL-009', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'SSO con SAML',
+    id: 'PL-009', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'SAML SSO',
     metier: 'Backend', status: 'draft', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-1',
     estimatedDays: 18, estimatedKEuro: 15.3, lastUpdatedBy: 'Ana Martinez', lastUpdatedAt: '2026-05-20T15:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
@@ -75,7 +75,7 @@ export const PROJECT_LINES: ProjectLine[] = [
     description: 'Implement SAML-based Single Sign-On for enterprise clients',
   },
   {
-    id: 'PL-010', projectId: 'P-PAY', projectName: 'Payments', lineName: 'Reportes contables',
+    id: 'PL-010', projectId: 'P-PAY', projectName: 'Payments', lineName: 'Accounting reports',
     metier: 'Backend', status: 'draft', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-2',
     estimatedDays: 12, estimatedKEuro: 10.2, lastUpdatedBy: 'Bruno Silva', lastUpdatedAt: '2026-05-19T15:00:00Z',
     organType: 'Electric Motor', energyFuelType: 'Electric', projectRanking: 'Child',
@@ -112,7 +112,7 @@ export const PROJECT_LINES: ProjectLine[] = [
 
   // ── Estimated (6) ──────────────────────────────────────────
   {
-    id: 'PL-015', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'MFA con TOTP',
+    id: 'PL-015', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'MFA with TOTP',
     metier: 'Backend', status: 'estimated', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-1',
     estimatedDays: 20, estimatedKEuro: 17.0, lastUpdatedBy: 'Ana Martinez', lastUpdatedAt: '2026-05-14T10:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
@@ -127,7 +127,7 @@ export const PROJECT_LINES: ProjectLine[] = [
     injectionSystem: null, spDate: '2026-05-01', durationMonths: 3,
   },
   {
-    id: 'PL-017', projectId: 'P-MKT', projectName: 'Marketing Tools', lineName: 'Segmentación de usuarios',
+    id: 'PL-017', projectId: 'P-MKT', projectName: 'Marketing Tools', lineName: 'User segmentation',
     metier: 'Frontend', status: 'estimated', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-4',
     estimatedDays: 16, estimatedKEuro: 12.8, lastUpdatedBy: 'Diego Pérez', lastUpdatedAt: '2026-05-13T11:00:00Z',
     organType: 'Electric Motor', energyFuelType: 'Electric', projectRanking: 'Child',
@@ -148,7 +148,7 @@ export const PROJECT_LINES: ProjectLine[] = [
     injectionSystem: 'Direct Injection', spDate: '2026-08-01', durationMonths: 3,
   },
   {
-    id: 'PL-020', projectId: 'P-MOB', projectName: 'Mobile App', lineName: 'Pago in-app',
+    id: 'PL-020', projectId: 'P-MOB', projectName: 'Mobile App', lineName: 'In-app payment',
     metier: 'Mobile', status: 'estimated', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-10',
     estimatedDays: 22, estimatedKEuro: 18.7, lastUpdatedBy: 'Joaquín Díaz', lastUpdatedAt: '2026-05-12T11:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
@@ -157,10 +157,10 @@ export const PROJECT_LINES: ProjectLine[] = [
 
   // ── Rejected (3) ────────────────────────────────────────────
   {
-    id: 'PL-021', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'Recuperar contraseña v2',
+    id: 'PL-021', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'Password recovery v2',
     metier: 'Backend', status: 'rejected', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-1',
     estimatedDays: 6, estimatedKEuro: 5.1,
-    rejectionComment: 'Faltan considerar los emails transaccionales y rate limiting. Revisar y reestimar incluyendo esos inductores.',
+    rejectionComment: 'Missing transactional emails and rate limiting. Review and re-estimate including those inductors.',
     lastUpdatedBy: 'CPO', lastUpdatedAt: '2026-05-21T16:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
     injectionSystem: 'Direct Injection', spDate: '2026-05-01', durationMonths: 2,
@@ -170,7 +170,7 @@ export const PROJECT_LINES: ProjectLine[] = [
     id: 'PL-022', projectId: 'P-MKT', projectName: 'Marketing Tools', lineName: 'CRM connector',
     metier: 'Frontend', status: 'rejected', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-3',
     estimatedDays: 9, estimatedKEuro: 7.2,
-    rejectionComment: 'Estimación muy baja vs. cycle anterior. Revisar inductores de integración externa.',
+    rejectionComment: 'Estimation too low vs. previous cycle. Review external integration inductors.',
     lastUpdatedBy: 'CPO', lastUpdatedAt: '2026-05-21T16:00:00Z',
     organType: 'Electric Motor', energyFuelType: 'Electric', projectRanking: 'Child',
     injectionSystem: null, spDate: '2026-06-01', durationMonths: 3,
@@ -179,7 +179,7 @@ export const PROJECT_LINES: ProjectLine[] = [
     id: 'PL-023', projectId: 'P-DATA', projectName: 'Data Platform', lineName: 'Data lineage tooling',
     metier: 'Data', status: 'rejected', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-5',
     estimatedDays: 18, estimatedKEuro: 17.1,
-    rejectionComment: 'Definir scope con DataGov antes. Pausar y reestimar.',
+    rejectionComment: 'Define scope with DataGov first. Pause and re-estimate.',
     lastUpdatedBy: 'CPO', lastUpdatedAt: '2026-05-20T16:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
     injectionSystem: 'Direct Injection', spDate: '2026-07-01', durationMonths: 4,

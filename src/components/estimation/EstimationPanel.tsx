@@ -216,7 +216,7 @@ export function EstimationPanel({ line, onClose }: Props) {
     }
     persist('draft');
     setHasDraftedThisSession(true);
-    pushToast(`Borrador guardado para ${line!.id}`, 'success');
+    pushToast(t('panel.toastDraftSaved', { id: line!.id }), 'success');
     onClose();
   }
 
@@ -228,7 +228,7 @@ export function EstimationPanel({ line, onClose }: Props) {
       return;
     }
     persist('estimated');
-    pushToast(`${line!.id} promovida a estimación definitiva`, 'success');
+    pushToast(t('panel.toastPromoted', { id: line!.id }), 'success');
     setConfirmPromote(false);
     onClose();
   }

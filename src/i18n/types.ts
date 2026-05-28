@@ -234,6 +234,8 @@ export interface Translations {
     colFixed: string;
     colDays: string;
     selectCranWarning: string;
+    toastDraftSaved: string;
+    toastPromoted: string;
   };
   copy: {
     title: string;
@@ -244,6 +246,7 @@ export interface Translations {
     colStatus: string;
     cancel: string;
     confirm: string;
+    toastCopied: string;
   };
   manageInductors: {
     title: string;

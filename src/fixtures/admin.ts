@@ -7,14 +7,14 @@ export const WORKLOAD_STANDARDS: WorkloadStandard[] = [
 ];
 
 export const PROTOTYPE_CATEGORIES: PrototypeCategory[] = [
-  { id: 'cat-1', name: 'Greenfield', description: 'Producto nuevo desde cero' },
-  { id: 'cat-2', name: 'Refactor', description: 'Reescritura de módulo existente' },
-  { id: 'cat-3', name: 'Integration', description: 'Conexión con sistemas externos' },
-  { id: 'cat-4', name: 'Maintenance', description: 'Bugfixes y mejoras menores' },
+  { id: 'cat-1', name: 'Greenfield', description: 'New product from scratch' },
+  { id: 'cat-2', name: 'Refactor', description: 'Rewrite of existing module' },
+  { id: 'cat-3', name: 'Integration', description: 'Connection with external systems' },
+  { id: 'cat-4', name: 'Maintenance', description: 'Bugfixes and minor improvements' },
 ];
 
 export const ALLOCATION_RULES: AllocationRule[] = [
-  { id: 'ar-1', name: 'Backend default', metier: 'Backend', rule: 'Si días > 15, considerar split entre 2 engineers' },
-  { id: 'ar-2', name: 'Frontend bulk', metier: 'Frontend', rule: 'Líneas de UI agruparse en sprints de 2 semanas' },
-  { id: 'ar-3', name: 'Data ETL', metier: 'Data', rule: 'Pipelines ETL siempre 1 senior + 1 mid' },
+  { id: 'ar-1', name: 'Backend default', metier: 'Backend', rule: 'If days > 15, consider split between 2 engineers' },
+  { id: 'ar-2', name: 'Frontend bulk', metier: 'Frontend', rule: 'UI lines should be grouped in 2-week sprints' },
+  { id: 'ar-3', name: 'Data ETL', metier: 'Data', rule: 'ETL pipelines always 1 senior + 1 mid' },
 ];

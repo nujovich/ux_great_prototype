@@ -234,6 +234,8 @@ export const en: Translations = {
     colFixed: 'Fixed',
     colDays: 'Days',
     selectCranWarning: '⚠ Select a cran to load Job Units',
+    toastDraftSaved: 'Draft saved for {id}',
+    toastPromoted: '{id} promoted to definitive estimation',
   },
   copy: {
     title: 'Copy estimation from {id}',
@@ -244,6 +246,7 @@ export const en: Translations = {
     colStatus: 'Status',
     cancel: 'Cancel',
     confirm: 'Copy to {n} line(s)',
+    toastCopied: 'Estimation copied to {n} line(s)',
   },
   manageInductors: {
     title: 'Load Inductors',
