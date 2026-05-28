@@ -3,6 +3,7 @@ import { useDataStore } from '../store/dataStore';
 import { RoleGate } from '../components/shared/RoleGate';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { StatusPieChart } from '../components/management/StatusPieChart';
+import { useT } from '../i18n/useT';
 import { CYCLES } from '../fixtures/cycles';
 import type { LineStatus, Metier } from '../types';
 
@@ -19,6 +20,7 @@ export function ManagementPage() {
 
 function ManagementContent() {
   const lines = useDataStore((s) => s.lines);
+  const t = useT();
   const [cycleId, setCycleId] = useState<string>('cyc-2026h1');
   const [statusFilter, setStatusFilter] = useState<LineStatus | 'all'>('all');
   const [metierFilter, setMetierFilter] = useState<Metier | 'all'>('all');
@@ -56,10 +58,8 @@ function ManagementContent() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Management</h1>
-        <p className="text-sm text-slate-600">
-          Timeline de status por (Project Line × Métier). Útil para tracking ejecutivo.
-        </p>
+        <h1 className="text-xl font-bold text-slate-900">{t('mgmt.title')}</h1>
+        <p className="text-sm text-slate-600">{t('mgmt.subtitle')}</p>
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-3">
@@ -68,32 +68,32 @@ function ManagementContent() {
             <option key={c.id} value={c.id}>{c.name} {c.isActive ? '(activo)' : '(cerrado)'}</option>
           ))}
         </FilterSelect>
-        <FilterSelect label="Status" value={statusFilter} onChange={(v) => setStatusFilter(v as LineStatus | 'all')}>
-          <option value="all">Todos</option>
-          {STATUSES.map((s) => (<option key={s} value={s}>{s}</option>))}
+        <FilterSelect label={t('filters.status')} value={statusFilter} onChange={(v) => setStatusFilter(v as LineStatus | 'all')}>
+          <option value="all">{t('filters.all')}</option>
+          {STATUSES.map((s) => (<option key={s} value={s}>{t(`status.${s}`)}</option>))}
         </FilterSelect>
-        <FilterSelect label="Métier" value={metierFilter} onChange={(v) => setMetierFilter(v as Metier | 'all')}>
-          <option value="all">Todos</option>
+        <FilterSelect label={t('filters.metier')} value={metierFilter} onChange={(v) => setMetierFilter(v as Metier | 'all')}>
+          <option value="all">{t('filters.all')}</option>
           {METIERS.map((m) => (<option key={m} value={m}>{m}</option>))}
         </FilterSelect>
       </div>
 
       <StatusPieChart
         data={statusTotals}
-        title="Distribución por Status — pares (PL × Métier)"
+        title={t('mgmt.pieTitle')}
       />
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">Métier</th>
+              <th className="px-3 py-2 text-left font-medium">{t('filters.metier')}</th>
               {STATUSES.map((s) => (
                 <th key={s} className="px-3 py-2 text-center font-medium">
                   <StatusBadge status={s} />
                 </th>
               ))}
-              <th className="px-3 py-2 text-right font-medium">Total</th>
+              <th className="px-3 py-2 text-right font-medium">{t('mgmt.colTotal')}</th>
             </tr>
           </thead>
           <tbody>

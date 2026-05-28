@@ -9,6 +9,7 @@ import { Modal } from '../components/shared/Modal';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { EmptyState } from '../components/shared/EmptyState';
 import { formatDays, formatKEuro } from '../lib/format';
+import { useT } from '../i18n/useT';
 import { ENGINEERS } from '../fixtures/engineers';
 import type { AllocationSplit, ProjectLine } from '../types';
 
@@ -26,6 +27,7 @@ function AllocationContent() {
   const setAllocation = useDataStore((s) => s.setAllocation);
   const can = useRoleStore((s) => s.can);
   const pushToast = useUIStore((s) => s.pushToast);
+  const t = useT();
 
   const [splitTarget, setSplitTarget] = useState<ProjectLine | null>(null);
 
@@ -37,10 +39,10 @@ function AllocationContent() {
   if (allocatable.length === 0) {
     return (
       <div className="space-y-4">
-        <h1 className="text-xl font-bold text-slate-900">Allocation</h1>
+        <h1 className="text-xl font-bold text-slate-900">{t('alloc.title')}</h1>
         <EmptyState
-          title="No hay líneas listas para allocation"
-          description="Las líneas aparecen acá una vez aprobadas en Estimation Review."
+          title={t('alloc.noLines')}
+          description={t('alloc.noLinesDesc')}
         />
       </div>
     );
@@ -49,22 +51,20 @@ function AllocationContent() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Allocation</h1>
-        <p className="text-sm text-slate-600">
-          Asignación de líneas aprobadas a engineers. Soporta split entre múltiples engineers.
-        </p>
+        <h1 className="text-xl font-bold text-slate-900">{t('alloc.title')}</h1>
+        <p className="text-sm text-slate-600">{t('alloc.subtitle')}</p>
       </div>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">Línea</th>
-              <th className="px-3 py-2 text-left font-medium">Status</th>
-              <th className="px-3 py-2 text-right font-medium">Días</th>
+              <th className="px-3 py-2 text-left font-medium">{t('alloc.colLine')}</th>
+              <th className="px-3 py-2 text-left font-medium">{t('alloc.colStatus')}</th>
+              <th className="px-3 py-2 text-right font-medium">{t('alloc.colDays')}</th>
               {can('view:k-euro-rates') && <th className="px-3 py-2 text-right font-medium">k€</th>}
-              <th className="px-3 py-2 text-left font-medium">Asignación</th>
-              {can('edit:allocation') && <th className="px-3 py-2 text-right font-medium">Acciones</th>}
+              <th className="px-3 py-2 text-left font-medium">{t('alloc.colAssignment')}</th>
+              {can('edit:allocation') && <th className="px-3 py-2 text-right font-medium">{t('alloc.colActions')}</th>}
             </tr>
           </thead>
           <tbody>
@@ -96,13 +96,13 @@ function AllocationContent() {
                         })}
                       </div>
                     ) : (
-                      <span className="text-xs text-slate-400">Sin asignar</span>
+                      <span className="text-xs text-slate-400">{t('alloc.unassigned')}</span>
                     )}
                   </td>
                   {can('edit:allocation') && (
                     <td className="px-3 py-2.5 text-right">
                       <Button size="sm" variant="secondary" onClick={() => setSplitTarget(l)}>
-                        <Split size={14} /> Editar split
+                        <Split size={14} /> {t('alloc.editSplit')}
                       </Button>
                     </td>
                   )}
@@ -137,6 +137,7 @@ interface SplitProps {
 }
 
 function SplitModal({ line, currentSplits, onClose, onSave }: SplitProps) {
+  const t = useT();
   const [splits, setSplits] = useState<AllocationSplit[]>(
     currentSplits.length > 0 ? currentSplits : [{ engineerId: '', percentage: 100, days: line.estimatedDays ?? 0 }],
   );
@@ -161,19 +162,19 @@ function SplitModal({ line, currentSplits, onClose, onSave }: SplitProps) {
     <Modal
       open
       onClose={onClose}
-      title={`Split allocation — ${line.id}`}
+      title={t('alloc.splitModalTitle', { id: line.id })}
       size="lg"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+          <Button variant="secondary" onClick={onClose}>{t('alloc.cancel')}</Button>
           <Button variant="primary" onClick={() => onSave(splits)} disabled={splits.some((s) => !s.engineerId)}>
-            Guardar
+            {t('alloc.save')}
           </Button>
         </>
       }
     >
       <p className="mb-3 text-sm text-slate-600">
-        Total línea: <strong>{formatDays(line.estimatedDays)}</strong> · métier <strong>{line.metier}</strong>
+        {t('alloc.splitModalDesc', { days: formatDays(line.estimatedDays), metier: line.metier })}
       </p>
       <div className="space-y-2">
         {splits.map((s, idx) => (
@@ -183,7 +184,7 @@ function SplitModal({ line, currentSplits, onClose, onSave }: SplitProps) {
               onChange={(e) => update(idx, { engineerId: e.target.value })}
               className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
             >
-              <option value="">Seleccionar engineer…</option>
+              <option value="">{t('alloc.selectEngineer')}</option>
               {candidateEngs.map((e) => (
                 <option key={e.id} value={e.id}>{e.name}</option>
               ))}
@@ -214,10 +215,10 @@ function SplitModal({ line, currentSplits, onClose, onSave }: SplitProps) {
           variant="secondary"
           onClick={() => setSplits((s) => [...s, { engineerId: '', percentage: 0, days: 0 }])}
         >
-          <Plus size={14} /> Agregar engineer
+          <Plus size={14} /> {t('alloc.addEngineer')}
         </Button>
         <div className={`text-sm font-medium ${totalPct === 100 ? 'text-emerald-700' : 'text-amber-700'}`}>
-          Total: {totalPct}%
+          {t('alloc.total')}: {totalPct}%
         </div>
       </div>
     </Modal>

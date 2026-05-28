@@ -1,4 +1,5 @@
 import type { LineStatus } from '../../types';
+import { useT } from '../../i18n/useT';
 
 const STATUS_COLORS: Record<LineStatus, string> = {
   to_do:     '#94a3b8',
@@ -7,15 +8,6 @@ const STATUS_COLORS: Record<LineStatus, string> = {
   sent:      '#a855f7',
   rejected:  '#ef4444',
   approved:  '#22c55e',
-};
-
-const STATUS_LABELS: Record<LineStatus, string> = {
-  to_do:     'Sin estimar',
-  draft:     'Borrador',
-  estimated: 'Estimada',
-  sent:      'Enviada',
-  rejected:  'Rechazada',
-  approved:  'Aprobada',
 };
 
 interface Props {
@@ -37,11 +29,12 @@ function describeSlice(cx: number, cy: number, r: number, start: number, end: nu
 }
 
 export function StatusPieChart({ data, title }: Props) {
+  const t = useT();
   const entries = (Object.entries(data) as [LineStatus, number][]).filter(([, v]) => v > 0);
   const total = entries.reduce((acc, [, v]) => acc + v, 0);
 
   if (total === 0) {
-    return <p className="text-sm text-slate-400">Sin datos para el ciclo activo.</p>;
+    return <p className="text-sm text-slate-400">{t('mgmt.noData')}</p>;
   }
 
   let angle = 0;
@@ -74,7 +67,7 @@ export function StatusPieChart({ data, title }: Props) {
                 className="inline-block h-3 w-3 shrink-0 rounded-full"
                 style={{ background: STATUS_COLORS[status] }}
               />
-              <span className="text-slate-700">{STATUS_LABELS[status]}</span>
+              <span className="text-slate-700">{t(`status.${status}`)}</span>
               <span className="font-mono text-slate-500">
                 {count} ({Math.round(frac * 100)}%)
               </span>

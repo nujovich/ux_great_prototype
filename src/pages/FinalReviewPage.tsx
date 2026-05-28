@@ -6,6 +6,7 @@ import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { formatDays, formatKEuro } from '../lib/format';
 import { exportToCsv } from '../lib/csvExport';
+import { useT } from '../i18n/useT';
 import type { Metier } from '../types';
 
 export function FinalReviewPage() {
@@ -20,6 +21,7 @@ function FinalReviewContent() {
   const lines = useDataStore((s) => s.lines);
   const cycles = useDataStore((s) => s.cycles);
   const can = useRoleStore((s) => s.can);
+  const t = useT();
 
   const activeCycleId = useMemo(() => cycles.find((c) => c.isActive)?.id ?? 'export', [cycles]);
   const approvedLines = useMemo(() => lines.filter((l) => l.status === 'approved'), [lines]);
@@ -46,24 +48,22 @@ function FinalReviewContent() {
     <div className="space-y-4">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Final Review</h1>
-          <p className="text-sm text-slate-600">
-            Agregación por métier sobre las líneas con estimación. Listo para reportar.
-          </p>
+          <h1 className="text-xl font-bold text-slate-900">{t('finalReview.title')}</h1>
+          <p className="text-sm text-slate-600">{t('finalReview.subtitle')}</p>
         </div>
         {can('export:final-review') && (
           <Button
             variant="secondary"
             onClick={() => exportToCsv(approvedLines, `final-review-${activeCycleId}.csv`)}
           >
-            <Download size={14} /> Exportar CSV (FR-BR-10)
+            <Download size={14} /> {t('finalReview.exportCsv')}
           </Button>
         )}
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Stat label="Líneas estimadas" value={String(totals.count)} />
-        <Stat label="Total días" value={formatDays(totals.days)} />
+        <Stat label={t('finalReview.estimated')} value={String(totals.count)} />
+        <Stat label={t('finalReview.totalDays')} value={formatDays(totals.days)} />
         <Stat label="Total k€" value={formatKEuro(totals.kEuro)} />
       </div>
 
@@ -71,11 +71,11 @@ function FinalReviewContent() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">Métier</th>
-              <th className="px-3 py-2 text-right font-medium">Líneas</th>
-              <th className="px-3 py-2 text-right font-medium">Días</th>
+              <th className="px-3 py-2 text-left font-medium">{t('finalReview.colMetier')}</th>
+              <th className="px-3 py-2 text-right font-medium">{t('finalReview.colLines')}</th>
+              <th className="px-3 py-2 text-right font-medium">{t('finalReview.colDays')}</th>
               <th className="px-3 py-2 text-right font-medium">k€</th>
-              <th className="px-3 py-2 text-left font-medium">Distribución</th>
+              <th className="px-3 py-2 text-left font-medium">{t('finalReview.colDistribution')}</th>
             </tr>
           </thead>
           <tbody>
