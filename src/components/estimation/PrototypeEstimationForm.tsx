@@ -1,28 +1,34 @@
 import { useState } from 'react';
 import { Button } from '../shared/Button';
-import type { PrototypeCategory, PrototypeEstimation } from '../../types';
+import { useT } from '../../i18n/useT';
+import type { PrototypeEstimation } from '../../types';
 
-const DEFAULT_CATEGORIES: PrototypeCategory[] = [
-  { id: 'proto-cat-1', name: 'Greenfield',  description: 'Producto nuevo desde cero' },
-  { id: 'proto-cat-2', name: 'Refactor',    description: 'Reescritura de módulo existente' },
-  { id: 'proto-cat-3', name: 'Integration', description: 'Conexión con sistemas externos' },
-  { id: 'proto-cat-4', name: 'Maintenance', description: 'Bugfixes y mejoras menores' },
-];
+interface Category { id: string; name: string; description: string; }
+
+function getCategories(t: (k: string) => string): Category[] {
+  return [
+    { id: 'proto-cat-1', name: t('proto.catGreenfield'),  description: t('proto.catGreenDesc') },
+    { id: 'proto-cat-2', name: t('proto.catRefactor'),    description: t('proto.catRefactorDesc') },
+    { id: 'proto-cat-3', name: t('proto.catIntegration'), description: t('proto.catIntegrationDesc') },
+    { id: 'proto-cat-4', name: t('proto.catMaintenance'), description: t('proto.catMaintenanceDesc') },
+  ];
+}
 
 interface Props {
   lineId: string;
   initial?: PrototypeEstimation;
   onSave: (est: PrototypeEstimation) => void;
+  onClose?: () => void;
   readOnly?: boolean;
 }
 
-export function PrototypeEstimationForm({ lineId, initial, onSave, readOnly }: Props) {
+export function PrototypeEstimationForm({ lineId, initial, onSave, onClose, readOnly }: Props) {
+  const t = useT();
+  const categories = getCategories(t);
   const [quantities, setQuantities] = useState<Record<string, number>>(
-    initial?.quantities ??
-      Object.fromEntries(DEFAULT_CATEGORIES.map((c) => [c.id, 0])),
+    initial?.quantities ?? Object.fromEntries(categories.map((c) => [c.id, 0])),
   );
   const [comment, setComment] = useState(initial?.comment ?? '');
-
   const total = Object.values(quantities).reduce((a, b) => a + b, 0);
 
   function handleChange(catId: string, raw: string) {
@@ -32,11 +38,11 @@ export function PrototypeEstimationForm({ lineId, initial, onSave, readOnly }: P
   return (
     <div className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 space-y-3">
       <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-        Estimación de Prototipo (BR-18) — No afecta FTE / BH / KM
+        {t('proto.title')}
       </h4>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {DEFAULT_CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <div key={cat.id}>
             <label
               className="block text-xs font-medium text-slate-600 mb-1"
@@ -58,14 +64,14 @@ export function PrototypeEstimationForm({ lineId, initial, onSave, readOnly }: P
       </div>
 
       <p className="text-xs text-slate-500">
-        Total: <strong className="text-slate-700">{total}</strong> unidades de prototipo
+        {t('proto.total', { n: total })}
       </p>
 
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         disabled={readOnly}
-        placeholder="Comentario sobre el prototipo (opcional)..."
+        placeholder={t('proto.commentPlaceholder')}
         rows={2}
         className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:outline-none disabled:bg-white disabled:opacity-60"
       />
@@ -74,9 +80,12 @@ export function PrototypeEstimationForm({ lineId, initial, onSave, readOnly }: P
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => onSave({ lineId, quantities: { ...quantities }, comment })}
+          onClick={() => {
+            onSave({ lineId, quantities: { ...quantities }, comment });
+            onClose?.();
+          }}
         >
-          Guardar Prototipo
+          {t('proto.save')}
         </Button>
       )}
     </div>

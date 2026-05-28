@@ -364,10 +364,10 @@ export function EstimationPanel({ line, onClose }: Props) {
                   lineId={line.id}
                   initial={protoEst}
                   onSave={(est) => setPrototypeEstimation(line.id, est)}
+                  onClose={onClose}
                   readOnly={locked}
                 />
               )}
-            </div>
 
             {/* Right: summary */}
             <div className="w-52 flex-shrink-0 overflow-y-auto px-4 py-4">
