@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation } from '../types';
+import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation, EstimationComment } from '../types';
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
 import { canTransition } from '../lib/stateMachine';
@@ -13,6 +13,7 @@ interface DataState {
   rejectLine: (id: string, comment: string) => void;
   setEstimation: (lineId: string, est: Estimation) => void;
   copyEstimation: (sourceId: string, targetIds: string[]) => void;
+  addComment: (comment: Omit<EstimationComment, 'id' | 'createdAt'>) => void;
   setAllocation: (lineId: string, splits: AllocationSplit[]) => void;
   bulkAssign: (lineIds: string[], engineerId: string) => void;
 }
@@ -73,6 +74,25 @@ export const useDataStore = create<DataState>((set, get) => ({
       return { estimations: updated, lines: updatedLines };
     });
   },
+  addComment: (comment) =>
+    set((s) => {
+      const existing = s.estimations[comment.lineId];
+      if (!existing) return s;
+      const newComment: EstimationComment = {
+        ...comment,
+        id: `comment-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        createdAt: new Date().toISOString(),
+      };
+      return {
+        estimations: {
+          ...s.estimations,
+          [comment.lineId]: {
+            ...existing,
+            comments: [...(existing.comments ?? []), newComment],
+          },
+        },
+      };
+    }),
   setAllocation: (lineId, splits) =>
     set((s) => {
       const exists = s.allocations.find((a) => a.lineId === lineId);

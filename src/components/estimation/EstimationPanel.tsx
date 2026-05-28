@@ -14,6 +14,7 @@ import { useDataStore } from '../../store/dataStore';
 import { useUIStore } from '../../store/uiStore';
 import { CopyEstimationModal } from './CopyEstimationModal';
 import { ManageInductorsModal } from './ManageInductorsModal';
+import { CommentSection } from './CommentSection';
 
 interface Props {
   line: ProjectLine | null;
@@ -22,9 +23,12 @@ interface Props {
 
 export function EstimationPanel({ line, onClose }: Props) {
   const can = useRoleStore((s) => s.can);
+  const currentRole = useRoleStore((s) => s.currentRole);
+  const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
   const existing = useDataStore((s) => (line ? s.estimations[line.id] : undefined));
   const setEstimation = useDataStore((s) => s.setEstimation);
   const setLineStatus = useDataStore((s) => s.setLineStatus);
+  const addComment = useDataStore((s) => s.addComment);
   const pushToast = useUIStore((s) => s.pushToast);
 
   const [selections, setSelections] = useState<InductorSelection[]>([]);
@@ -333,6 +337,22 @@ export function EstimationPanel({ line, onClose }: Props) {
                 canEditCustomJU={canEditCustomJU}
                 onChange={setCustomJUs}
               />
+
+              {existing && line && (
+                <CommentSection
+                  comments={existing.comments ?? []}
+                  metier={line.metier}
+                  onAdd={(text) =>
+                    addComment({
+                      lineId: line.id,
+                      metier: line.metier,
+                      text,
+                      authorId: activeEngineerId ?? currentRole,
+                    })
+                  }
+                  readOnly={locked}
+                />
+              )}
             </div>
 
             {/* Right: summary */}
