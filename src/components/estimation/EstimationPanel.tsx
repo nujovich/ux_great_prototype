@@ -5,6 +5,7 @@ import { INDUCTORS } from '../../fixtures/inductors';
 import { CRANS } from '../../fixtures/crans';
 import { JOB_UNITS } from '../../fixtures/jobUnits';
 import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
+import { validateBeforeSave } from '../../lib/validation';
 import { formatDays, formatKEuro } from '../../lib/format';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
@@ -197,12 +198,23 @@ export function EstimationPanel({ line, onClose }: Props) {
   }
 
   function handleSaveDraft() {
+    const validation = validateBeforeSave(line!);
+    if (!validation.valid) {
+      pushToast(validation.errors.join(' '), 'error');
+      return;
+    }
     persist('draft');
     pushToast(`Borrador guardado para ${line!.id}`, 'success');
     onClose();
   }
 
   function handlePromote() {
+    const validation = validateBeforeSave(line!);
+    if (!validation.valid) {
+      pushToast(validation.errors.join(' '), 'error');
+      setConfirmPromote(false);
+      return;
+    }
     persist('estimated');
     pushToast(`${line!.id} promovida a estimación definitiva`, 'success');
     setConfirmPromote(false);
