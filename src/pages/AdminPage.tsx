@@ -249,24 +249,30 @@ function RatesTab() {
 }
 
 function CyclesTab() {
-  const [cycles, setCycles] = useState(CYCLES);
+  const cycles = useDataStore((s) => s.cycles);
+  const storCreateCycle = useDataStore((s) => s.createCycle);
   const pushToast = useUIStore((s) => s.pushToast);
 
-  function createCycle() {
-    const id = `cyc-new-${Date.now()}`;
-    setCycles((c) => [...c, { id, name: `Nuevo cycle`, status: 'draft', startDate: '2027-01-01', endDate: '2027-06-30' }]);
-    pushToast('Nuevo cycle creado en estado draft', 'success');
+  function handleCreateCycle() {
+    const activeCycle = cycles.find((c) => c.isActive);
+    const name = window.prompt('Nombre del nuevo ciclo (ej: 2026 H2):');
+    if (!name?.trim()) return;
+    const msg = activeCycle
+      ? `¿Crear "${name}"? El ciclo "${activeCycle.name}" se desactivará automáticamente (CYCLE-BR-04).`
+      : `¿Crear el ciclo "${name}"?`;
+    if (!window.confirm(msg)) return;
+    storCreateCycle(name.trim(), new Date().toISOString().slice(0, 10), '');
+    pushToast(`Ciclo "${name}" creado y activado`, 'success');
   }
 
-  function closeCycle(id: string) {
-    setCycles((c) => c.map((x) => (x.id === id ? { ...x, status: 'closed' } : x)));
-    pushToast('Cycle cerrado', 'info');
+  function closeCycle(_id: string) {
+    pushToast('Para cerrar un ciclo, creá uno nuevo — esto lo desactiva automáticamente (CYCLE-BR-04)', 'info');
   }
 
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <Button onClick={createCycle}>
+        <Button onClick={handleCreateCycle}>
           <CalendarPlus size={14} /> Crear cycle
         </Button>
       </div>

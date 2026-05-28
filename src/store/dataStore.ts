@@ -1,19 +1,22 @@
 import { create } from 'zustand';
-import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation, EstimationComment } from '../types';
+import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation, EstimationComment, Cycle } from '../types';
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
+import { CYCLES } from '../fixtures/cycles';
 import { canTransition } from '../lib/stateMachine';
 
 interface DataState {
   lines: ProjectLine[];
   allocations: Allocation[];
   estimations: Record<string, Estimation>; // by lineId
+  cycles: Cycle[];
   updateLine: (id: string, patch: Partial<ProjectLine>) => void;
   setLineStatus: (id: string, status: LineStatus, extra?: Partial<ProjectLine>) => void;
   rejectLine: (id: string, comment: string) => void;
   setEstimation: (lineId: string, est: Estimation) => void;
   copyEstimation: (sourceId: string, targetIds: string[]) => void;
   addComment: (comment: Omit<EstimationComment, 'id' | 'createdAt'>) => void;
+  createCycle: (name: string, startDate: string, endDate: string) => void;
   setAllocation: (lineId: string, splits: AllocationSplit[]) => void;
   bulkAssign: (lineIds: string[], engineerId: string) => void;
 }
@@ -22,6 +25,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   lines: structuredClone(PROJECT_LINES),
   allocations: structuredClone(ALLOCATIONS),
   estimations: {},
+  cycles: structuredClone(CYCLES),
   updateLine: (id, patch) =>
     set((s) => ({
       lines: s.lines.map((l) => (l.id === id ? { ...l, ...patch, lastUpdatedAt: new Date().toISOString() } : l)),
@@ -93,6 +97,13 @@ export const useDataStore = create<DataState>((set, get) => ({
         },
       };
     }),
+  createCycle: (name, startDate, endDate) =>
+    set((s) => ({
+      cycles: [
+        ...s.cycles.map((c) => ({ ...c, isActive: false })), // CYCLE-BR-04: deactivate all existing
+        { id: `cyc-${Date.now()}`, name, isActive: true, startDate, endDate },
+      ],
+    })),
   setAllocation: (lineId, splits) =>
     set((s) => {
       const exists = s.allocations.find((a) => a.lineId === lineId);
