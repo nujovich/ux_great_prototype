@@ -4,20 +4,14 @@ import { clsx } from 'clsx';
 import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { WORKLOAD_STANDARDS, PROTOTYPE_CATEGORIES, ALLOCATION_RULES } from '../fixtures/admin';
-import { K_EURO_RATES, CYCLES } from '../fixtures/cycles';
+import { K_EURO_RATES } from '../fixtures/cycles';
+import { useDataStore } from '../store/dataStore';
 import { useUIStore } from '../store/uiStore';
+import { useT } from '../i18n/useT';
 import { formatDate } from '../lib/format';
 import type { Metier } from '../types';
 
 type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles';
-
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'workload', label: 'Workload Standards' },
-  { key: 'categories', label: 'Categorías' },
-  { key: 'rules', label: 'Reglas de Allocation' },
-  { key: 'rates', label: 'Rates k€' },
-  { key: 'cycles', label: 'Cycles' },
-];
 
 export function AdminPage() {
   return (
@@ -29,25 +23,33 @@ export function AdminPage() {
 
 function AdminContent() {
   const [tab, setTab] = useState<Tab>('workload');
+  const t = useT();
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'workload', label: t('admin.tabWorkload') },
+    { key: 'categories', label: t('admin.tabCategories') },
+    { key: 'rules', label: t('admin.tabRules') },
+    { key: 'rates', label: t('admin.tabRates') },
+    { key: 'cycles', label: t('admin.tabCycles') },
+  ];
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Admin</h1>
-        <p className="text-sm text-slate-600">Configuración del sistema. Solo accesible para Admin.</p>
+        <h1 className="text-xl font-bold text-slate-900">{t('admin.title')}</h1>
+        <p className="text-sm text-slate-600">{t('admin.subtitle')}</p>
       </div>
       <div className="flex flex-wrap gap-1 border-b border-slate-200">
-        {TABS.map((t) => (
+        {tabs.map((tb) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={tb.key}
+            onClick={() => setTab(tb.key)}
             className={clsx(
               'rounded-t-md border-b-2 px-3 py-2 text-sm font-medium transition-colors',
-              tab === t.key
+              tab === tb.key
                 ? 'border-brand-600 text-brand-700'
                 : 'border-transparent text-slate-500 hover:text-slate-800',
             )}
           >
-            {t.label}
+            {tb.label}
           </button>
         ))}
       </div>
@@ -64,6 +66,7 @@ function WorkloadStandardsTab() {
   const [items, setItems] = useState(WORKLOAD_STANDARDS);
   const [metier, setMetier] = useState<Metier>('Backend');
   const pushToast = useUIStore((s) => s.pushToast);
+  const t = useT();
 
   function handleUpload() {
     const id = `ws-${Date.now()}`;
@@ -77,10 +80,10 @@ function WorkloadStandardsTab() {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200 bg-white p-4">
-        <h3 className="mb-2 font-semibold text-slate-800">Subir nuevo estándar</h3>
+        <h3 className="mb-2 font-semibold text-slate-800">{t('admin.workloadUpload')}</h3>
         <div className="flex items-end gap-2">
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-slate-500">Métier</label>
+            <label className="text-xs font-medium text-slate-500">{t('admin.workloadMetier')}</label>
             <select
               value={metier}
               onChange={(e) => setMetier(e.target.value as Metier)}
@@ -92,17 +95,17 @@ function WorkloadStandardsTab() {
             </select>
           </div>
           <Button onClick={handleUpload}>
-            <Upload size={14} /> Subir XLSX (mock)
+            <Upload size={14} /> {t('admin.workloadBtn')}
           </Button>
         </div>
       </div>
       <table className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white text-sm">
         <thead className="bg-slate-50 text-xs uppercase text-slate-500">
           <tr>
-            <th className="px-3 py-2 text-left font-medium">Métier</th>
-            <th className="px-3 py-2 text-left font-medium">Archivo</th>
-            <th className="px-3 py-2 text-right font-medium">Filas</th>
-            <th className="px-3 py-2 text-left font-medium">Subido</th>
+            <th className="px-3 py-2 text-left font-medium">{t('admin.workloadMetier')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('admin.workloadColFile')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('admin.workloadColRows')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('admin.workloadColUploaded')}</th>
           </tr>
         </thead>
         <tbody>
@@ -125,6 +128,7 @@ function CategoriesTab() {
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
   const pushToast = useUIStore((s) => s.pushToast);
+  const t = useT();
 
   function add() {
     if (!name.trim()) return;
@@ -139,19 +143,19 @@ function CategoriesTab() {
       <div className="rounded-lg border border-slate-200 bg-white p-3">
         <div className="flex flex-wrap items-end gap-2">
           <input
-            placeholder="Nombre"
+            placeholder={t('admin.catName')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
           />
           <input
-            placeholder="Descripción"
+            placeholder={t('admin.catDesc')}
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             className="flex-[2] rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
           />
           <Button onClick={add}>
-            <Plus size={14} /> Agregar
+            <Plus size={14} /> {t('admin.catAdd')}
           </Button>
         </div>
       </div>
@@ -159,8 +163,8 @@ function CategoriesTab() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">Categoría</th>
-              <th className="px-3 py-2 text-left font-medium">Descripción</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.catColName')}</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.catColDesc')}</th>
               <th className="w-12" />
             </tr>
           </thead>
@@ -188,14 +192,15 @@ function CategoriesTab() {
 
 function RulesTab() {
   const [items] = useState(ALLOCATION_RULES);
+  const t = useT();
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
       <table className="w-full text-sm">
         <thead className="bg-slate-50 text-xs uppercase text-slate-500">
           <tr>
-            <th className="px-3 py-2 text-left font-medium">Regla</th>
-            <th className="px-3 py-2 text-left font-medium">Métier</th>
-            <th className="px-3 py-2 text-left font-medium">Condición</th>
+            <th className="px-3 py-2 text-left font-medium">{t('admin.rulesColRule')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('admin.rulesColMetier')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('admin.rulesColCondition')}</th>
           </tr>
         </thead>
         <tbody>
@@ -214,14 +219,15 @@ function RulesTab() {
 
 function RatesTab() {
   const [rates, setRates] = useState(K_EURO_RATES);
+  const t = useT();
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
       <table className="w-full text-sm">
         <thead className="bg-slate-50 text-xs uppercase text-slate-500">
           <tr>
-            <th className="px-3 py-2 text-left font-medium">Métier</th>
-            <th className="px-3 py-2 text-left font-medium">Cycle</th>
-            <th className="px-3 py-2 text-right font-medium">Rate (k€/día)</th>
+            <th className="px-3 py-2 text-left font-medium">{t('admin.ratesColMetier')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('admin.ratesColCycle')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('admin.ratesColRate')}</th>
           </tr>
         </thead>
         <tbody>
@@ -252,6 +258,7 @@ function CyclesTab() {
   const cycles = useDataStore((s) => s.cycles);
   const storCreateCycle = useDataStore((s) => s.createCycle);
   const pushToast = useUIStore((s) => s.pushToast);
+  const t = useT();
 
   function handleCreateCycle() {
     const activeCycle = cycles.find((c) => c.isActive);
@@ -273,17 +280,17 @@ function CyclesTab() {
     <div className="space-y-3">
       <div className="flex justify-end">
         <Button onClick={handleCreateCycle}>
-          <CalendarPlus size={14} /> Crear cycle
+          <CalendarPlus size={14} /> {t('admin.cyclesCreate')}
         </Button>
       </div>
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">Cycle</th>
-              <th className="px-3 py-2 text-left font-medium">Periodo</th>
-              <th className="px-3 py-2 text-left font-medium">Status</th>
-              <th className="px-3 py-2 text-right font-medium">Acciones</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.cyclesColCycle')}</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.cyclesColPeriod')}</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.cyclesColStatus')}</th>
+              <th className="px-3 py-2 text-right font-medium">{t('admin.cyclesColActions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -298,13 +305,13 @@ function CyclesTab() {
                       c.isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-600',
                     )}
                   >
-                    {c.isActive ? 'Activo' : 'Cerrado'}
+                    {c.isActive ? t('admin.cyclesActive') : t('admin.cyclesClosed')}
                   </span>
                 </td>
                 <td className="px-3 py-2.5 text-right">
                   {c.isActive && (
                     <Button size="sm" variant="secondary" onClick={() => closeCycle(c.id)}>
-                      <Lock size={14} /> Cerrar
+                      <Lock size={14} /> {t('admin.cyclesClose')}
                     </Button>
                   )}
                 </td>
