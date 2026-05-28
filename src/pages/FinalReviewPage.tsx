@@ -2,10 +2,10 @@ import { useMemo } from 'react';
 import { Download } from 'lucide-react';
 import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
-import { useUIStore } from '../store/uiStore';
 import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { formatDays, formatKEuro } from '../lib/format';
+import { exportToCsv } from '../lib/csvExport';
 import type { Metier } from '../types';
 
 export function FinalReviewPage() {
@@ -18,8 +18,11 @@ export function FinalReviewPage() {
 
 function FinalReviewContent() {
   const lines = useDataStore((s) => s.lines);
+  const cycles = useDataStore((s) => s.cycles);
   const can = useRoleStore((s) => s.can);
-  const pushToast = useUIStore((s) => s.pushToast);
+
+  const activeCycleId = useMemo(() => cycles.find((c) => c.isActive)?.id ?? 'export', [cycles]);
+  const approvedLines = useMemo(() => lines.filter((l) => l.status === 'approved'), [lines]);
 
   const byMetier = useMemo(() => {
     const map = new Map<Metier, { count: number; days: number; kEuro: number }>();
@@ -49,8 +52,11 @@ function FinalReviewContent() {
           </p>
         </div>
         {can('export:final-review') && (
-          <Button onClick={() => pushToast('Reporte generado (mock) — descargá el PDF', 'success')}>
-            <Download size={14} /> Exportar reporte
+          <Button
+            variant="secondary"
+            onClick={() => exportToCsv(approvedLines, `final-review-${activeCycleId}.csv`)}
+          >
+            <Download size={14} /> Exportar CSV (FR-BR-10)
           </Button>
         )}
       </div>
