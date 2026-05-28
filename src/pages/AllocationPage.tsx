@@ -30,7 +30,7 @@ function AllocationContent() {
   const [splitTarget, setSplitTarget] = useState<ProjectLine | null>(null);
 
   const allocatable = useMemo(
-    () => lines.filter((l) => l.status === 'approved' || l.status === 'allocated'),
+    () => lines.filter((l) => l.status === 'approved'),
     [lines],
   );
 

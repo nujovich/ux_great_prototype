@@ -1,6 +1,6 @@
 import type { LineStatus, Metier } from '../../types';
 
-const STATUSES: LineStatus[] = ['empty', 'draft', 'estimated', 'rejected', 'approved', 'allocated'];
+const STATUSES: LineStatus[] = ['to_do', 'draft', 'estimated', 'sent', 'rejected', 'approved'];
 const METIERS: Metier[] = ['Backend', 'Frontend', 'Data', 'DevOps', 'QA', 'Mobile'];
 
 export interface GridFilters {

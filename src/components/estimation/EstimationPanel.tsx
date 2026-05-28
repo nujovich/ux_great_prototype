@@ -53,7 +53,7 @@ export function EstimationPanel({ line, onClose }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line?.id]);
 
-  const locked = !line || line.status === 'estimated' || line.status === 'approved' || line.status === 'allocated';
+  const locked = !line || line.status === 'estimated' || line.status === 'sent' || line.status === 'approved';
   const canEdit = can('edit:estimation') && !locked;
   const canEditCustomJU = can('edit:custom-jus');
 

@@ -289,16 +289,14 @@ function CyclesTab() {
                   <span
                     className={clsx(
                       'rounded-full border px-2 py-0.5 text-xs font-medium',
-                      c.status === 'open' && 'border-emerald-200 bg-emerald-50 text-emerald-700',
-                      c.status === 'draft' && 'border-amber-200 bg-amber-50 text-amber-700',
-                      c.status === 'closed' && 'border-slate-200 bg-slate-100 text-slate-600',
+                      c.isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-600',
                     )}
                   >
-                    {c.status}
+                    {c.isActive ? 'Activo' : 'Cerrado'}
                   </span>
                 </td>
                 <td className="px-3 py-2.5 text-right">
-                  {c.status !== 'closed' && (
+                  {c.isActive && (
                     <Button size="sm" variant="secondary" onClick={() => closeCycle(c.id)}>
                       <Lock size={14} /> Cerrar
                     </Button>

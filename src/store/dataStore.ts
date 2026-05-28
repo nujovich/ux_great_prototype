@@ -71,7 +71,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   bulkAssign: (lineIds, engineerId) =>
     set((s) => ({
       lines: s.lines.map((l) =>
-        lineIds.includes(l.id) ? { ...l, assignedEngineerId: engineerId, status: 'allocated' as LineStatus } : l,
+        lineIds.includes(l.id) ? { ...l, assignedEngineerId: engineerId, lastUpdatedAt: new Date().toISOString() } : l,
       ),
     })),
 }));

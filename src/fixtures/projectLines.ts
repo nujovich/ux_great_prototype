@@ -8,7 +8,7 @@ export const PROJECT_LINES: ProjectLine[] = [
   // Auth Platform - Backend (Thermal Engine, Gasoline, Mother, Direct Injection)
   {
     id: 'PL-001', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'API refactor de autenticación',
-    metier: 'Backend', status: 'empty', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-1',
+    metier: 'Backend', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-1',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-10T09:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
     injectionSystem: 'Direct Injection', spDate: '2026-01-01', durationMonths: 6,
@@ -16,7 +16,7 @@ export const PROJECT_LINES: ProjectLine[] = [
   },
   {
     id: 'PL-002', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'OAuth provider integration',
-    metier: 'Backend', status: 'empty', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-1',
+    metier: 'Backend', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-1',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-10T09:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
     injectionSystem: 'Direct Injection', spDate: '2026-02-01', durationMonths: 4,
@@ -24,42 +24,42 @@ export const PROJECT_LINES: ProjectLine[] = [
   },
   {
     id: 'PL-003', projectId: 'P-PAY', projectName: 'Payments', lineName: 'Webhook de Stripe',
-    metier: 'Backend', status: 'empty', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-2',
+    metier: 'Backend', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-2',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-09T10:00:00Z',
     organType: 'Electric Motor', energyFuelType: 'Electric', projectRanking: 'Child',
     injectionSystem: null, spDate: '2026-03-01', durationMonths: 3,
   },
   {
     id: 'PL-004', projectId: 'P-MKT', projectName: 'Marketing Tools', lineName: 'Landing builder UI',
-    metier: 'Frontend', status: 'empty', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-3',
+    metier: 'Frontend', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-3',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-09T10:00:00Z',
     organType: 'Electric Motor', energyFuelType: 'Electric', projectRanking: 'Child',
     injectionSystem: null, spDate: '2026-04-01', durationMonths: 5,
   },
   {
     id: 'PL-005', projectId: 'P-MKT', projectName: 'Marketing Tools', lineName: 'A/B test dashboard',
-    metier: 'Frontend', status: 'empty', cycleId: 'cyc-2026h1', assignedEngineerId: null,
+    metier: 'Frontend', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: null,
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-08T11:00:00Z',
     organType: 'Electric Motor', energyFuelType: 'Electric', projectRanking: 'Child',
     injectionSystem: null, spDate: '2026-05-01', durationMonths: 4,
   },
   {
     id: 'PL-006', projectId: 'P-DATA', projectName: 'Data Platform', lineName: 'Pipeline de eventos',
-    metier: 'Data', status: 'empty', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-5',
+    metier: 'Data', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-5',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-08T11:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
     injectionSystem: 'Direct Injection', spDate: '2026-06-01', durationMonths: 6,
   },
   {
     id: 'PL-007', projectId: 'P-MOB', projectName: 'Mobile App', lineName: 'Onboarding screens',
-    metier: 'Mobile', status: 'empty', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-9',
+    metier: 'Mobile', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-9',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-08T11:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
     injectionSystem: null, spDate: '2026-07-01', durationMonths: 3,
   },
   {
     id: 'PL-008', projectId: 'P-INFRA', projectName: 'Infra', lineName: 'Migración a Kubernetes',
-    metier: 'DevOps', status: 'empty', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-7',
+    metier: 'DevOps', status: 'to_do', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-7',
     estimatedDays: null, estimatedKEuro: null, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-07T11:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
     injectionSystem: 'Direct Injection', spDate: '2026-08-01', durationMonths: 4,
@@ -188,14 +188,14 @@ export const PROJECT_LINES: ProjectLine[] = [
   // ── Approved + Allocated (3) ────────────────────────────────
   {
     id: 'PL-024', projectId: 'P-AUTH', projectName: 'Auth Platform', lineName: 'Audit log v1',
-    metier: 'Backend', status: 'allocated', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-2',
+    metier: 'Backend', status: 'approved', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-2',
     estimatedDays: 10, estimatedKEuro: 8.5, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-22T09:00:00Z',
     organType: 'Thermal Engine', energyFuelType: 'Gasoline', projectRanking: 'Mother',
     injectionSystem: 'Direct Injection', spDate: '2026-08-01', durationMonths: 3,
   },
   {
     id: 'PL-025', projectId: 'P-MKT', projectName: 'Marketing Tools', lineName: 'Public site redesign',
-    metier: 'Frontend', status: 'allocated', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-4',
+    metier: 'Frontend', status: 'approved', cycleId: 'cyc-2026h1', assignedEngineerId: 'eng-4',
     estimatedDays: 35, estimatedKEuro: 28.0, lastUpdatedBy: 'PMO', lastUpdatedAt: '2026-05-22T09:00:00Z',
     organType: 'Electric Motor', energyFuelType: 'Electric', projectRanking: 'Child',
     injectionSystem: null, spDate: '2026-09-01', durationMonths: 6,

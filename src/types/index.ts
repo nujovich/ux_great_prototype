@@ -1,12 +1,12 @@
 export type Role = 'Engineer' | 'PMO' | 'Admin' | 'RCRC' | 'CPO';
 
 export type LineStatus =
-  | 'empty'
+  | 'to_do'
   | 'draft'
   | 'estimated'
+  | 'sent'
   | 'rejected'
-  | 'approved'
-  | 'allocated';
+  | 'approved';
 
 export type Metier =
   | 'Backend'
@@ -101,6 +101,7 @@ export interface Estimation {
   status: LineStatus;
   draftedAt?: string;
   estimatedAt?: string;
+  comments?: EstimationComment[];
 }
 
 export interface AllocationSplit {
@@ -117,9 +118,24 @@ export interface Allocation {
 export interface Cycle {
   id: string;
   name: string;
-  status: 'open' | 'closed' | 'draft';
+  isActive: boolean;
   startDate: string;
   endDate: string;
+}
+
+export interface EstimationComment {
+  id: string;
+  lineId: string;
+  metier: Metier;
+  text: string;
+  authorId: string;
+  createdAt: string;
+}
+
+export interface PrototypeEstimation {
+  lineId: string;
+  quantities: Record<string, number>;
+  comment: string;
 }
 
 export interface Engineer {

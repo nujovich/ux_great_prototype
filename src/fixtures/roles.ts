@@ -13,7 +13,7 @@ export type Permission =
   | 'view:estimation-review'
   | 'approve:estimation'
   | 'reject:estimation'
-  | 'send:cpo'
+  | 'send:hvt'
   | 'view:allocation'
   | 'edit:allocation'
   | 'view:k-euro-rates'
@@ -41,7 +41,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'view:estimation-review',
     'approve:estimation',
     'reject:estimation',
-    'send:cpo',
+    'send:hvt',
     'view:allocation',
     'edit:allocation',
     'view:k-euro-rates',
@@ -59,7 +59,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'view:estimation-review',
     'approve:estimation',
     'reject:estimation',
-    'send:cpo',
+    'send:hvt',
     'view:allocation',
     'edit:allocation',
     'view:k-euro-rates',

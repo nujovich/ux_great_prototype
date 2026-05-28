@@ -1,9 +1,9 @@
 import type { Cycle, KEuroRate } from '../types';
 
 export const CYCLES: Cycle[] = [
-  { id: 'cyc-2025h2', name: '2025-H2', status: 'closed', startDate: '2025-07-01', endDate: '2025-12-31' },
-  { id: 'cyc-2026h1', name: '2026-H1', status: 'open', startDate: '2026-01-01', endDate: '2026-06-30' },
-  { id: 'cyc-2026h2', name: '2026-H2', status: 'draft', startDate: '2026-07-01', endDate: '2026-12-31' },
+  { id: 'cyc-2025h2', name: '2025-H2', isActive: false, startDate: '2025-07-01', endDate: '2025-12-31' },
+  { id: 'cyc-2026h1', name: '2026-H1', isActive: true,  startDate: '2026-01-01', endDate: '2026-06-30' },
+  { id: 'cyc-2026h2', name: '2026-H2', isActive: false, startDate: '2026-07-01', endDate: '2026-12-31' },
 ];
 
 export const CURRENT_CYCLE_ID = 'cyc-2026h1';

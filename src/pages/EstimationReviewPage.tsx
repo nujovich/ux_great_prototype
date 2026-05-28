@@ -34,7 +34,7 @@ function ReviewContent() {
     return {
       estimated: lines.filter((l) => l.status === 'estimated'),
       rejected: lines.filter((l) => l.status === 'rejected'),
-      approved: lines.filter((l) => l.status === 'approved' || l.status === 'allocated'),
+      approved: lines.filter((l) => l.status === 'approved'),
     };
   }, [lines]);
 
@@ -76,7 +76,7 @@ function ReviewContent() {
                 <CheckCircle2 size={14} /> Aprobar
               </Button>
             )}
-            {can('send:cpo') && (
+            {can('send:hvt') && (
               <Button size="sm" variant="secondary" onClick={() => handleSendToCPO(l)}>
                 <Send size={14} /> Enviar a CPO
               </Button>

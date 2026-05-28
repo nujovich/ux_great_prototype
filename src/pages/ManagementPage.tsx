@@ -6,7 +6,7 @@ import { CYCLES } from '../fixtures/cycles';
 import type { LineStatus, Metier } from '../types';
 
 const METIERS: Metier[] = ['Backend', 'Frontend', 'Data', 'DevOps', 'QA', 'Mobile'];
-const STATUSES: LineStatus[] = ['empty', 'draft', 'estimated', 'rejected', 'approved', 'allocated'];
+const STATUSES: LineStatus[] = ['to_do', 'draft', 'estimated', 'sent', 'rejected', 'approved'];
 
 export function ManagementPage() {
   return (
@@ -36,7 +36,7 @@ function ManagementContent() {
   const matrix = useMemo(() => {
     const m: Record<Metier, Record<LineStatus, number>> = {} as never;
     METIERS.forEach((met) => {
-      m[met] = { empty: 0, draft: 0, estimated: 0, rejected: 0, approved: 0, allocated: 0 };
+      m[met] = { to_do: 0, draft: 0, estimated: 0, sent: 0, rejected: 0, approved: 0 };
     });
     filtered.forEach((l) => {
       m[l.metier][l.status] += 1;
@@ -56,7 +56,7 @@ function ManagementContent() {
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-3">
         <FilterSelect label="Cycle" value={cycleId} onChange={setCycleId}>
           {CYCLES.map((c) => (
-            <option key={c.id} value={c.id}>{c.name} ({c.status})</option>
+            <option key={c.id} value={c.id}>{c.name} {c.isActive ? '(activo)' : '(cerrado)'}</option>
           ))}
         </FilterSelect>
         <FilterSelect label="Status" value={statusFilter} onChange={(v) => setStatusFilter(v as LineStatus | 'all')}>
