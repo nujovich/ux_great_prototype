@@ -36,6 +36,9 @@ export function EstimationPanel({ line, onClose }: Props) {
   const [showManage, setShowManage] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [confirmPromote, setConfirmPromote] = useState(false);
+  const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(
+    line?.status === 'draft' || line?.status === 'estimated' || line?.status === 'rejected',
+  );
 
   useEffect(() => {
     if (!line) return;
@@ -204,6 +207,7 @@ export function EstimationPanel({ line, onClose }: Props) {
       return;
     }
     persist('draft');
+    setHasDraftedThisSession(true);
     pushToast(`Borrador guardado para ${line!.id}`, 'success');
     onClose();
   }
@@ -408,7 +412,13 @@ export function EstimationPanel({ line, onClose }: Props) {
                   <Button size="md" variant="secondary" onClick={handleSaveDraft} disabled={!hasMinimumForDraft}>
                     Guardar borrador
                   </Button>
-                  <Button size="md" variant="primary" onClick={() => setConfirmPromote(true)} disabled={!hasMinimumForDefinitive}>
+                  <Button
+                    size="md"
+                    variant="primary"
+                    onClick={() => setConfirmPromote(true)}
+                    disabled={!hasMinimumForDefinitive || !hasDraftedThisSession}
+                    title={!hasDraftedThisSession ? 'Primero guardá como Borrador en esta sesión (BR-02)' : undefined}
+                  >
                     Promover a definitiva
                   </Button>
                 </>
