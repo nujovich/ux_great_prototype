@@ -9,6 +9,7 @@ import { Modal } from '../components/shared/Modal';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { EmptyState } from '../components/shared/EmptyState';
 import { formatDays, formatKEuro, formatDate } from '../lib/format';
+import { useT } from '../i18n/useT';
 import { ENGINEERS } from '../fixtures/engineers';
 import type { ProjectLine } from '../types';
 
@@ -28,6 +29,7 @@ function ReviewContent() {
   const currentRole = useRoleStore((s) => s.currentRole);
   const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
   const pushToast = useUIStore((s) => s.pushToast);
+  const t = useT();
 
   const [rejectTarget, setRejectTarget] = useState<ProjectLine | null>(null);
   const [rejectComment, setRejectComment] = useState('');
@@ -67,38 +69,36 @@ function ReviewContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Estimation Review</h1>
-        <p className="text-sm text-slate-600">
-          Revisión de estimaciones definitivas. Aprobá, enviá al CPO o rechazá con comentario.
-        </p>
+        <h1 className="text-xl font-bold text-slate-900">{t('estReview.title')}</h1>
+        <p className="text-sm text-slate-600">{t('estReview.subtitle')}</p>
       </div>
 
       {groups.estimated.length > 0 && can('send:hvt') && (
         <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5">
           <span className="text-sm text-blue-700">
-            {groups.estimated.length} estimación(es) elegibles para enviar al HVT.
+            {t('estReview.bulkBar', { n: groups.estimated.length })}
           </span>
           <Button size="sm" variant="primary" onClick={handleSendAllToHVT}>
-            <Send size={14} /> Enviar todas ({groups.estimated.length})
+            <Send size={14} /> {t('estReview.sendAll', { n: groups.estimated.length })}
           </Button>
         </div>
       )}
 
       <Section
-        title="Pendientes de revisión"
-        description="Líneas con estimación definitiva esperando aprobación."
+        title={t('estReview.pending')}
+        description={t('estReview.pendingDesc')}
         lines={groups.estimated}
-        emptyText="No hay estimaciones pendientes de revisión."
+        emptyText={t('estReview.noPending')}
         renderActions={(l) => (
           <div className="flex gap-2">
             {can('send:hvt') && (
               <Button size="sm" variant="secondary" onClick={() => handleSendToHVT(l)}>
-                <Send size={14} /> Enviar a HVT
+                <Send size={14} /> {t('estReview.sendToHvt')}
               </Button>
             )}
             {can('reject:estimation') && (
               <Button size="sm" variant="danger" onClick={() => setRejectTarget(l)}>
-                <XCircle size={14} /> Rechazar
+                <XCircle size={14} /> {t('estReview.reject')}
               </Button>
             )}
           </div>
@@ -106,16 +106,16 @@ function ReviewContent() {
       />
 
       <Section
-        title="Enviadas al HVT — Esperando CPO"
-        description="Bloqueadas en GREAT hasta respuesta del CPO (BR-16). No se puede cancelar ni editar."
+        title={t('estReview.sent')}
+        description={t('estReview.sentDesc')}
         lines={groups.sent}
-        emptyText="Ninguna línea esperando al CPO."
+        emptyText={t('estReview.noSent')}
       />
 
       {can('reject:estimation') && groups.sent.length > 0 && (
         <Section
-          title="[CPO] Respuesta a líneas enviadas"
-          description="En producción, esto llega vía callback de HVT. Visible solo para CPO en el prototipo."
+          title={t('estReview.cpoPanel')}
+          description={t('estReview.cpoPanelDesc')}
           lines={groups.sent}
           renderActions={(l) => (
             <div className="flex gap-2">
@@ -124,14 +124,14 @@ function ReviewContent() {
                 variant="primary"
                 onClick={() => { setLineStatus(l.id, 'approved'); pushToast(`${l.lineName} aprobada por CPO`, 'success'); }}
               >
-                <CheckCircle2 size={14} /> Aprobar
+                <CheckCircle2 size={14} /> {t('estReview.approve')}
               </Button>
               <Button
                 size="sm"
                 variant="danger"
                 onClick={() => setRejectTarget(l)}
               >
-                <XCircle size={14} /> Rechazar
+                <XCircle size={14} /> {t('estReview.reject')}
               </Button>
             </div>
           )}
@@ -139,10 +139,10 @@ function ReviewContent() {
       )}
 
       <Section
-        title="Rechazadas (en rework)"
-        description="Devueltas al engineer con comentario."
+        title={t('estReview.rejected')}
+        description={t('estReview.rejectedDesc')}
         lines={groups.rejected}
-        emptyText="Sin líneas rechazadas."
+        emptyText={t('estReview.noRejected')}
         renderActions={(l) => (
           <div className="flex items-start gap-2 text-xs text-red-700 max-w-md">
             <MessageSquare size={14} className="mt-0.5 shrink-0" />
@@ -152,36 +152,36 @@ function ReviewContent() {
       />
 
       <Section
-        title="Aprobadas"
-        description="Listas para allocation."
+        title={t('estReview.approved')}
+        description={t('estReview.approvedDesc')}
         lines={groups.approved}
-        emptyText="Aún no hay aprobaciones."
+        emptyText={t('estReview.noApproved')}
       />
 
       <Modal
         open={rejectTarget !== null}
         onClose={() => setRejectTarget(null)}
-        title={`Rechazar ${rejectTarget?.id ?? ''}`}
+        title={t('estReview.rejectModalTitle', { id: rejectTarget?.id ?? '' })}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setRejectTarget(null)}>Cancelar</Button>
+            <Button variant="secondary" onClick={() => setRejectTarget(null)}>{t('estReview.cancel')}</Button>
             <Button variant="danger" onClick={submitReject} disabled={!rejectComment.trim()}>
-              Rechazar y devolver
+              {t('estReview.rejectConfirm')}
             </Button>
           </>
         }
       >
         <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Motivo del rechazo *
+          {t('estReview.rejectReason')}
         </label>
         <textarea
           value={rejectComment}
           onChange={(e) => setRejectComment(e.target.value)}
           rows={4}
-          placeholder="Explicá qué hay que ajustar para que el engineer pueda re-estimar…"
+          placeholder={t('estReview.rejectPlaceholder')}
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
         />
-        <p className="mt-2 text-xs text-slate-500">El engineer verá este comentario en el panel de estimación.</p>
+        <p className="mt-2 text-xs text-slate-500">{t('estReview.rejectNote')}</p>
       </Modal>
     </div>
   );
@@ -196,6 +196,7 @@ interface SectionProps {
 }
 
 function Section({ title, description, lines, emptyText, renderActions }: SectionProps) {
+  const t = useT();
   return (
     <section>
       <div className="mb-2">
@@ -211,13 +212,13 @@ function Section({ title, description, lines, emptyText, renderActions }: Sectio
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-3 py-2 text-left font-medium">Línea</th>
-                <th className="px-3 py-2 text-left font-medium">Engineer</th>
-                <th className="px-3 py-2 text-left font-medium">Status</th>
-                <th className="px-3 py-2 text-right font-medium">Días</th>
-                <th className="px-3 py-2 text-right font-medium">k€</th>
-                <th className="px-3 py-2 text-left font-medium">Actualizada</th>
-                {renderActions && <th className="px-3 py-2 text-right font-medium">Acciones</th>}
+                <th className="px-3 py-2 text-left font-medium">{t('estReview.colLine')}</th>
+                <th className="px-3 py-2 text-left font-medium">{t('estReview.colEngineer')}</th>
+                <th className="px-3 py-2 text-left font-medium">{t('estReview.colStatus')}</th>
+                <th className="px-3 py-2 text-right font-medium">{t('estReview.colDays')}</th>
+                <th className="px-3 py-2 text-right font-medium">{t('estReview.colKeuro')}</th>
+                <th className="px-3 py-2 text-left font-medium">{t('estReview.colUpdated')}</th>
+                {renderActions && <th className="px-3 py-2 text-right font-medium">{t('estReview.colActions')}</th>}
               </tr>
             </thead>
             <tbody>
