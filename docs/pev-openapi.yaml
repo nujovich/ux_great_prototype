@@ -1,0 +1,1629 @@
+openapi: 3.1.0
+info:
+  title: GREAT API
+  version: 2.0.0
+  description: |
+    GREAT System — Resource Estimation API.
+    Covers Pre-Estimation, Estimation Review, Allocation, Final Review,
+    Management View, and Transversal features.
+    Replaces PEV API v1 (Pre-Estimation only).
+
+servers:
+  - url: /api/v1
+
+security:
+  - BearerAuth: []
+
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ServiceSecret:
+      type: apiKey
+      in: header
+      name: X-Service-Secret
+
+  parameters:
+    PathId:
+      name: id
+      in: path
+      required: true
+      description: Unique identifier of the resource (UUID)
+      schema:
+        type: string
+        format: uuid
+    PathMetier:
+      name: metier
+      in: path
+      required: true
+      description: Métier identifier
+      schema:
+        $ref: '#/components/schemas/Metier'
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: State conflict (e.g., invalid status transition)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+
+    # ── Enums ──
+
+    Metier:
+      type: string
+      enum: [H-DESIGN, H-TUNING, H-SOFTWARE, H-CUSTOMER, H-PROJECT, H-NP, H-TESTING]
+
+    Status:
+      type: string
+      enum: ["To do", Draft, Estimated, Sent, Rejected, Approved]
+
+    CostType:
+      type: string
+      enum: [FTE, TSA, TC]
+
+    # ── Project Lines ──
+
+    ProjectLineListItem:
+      type: object
+      required: [id, project_id, name, metier, status, updated_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          description: "Unique identifier — composition of pl_number + metier (e.g. 'PL-016-Backend')"
+          example: "PL-016-Backend"
+        name:
+          type: string
+        metier:
+          $ref: '#/components/schemas/Metier'
+        status:
+          $ref: '#/components/schemas/Status'
+        updated_at:
+          type: string
+          format: date-time
+
+    ProjectLineDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProjectLineListItem'
+        - type: object
+          properties:
+            description:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+            cpo_comment:
+              type: string
+              nullable: true
+              description: "CPO rejection comment from last HVT Stage 2 callback"
+
+    ProjectLineListResponse:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectLineListItem'
+        total:
+          type: integer
+
+    # → Estimation ──
+
+    JU:
+      type: object
+      required: [id, name, occurrence]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        occurrence:
+          type: number
+          format: float
+        locked:
+          type: boolean
+          default: false
+        custom:
+          type: boolean
+          default: false
+
+    Cran:
+      type: object
+      required: [id, name, jus]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        jus:
+          type: array
+          items:
+            $ref: '#/components/schemas/JU'
+
+    Inductor:
+      type: object
+      required: [id, name, crans]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        crans:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cran'
+
+    EstimationPayload:
+      type: object
+      required: [inductors]
+      properties:
+        inductors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Inductor'
+
+    PreSaveSummary:
+      type: object
+      required: [total_fte, total_bh, total_km, yearly]
+      properties:
+        total_fte:
+          type: number
+          format: float
+        total_bh:
+          type: number
+          format: float
+        total_km:
+          type: number
+          format: float
+        yearly:
+          type: object
+          additionalProperties:
+            type: object
+            required: [fte, bh, km]
+            properties:
+              fte:
+                type: number
+                format: float
+              bh:
+                type: number
+                format: float
+              km:
+                type: number
+                format: float
+
+    SaveDraftResponse:
+      type: object
+      required: [pre_save_summary]
+      properties:
+        pre_save_summary:
+          $ref: '#/components/schemas/PreSaveSummary'
+
+    CopyEstimationRequest:
+      type: object
+      required: [source_line_id]
+      properties:
+        source_line_id:
+          type: string
+          format: uuid
+
+    BatchSaveRequest:
+      type: object
+      required: [line_ids, inductors]
+      properties:
+        line_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+        inductors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Inductor'
+
+    BatchSaveLineResult:
+      type: object
+      required: [line_id, summary]
+      properties:
+        line_id:
+          type: string
+          format: uuid
+        summary:
+          $ref: '#/components/schemas/PreSaveSummary'
+
+    BatchSaveResponse:
+      type: object
+      required: [lines]
+      properties:
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchSaveLineResult'
+
+    WorkloadStandardResponse:
+      type: object
+      required: [inductors]
+      properties:
+        inductors:
+          type: array
+          items:
+            $ref: '#/components/schemas/Inductor'
+
+    PrototypeCategoryEntry:
+      type: object
+      required: [id, quantity]
+      properties:
+        id:
+          type: string
+        quantity:
+          type: integer
+          minimum: 0
+
+    PrototypePayload:
+      type: object
+      required: [categories, comment]
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrototypeCategoryEntry'
+        comment:
+          type: string
+
+    PrototypeCategory:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    # ── HVT ──
+
+    HvtCallbackItem:
+      type: object
+      required: [project_line_id, metier, approved]
+      properties:
+        project_line_id:
+          type: string
+          format: uuid
+        metier:
+          $ref: '#/components/schemas/Metier'
+        approved:
+          type: boolean
+        comment:
+          type: string
+          maxLength: 2000
+          nullable: true
+          description: "CPO rejection comment. Required when approved=false, ignored when approved=true."
+
+    HvtCallbackRequest:
+      type: array
+      items:
+        $ref: '#/components/schemas/HvtCallbackItem'
+      minItems: 1
+
+    HvtCallbackResultItem:
+      type: object
+      required: [project_line_id, success]
+      properties:
+        project_line_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        error:
+          type: string
+          nullable: true
+
+    HvtCallbackResponse:
+      type: array
+      items:
+        $ref: '#/components/schemas/HvtCallbackResultItem'
+
+    # ── Allocation ──
+
+    AllocationJU:
+      type: object
+      required: [id, societe]
+      properties:
+        id:
+          type: string
+          format: uuid
+        societe:
+          type: string
+        cost_type:
+          $ref: '#/components/schemas/CostType'
+          description: "Optional. Defaults to the JU original cost_type. Never changes via bulk assign."
+
+    AllocationPutRequest:
+      type: object
+      required: [job_units]
+      properties:
+        job_units:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllocationJU'
+
+    AllocationPatchRequest:
+      type: object
+      required: [job_units]
+      properties:
+        job_units:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllocationJU'
+
+    KEuroCalculated:
+      type: object
+      required: [job_unit_id, year, ke]
+      properties:
+        job_unit_id:
+          type: string
+          format: uuid
+        year:
+          type: string
+        ke:
+          type: number
+          format: float
+
+    AllocationSaveResponse:
+      type: object
+      required: [saved, keuro_calculated]
+      properties:
+        saved:
+          type: integer
+        keuro_calculated:
+          type: array
+          items:
+            $ref: '#/components/schemas/KEuroCalculated'
+
+    SplitEntry:
+      type: object
+      required: [societe, percentage]
+      properties:
+        societe:
+          type: string
+        percentage:
+          type: number
+          format: float
+          minimum: 0.01
+          maximum: 100
+
+    SplitRequest:
+      type: object
+      required: [splits]
+      properties:
+        splits:
+          type: array
+          items:
+            $ref: '#/components/schemas/SplitEntry'
+          minItems: 2
+
+    SplitUndoResponse:
+      type: object
+      required: [restored]
+      properties:
+        restored:
+          type: boolean
+
+    BulkAssignRequest:
+      type: object
+      required: [job_unit_ids, societe]
+      properties:
+        job_unit_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+        societe:
+          type: string
+
+    BulkAssignResponse:
+      type: object
+      required: [saved, keuro_calculated]
+      properties:
+        saved:
+          type: integer
+        keuro_calculated:
+          type: array
+          items:
+            $ref: '#/components/schemas/KEuroCalculated'
+
+    # ── Allocation Rules ──
+
+    AllocationRuleEntry:
+      type: object
+      properties:
+        organ_type:
+          type: string
+          nullable: true
+        fuel_type:
+          type: string
+          nullable: true
+        ranking:
+          type: string
+          nullable: true
+        alliance_code:
+          type: string
+          nullable: true
+        vehicle_code:
+          type: string
+          nullable: true
+        standard_emissions:
+          type: string
+          nullable: true
+        market:
+          type: string
+          nullable: true
+        injection_system:
+          type: string
+          nullable: true
+        part_type:
+          type: string
+          nullable: true
+        society:
+          type: string
+        is_exception:
+          type: boolean
+          default: false
+        diversity_flag:
+          type: boolean
+          default: false
+        priority:
+          type: integer
+          default: 0
+        row_order:
+          type: integer
+          default: 0
+
+    AllocationRulesUploadRequest:
+      type: object
+      required: [version, rules]
+      properties:
+        version:
+          type: string
+        apply_on_upload:
+          type: boolean
+          default: false
+          description: "If true, re-run auto-rules on unassigned JUs for this metier"
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/AllocationRuleEntry'
+
+    # ── K€ Rates ──
+
+    KEuroRateEntry:
+      type: object
+      required: [society_site, cost_type, year, rate]
+      properties:
+        society_site:
+          type: string
+        cost_type:
+          $ref: '#/components/schemas/CostType'
+        year:
+          type: integer
+        rate:
+          type: number
+          format: float
+
+    KEuroRatesUploadRequest:
+      type: object
+      required: [valid_from, rates]
+      properties:
+        valid_from:
+          type: string
+          format: date
+        rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/KEuroRateEntry'
+
+    # ── Metier Distribution ──
+
+    MetierDistributionEntry:
+      type: object
+      required: [metier, sp_pc, pc_co, co_sop]
+      properties:
+        metier:
+          $ref: '#/components/schemas/Metier'
+        sp_pc:
+          type: number
+          format: float
+        pc_co:
+          type: number
+          format: float
+        co_sop:
+          type: number
+          format: float
+
+    MetierDistributionUploadRequest:
+      type: object
+      required: [valid_from, configs]
+      properties:
+        valid_from:
+          type: string
+          format: date
+        configs:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetierDistributionEntry'
+
+    # ── Final Review ──
+
+    Stage3SendRequest:
+      type: object
+      required: [cycle_id]
+      properties:
+        cycle_id:
+          type: string
+          format: uuid
+
+    Stage3SendResponse:
+      type: object
+      required: [status, lines_sent]
+      properties:
+        status:
+          type: string
+          enum: [Sent]
+        lines_sent:
+          type: integer
+        warning:
+          type: string
+          nullable: true
+          description: "Warning about incomplete allocation, if any"
+
+    # ── Management View ──
+
+    PieChartSlice:
+      type: object
+      required: [status, count, percentage]
+      properties:
+        status:
+          $ref: '#/components/schemas/Status'
+        count:
+          type: integer
+        percentage:
+          type: number
+          format: float
+
+    PieChartResponse:
+      type: object
+      required: [total_pairs, slices]
+      properties:
+        total_pairs:
+          type: integer
+        slices:
+          type: array
+          items:
+            $ref: '#/components/schemas/PieChartSlice'
+
+    TimelineDataPoint:
+      type: object
+      required: [date, status_counts]
+      properties:
+        date:
+          type: string
+          format: date
+        status_counts:
+          type: object
+          additionalProperties:
+            type: integer
+
+    TimelineResponse:
+      type: object
+      required: [data_points]
+      properties:
+        data_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineDataPoint'
+
+    # ── Transversal — Cycles ──
+
+    CycleResponse:
+      type: object
+      required: [id, name, start_date, is_active, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    CreateCycleRequest:
+      type: object
+      required: [name, start_date]
+      properties:
+        name:
+          type: string
+        start_date:
+          type: string
+          format: date
+
+    CyclesListResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CycleResponse'
+
+    # ── Transversal — Workload Standard ──
+
+    WorkloadStandardCurrentResponse:
+      type: object
+      required: [metier, version_id, version_number, uploaded_at]
+      properties:
+        metier:
+          $ref: '#/components/schemas/Metier'
+        version_id:
+          type: string
+          format: uuid
+        version_number:
+          type: string
+        uploaded_at:
+          type: string
+          format: date-time
+
+    # ── Transversal — Emails ──
+
+    EmailLogItem:
+      type: object
+      required: [id, recipient_oid, alert_type, cycle_id, success, sent_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+        recipient_oid:
+          type: string
+        alert_type:
+          type: string
+          enum: [engineer_weekly, rcrc_weekly, rejection_notification]
+        cycle_id:
+          type: string
+          format: uuid
+          nullable: true
+        success:
+          type: boolean
+        error_detail:
+          type: string
+          nullable: true
+        sent_at:
+          type: string
+          format: date-time
+
+    EmailLogResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmailLogItem'
+
+    EmailRetryRequest:
+      type: object
+      required: [email_log_id]
+      properties:
+        email_log_id:
+          type: string
+          format: uuid
+
+    # ── Shared ──
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+tags:
+  - name: ProjectLines
+    description: Project line listing and detail
+  - name: Estimation
+    description: Estimation management (single-line, batch, copy)
+  - name: Prototype
+    description: Prototype quantities per project line
+  - name: HVT
+    description: HVT integration (send, callback)
+  - name: Allocation
+    description: Job unit allocation to societes
+  - name: AllocationConfig
+    description: Allocation rules, K€ rates, and distribution config
+  - name: FinalReview
+    description: Final review and Stage 3 send
+  - name: ManagementView
+    description: Operational dashboard (PMO/Admin only)
+  - name: Transversal
+    description: Cycles, workload standard, emails
+
+paths:
+
+  # ═══════════════════════════════════════════
+  # PROJECT LINES
+  # ═══════════════════════════════════════════
+
+  /project-lines:
+    get:
+      operationId: listProjectLines
+      summary: Role-scoped paginated list of project lines
+      tags: [ProjectLines]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/Status'
+        - name: metier
+          in: query
+          schema:
+            $ref: '#/components/schemas/Metier'
+        - name: project_id
+          in: query
+          schema:
+            type: string
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [name, -name, status, -status, updated_at, -updated_at]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of project lines
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectLineListResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /project-lines/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      operationId: getProjectLine
+      summary: Single project line detail
+      tags: [ProjectLines]
+      responses:
+        '200':
+          description: Project line detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectLineDetail'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ═══════════════════════════════════════════
+  # ESTIMATION (Pre-Estimation)
+  # ═══════════════════════════════════════════
+
+  /project-lines/{id}/estimation:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      operationId: getEstimation
+      summary: Load existing estimation (inductors + JUs + yearly values + CPO comment)
+      tags: [Estimation]
+      responses:
+        '200':
+          description: Current estimation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimationPayload'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /project-lines/{id}/workload-standard:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      operationId: getWorkloadStandard
+      summary: Applicable inductors and JUs for the line
+      tags: [Estimation]
+      responses:
+        '200':
+          description: Workload standard grouped by inductor → cran → JU
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadStandardResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /project-lines/{id}/estimation/draft:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      operationId: saveEstimationDraft
+      summary: Save estimation as Draft (single line)
+      tags: [Estimation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimationPayload'
+      responses:
+        '200':
+          description: Draft saved, returns pre-save summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveDraftResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /project-lines/{id}/estimation/definitive:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      operationId: saveEstimationDefinitive
+      summary: Save estimation as Definitive (single line)
+      tags: [Estimation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimationPayload'
+      responses:
+        '200':
+          description: Estimation saved as definitive, returns pre-save summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaveDraftResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /project-lines/estimation/batch-draft:
+    post:
+      operationId: batchSaveEstimationDraft
+      summary: Batch save estimations as Draft (atomic, multi-line)
+      tags: [Estimation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSaveRequest'
+      responses:
+        '200':
+          description: All drafts saved atomically
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSaveResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /project-lines/estimation/batch-definitive:
+    post:
+      operationId: batchSaveEstimationDefinitive
+      summary: Batch save estimations as Definitive (atomic, multi-line)
+      tags: [Estimation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSaveRequest'
+      responses:
+        '200':
+          description: All estimations saved as definitive atomically
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSaveResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /project-lines/{id}/estimation/copy:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      operationId: copyEstimation
+      summary: Copy estimation from a compatible source line
+      tags: [Estimation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CopyEstimationRequest'
+      responses:
+        '200':
+          description: Estimation copied and returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstimationPayload'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ═══════════════════════════════════════════
+  # PROTOTYPE
+  # ═══════════════════════════════════════════
+
+  /project-lines/{id}/prototype:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      operationId: getPrototype
+      summary: Load prototype quantities and comment
+      tags: [Prototype]
+      responses:
+        '200':
+          description: Prototype data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrototypePayload'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      operationId: savePrototype
+      summary: Save prototype quantities and comment
+      tags: [Prototype]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrototypePayload'
+      responses:
+        '200':
+          description: Prototype saved, returns updated data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrototypePayload'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /prototype-categories:
+    get:
+      operationId: listPrototypeCategories
+      summary: List active prototype categories
+      tags: [Prototype]
+      responses:
+        '200':
+          description: Active prototype categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrototypeCategory'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ═══════════════════════════════════════════
+  # ESTIMATION REVIEW — HVT
+  # ═══════════════════════════════════════════
+
+  /project-lines/{id}/estimation/send-to-hvt:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      operationId: sendToHvt
+      summary: Send estimation to HVT (Stage 1)
+      description: |
+        PMO/Admin only. Sends project line estimation to HVT for CPO review.
+        - Only lines with status=Estimated are sent (ERev-BR-04)
+        - Sent status is irreversible (ERev-BR-02)
+      tags: [HVT]
+      responses:
+        '200':
+          description: Sent to HVT successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [Sent]
+        '400':
+          description: Line not in Estimated status or invalid state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '502':
+          description: HVT service unavailable or returned error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /hvt/stage2-callback:
+    post:
+      operationId: hvtStage2Callback
+      summary: HVT CPO approval/rejection callback (Stage 2)
+      description: |
+        Service-to-service endpoint. HVT calls this after CPO review.
+        Updates status to Approved or rejected per item.
+      tags: [HVT]
+      security:
+        - ServiceSecret: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HvtCallbackRequest'
+      responses:
+        '200':
+          description: Callback processed, returns per-line results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HvtCallbackResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ═══════════════════════════════════════════
+  # ALLOCATION
+  # ═══════════════════════════════════════════
+
+  /project-lines/{id}/allocation:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    put:
+      operationId: putAllocation
+      summary: Bulk replace allocation for a project line
+      description: |
+        Replaces entire allocation. All job units must be provided.
+        Only Admin/PMO/RCRC.
+      tags: [Allocation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocationPutRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllocationSaveResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    patch:
+      operationId: patchAllocation
+      summary: Dirty-row save — update modified allocation rows only
+      description: |
+        Only sends modified rows. Cost_type cannot be changed (ALLOC-BR-10).
+        TSA/TC without societe blocks save (ALLOC-BR-06).
+      tags: [Allocation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocationPatchRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllocationSaveResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /allocation/ju/{id}/split:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      operationId: splitAllocation
+      summary: Split a job unit across multiple societes
+      description: |
+        Percentages must sum to 100% (ALLOC-BR-11).
+        Each split inherits the cost_type from the original JU.
+      tags: [Allocation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllocationSaveResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      operationId: undoSplitAllocation
+      summary: Undo split — restore original single row
+      description: Removes split children via CASCADE, restores parent (ALLOC-BR-12)
+      tags: [Allocation]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitUndoResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /allocation/bulk-assign:
+    patch:
+      operationId: bulkAssignAllocation
+      summary: Bulk assign societe to multiple job units
+      description: |
+        Overwrites existing societes on checked rows (ALLOC-BR-09).
+        Cost_type never changes — inherits from original JU (ALLOC-BR-10).
+      tags: [Allocation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkAssignRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkAssignResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ═══════════════════════════════════════════
+  # ALLOCATION CONFIG
+  # ═══════════════════════════════════════════
+
+  /allocation/rules/{metier}:
+    parameters:
+      - $ref: '#/components/parameters/PathMetier'
+    put:
+      operationId: putAllocationRules
+      summary: Upload allocation rules for a metier
+      description: |
+        Replaces all rules for this metier. If apply_on_upload=true,
+        re-runs auto-rules on unassigned JUs (ALLOC-BR-02).
+        Only Admin/PMO.
+      tags: [AllocationConfig]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocationRulesUploadRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rules_saved]
+                properties:
+                  rules_saved:
+                    type: integer
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /allocation/rates:
+    put:
+      operationId: putKEuroRates
+      summary: Upload K€ rates
+      description: |
+        Creates a new rate version with valid_from.
+        Previous rates for same society_site+cost_type remain as history.
+        Only Admin/PMO.
+      tags: [AllocationConfig]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KEuroRatesUploadRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [rates_saved]
+                properties:
+                  rates_saved:
+                    type: integer
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /metier-distribution:
+    put:
+      operationId: putMetierDistribution
+      summary: Upload metier distribution config
+      description: |
+        sp_pc + pc_co + co_sop must sum to 1.0.
+        Creates a new version with valid_from.
+        Only Admin/PMO.
+      tags: [AllocationConfig]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetierDistributionUploadRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [configs_saved]
+                properties:
+                  configs_saved:
+                    type: integer
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ═══════════════════════════════════════════
+  # FINAL REVIEW
+  # ═══════════════════════════════════════════
+
+  /final-review/send-stage3-hvt:
+    post:
+      operationId: sendStage3Hvt
+      summary: Send all approved lines to HVT (Stage 3)
+      description: |
+        PMO/Admin only. Sends entire active cycle.
+        Non-blocking: can send with incomplete allocation (FR-BR-06).
+        Warning returned for unallocated JUs.
+        Resendable (FR-BR-07).
+      tags: [FinalReview]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Stage3SendRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stage3SendResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502':
+          description: HVT service unavailable
+
+  # ═══════════════════════════════════════════
+  # MANAGEMENT VIEW
+  # ═══════════════════════════════════════════
+
+  /management/dashboard/pie-chart:
+    get:
+      operationId: getPieChart
+      summary: Status distribution pie chart data
+      description: PMO/Admin only. Counts (PL, Métier) pairs per status.
+      tags: [ManagementView]
+      parameters:
+        - name: metier
+          in: query
+          schema:
+            type: string
+            default: "All"
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PieChartResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /management/dashboard/timeline:
+    get:
+      operationId: getTimeline
+      summary: Status evolution timeline data
+      description: PMO/Admin only. Time series of status counts from status_change_log.
+      tags: [ManagementView]
+      parameters:
+        - name: metier
+          in: query
+          schema:
+            type: string
+            default: "All"
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimelineResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ═══════════════════════════════════════════
+  # TRANSVERSAL — CYCLES
+  # ═══════════════════════════════════════════
+
+  /cycles:
+    get:
+      operationId: listCycles
+      summary: List estimation cycles (active + historical)
+      tags: [Transversal]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyclesListResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      operationId: createCycle
+      summary: Create new estimation cycle
+      description: |
+        PMO/Admin only. Auto-deactivates current active cycle (CYCLE-BR-04).
+        No reactivation allowed (CYCLE-BR-02).
+      tags: [Transversal]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCycleRequest'
+      responses:
+        '201':
+          description: Cycle created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CycleResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /cycles/active:
+    get:
+      operationId: getActiveCycle
+      summary: Get current active cycle
+      tags: [Transversal]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CycleResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ═══════════════════════════════════════════
+  # TRANSVERSAL — WORKLOAD STANDARD
+  # ═══════════════════════════════════════════
+
+  /workload-standard/upload:
+    post:
+      operationId: uploadWorkloadStandard
+      summary: Upload workload standard (.xlsx, per metier)
+      description: |
+        Admin/RCRC only (WL-BR-01). Excel format only (WL-BR-02).
+        Preprocessed and validated before commit (WL-BR-03).
+        Creates new version, old versions retained (WL-BR-04).
+      tags: [Transversal]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [metier, file]
+              properties:
+                metier:
+                  $ref: '#/components/schemas/Metier'
+                file:
+                  type: string
+                  format: binary
+                  description: "Excel file (.xlsx)"
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadStandardCurrentResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /workload-standard/current:
+    get:
+      operationId: getCurrentWorkloadStandard
+      summary: Get current active workload standard info
+      tags: [Transversal]
+      parameters:
+        - name: metier
+          in: query
+          schema:
+            $ref: '#/components/schemas/Metier'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkloadStandardCurrentResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ═══════════════════════════════════════════
+  # TRANSVERSAL — EMAILS
+  # ═══════════════════════════════════════════
+
+  /email-log:
+    get:
+      operationId: getEmailLog
+      summary: Email send log for active cycle
+      tags: [Transversal]
+      parameters:
+        - name: alert_type
+          in: query
+          schema:
+            type: string
+            enum: [engineer_weekly, rcrc_weekly, rejection_notification]
+        - name: recipient
+          in: query
+          schema:
+            type: string
+        - name: success
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailLogResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /emails/retry:
+    post:
+      operationId: retryEmail
+      summary: Retry a failed email send
+      tags: [Transversal]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailRetryRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [success]
+                properties:
+                  success:
+                    type: boolean
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
