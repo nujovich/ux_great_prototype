@@ -1,3 +1,3 @@
-Carga sdd-kit/AGENTS.md antes de generar codigo. Las reglas de negocio estan en sdd-kit/great_dspy/specs/ (78 reglas, 6 vistas).
+Carga node_modules/great-sdd-kit/AGENTS.md antes de generar codigo. Las reglas de negocio estan en node_modules/great-sdd-kit/great_sdd/specs/ (78 reglas, 6 vistas).
 
-Siempre corre pytest sdd-kit/tests/ -v para validar que cumples las reglas.
+Siempre corre pytest node_modules/great-sdd-kit/tests/ -v para validar que cumples las reglas.
