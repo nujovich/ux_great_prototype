@@ -9,7 +9,7 @@
  * Mantiene la interfaz pública que la UI consume (calcTotalDays, calcKEuro, yearlyBreakdown)
  * pero con implementación alineada al SDD Kit.
  */
-import type { InductorSelection, JobUnit, CustomJU, Metier } from '../types';
+import type { InductorSelection, PrototypeInductor, CustomJU, Metier } from '../types';
 
 const MAN_DAY_FTE_DIVISOR = 209;  // §9.2: Working days per year
 
@@ -20,19 +20,22 @@ const MAN_DAY_FTE_DIVISOR = 209;  // §9.2: Working days per year
  */
 export function calcTotalDays(
   selections: InductorSelection[],
-  jobUnits: JobUnit[],
+  inductors: PrototypeInductor[],
   customJUs: CustomJU[],
   globalOccurrences: number,
 ): number {
   const inductorDays = selections.reduce((acc, sel) => {
     if (!sel.selectedCranId) return acc;  // BR-12
 
-    const cranJUs = jobUnits.filter((ju) => ju.cranId === sel.selectedCranId);
+    const cranJUs = inductors
+      .find((i) => i.id === sel.inductorId)
+      ?.crans.find((c) => c.id === sel.selectedCranId)
+      ?.jus ?? [];
     const selDays = cranJUs.reduce((sum, ju) => {
       const juOcc = sel.juOccurrences.find((o) => o.juId === ju.id);
       const occ = juOcc?.occurrence ?? sel.inductorOccurrence;
       // §9.1: Total = (Variable × Occurrence) + Fixed
-      return sum + occ * ju.variable + ju.fixed;
+      return sum + occ * (ju.variable ?? 0) + (ju.fixed ?? 0);
     }, 0);
     return acc + selDays;
   }, 0);

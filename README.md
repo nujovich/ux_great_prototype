@@ -70,6 +70,24 @@ src/
 └── types/                # ProjectLine, Estimation, Allocation, Role, etc.
 ```
 
+## Tipos API
+
+Los tipos TypeScript se generan desde la especificación OpenAPI v2 (`docs/pev-openapi.yaml`):
+
+```bash
+npx openapi-typescript docs/pev-openapi.yaml -o src/types/pev.ts
+```
+
+Después de regenerar, `src/types/index.ts` re-exporta los schemas con nombres limpios desde `pev.ts` y mantiene aliases legacy (`ProjectLine`, `LineStatus`) para compatibilidad durante la migración.
+
+## Base de datos
+
+El esquema PostgreSQL v2 (greenfield) está en `docs/schema.sql`. Incluye:
+
+- 19 tablas: ciclos, project lines, inductores, job units, allocation, workload standard, config, prototype, audit
+- CHECK constraints, triggers de `updated_at`, y el trigger de validación de `job_unit.metier` (BH/KM → H-TESTING)
+- Índices para las queries del grid de allocation, timeline, y filtros de compatibilidad
+
 ## Estados visuales cubiertos
 
 Cada vista tiene al menos:

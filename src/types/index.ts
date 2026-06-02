@@ -144,21 +144,6 @@ export interface CustomJU {
   days: number;
 }
 
-/** JU del prototipo con coeficientes del workload standard (no está en el API spec). */
-export interface JobUnit {
-  id: string;
-  cranId: string;
-  shortName: string;
-  description: string;
-  variable: number;
-  fixed: number;
-  unitType: string;
-  fmm: string;
-  smm: string;
-  dmm: string;
-  genericProfile: string;
-  metier: Metier;
-}
 
 export interface EstimationComment {
   id: string;
@@ -205,7 +190,3 @@ export interface PrototypeInductor extends Inductor {
   category: string;
 }
 
-/** Prototype Cran with back-reference to parent inductor (not in API spec). */
-export interface PrototypeCran extends Cran {
-  inductorId: string;
-}

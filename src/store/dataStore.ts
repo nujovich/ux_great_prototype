@@ -100,7 +100,7 @@ export const useDataStore = create<DataState>((set, get) => ({
         },
       };
     }),
-  createCycle: (name, startDate, _endDate) =>
+  createCycle: (name, startDate) =>
     set((s) => ({
       cycles: [
         ...s.cycles.map((c) => ({ ...c, is_active: false })), // CYCLE-BR-04: deactivate all existing

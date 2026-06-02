@@ -128,6 +128,43 @@ components:
               type: string
               nullable: true
               description: "CPO rejection comment from last HVT Stage 2 callback"
+            # HVT attributes — received from HVT Stage 1, used for workload standard filtering and allocation routing
+            organ_type:
+              type: string
+              nullable: true
+            energy:
+              type: string
+              nullable: true
+            project_ranking:
+              type: string
+              nullable: true
+            injection_system:
+              type: string
+              nullable: true
+            alliance_code:
+              type: string
+              nullable: true
+            vehicle_code:
+              type: string
+              nullable: true
+            market:
+              type: string
+              nullable: true
+            standard_emissions:
+              type: string
+              nullable: true
+            client:
+              type: string
+              nullable: true
+            request_type:
+              type: string
+              nullable: true
+            engineering:
+              type: string
+              nullable: true
+            estimate_type:
+              type: string
+              nullable: true
 
     ProjectLineListResponse:
       type: object
@@ -140,25 +177,68 @@ components:
         total:
           type: integer
 
-    # → Estimation ──
+    # ── Estimation ──
+
+    UnitType:
+      type: string
+      enum: [man_day, bench_hours, kilometres, kiloeuros]
+      description: Unit of measurement for variable and fixed workload coefficients.
 
     JU:
       type: object
-      required: [id, name, occurrence]
+      required: [id, name, occurrence, metier]
       properties:
         id:
           type: string
+        cran_id:
+          type: string
+          description: >
+            Parent cran identifier. Denormalized for client convenience;
+            also expressed structurally via Cran nesting in EstimationPayload.
         name:
           type: string
+          description: Short display name (maps to ju_short_name in DB).
+        long_name:
+          type: string
+          description: Full descriptive name (maps to ju_long_name in DB).
+        variable:
+          type: number
+          format: float
+          description: Variable workload coefficient — man-days (or other unit) per occurrence unit.
+        fixed:
+          type: number
+          format: float
+          description: Fixed workload component added once regardless of occurrence count.
+        unit_type:
+          $ref: '#/components/schemas/UnitType'
         occurrence:
           type: number
           format: float
-        locked:
+        occurrence_locked:
           type: boolean
           default: false
+          description: When true, occurrence cannot be modified by the engineer (BR-09).
+        fmm:
+          type: string
+          description: Function Major Module code.
+        smm:
+          type: string
+          description: Sub Major Module code.
+        dmm:
+          type: string
+          description: Detail Major Module code.
+        generic_profile:
+          type: string
+          description: Generic resource profile identifier.
         custom:
           type: boolean
           default: false
+        metier:
+          type: string
+          enum: [H-DESIGN, H-TUNING, H-SOFTWARE, H-CUSTOMER, H-PROJECT, H-NP, H-TESTING]
+          description: |
+            Routing métier. BH/KM → H-TESTING; else → matches project_line.metier.
+            Set at save time and immutable after.
 
     Cran:
       type: object
