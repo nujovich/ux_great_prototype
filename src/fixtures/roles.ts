@@ -11,6 +11,7 @@ export type Permission =
   | 'copy:estimation'
   | 'edit:custom-jus'
   | 'view:estimation-review'
+  | 'export:estimation-review'
   | 'approve:estimation'
   | 'reject:estimation'
   | 'send:hvt'
@@ -19,6 +20,8 @@ export type Permission =
   | 'view:k-euro-rates'
   | 'view:final-review'
   | 'export:final-review'
+  | 'send:stage3'
+  | 'upload:workload-standards'
   | 'view:management'
   | 'view:admin';
 
@@ -30,23 +33,23 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'save:draft',
     'save:definitive',
     'copy:estimation',
+    'edit:custom-jus',
+    'view:estimation-review',
+    'export:estimation-review',
+    'view:final-review',
+    'export:final-review',
   ],
   PMO: [
     'view:pre-estimation',
-    'edit:estimation',
-    'save:draft',
-    'save:definitive',
-    'copy:estimation',
-    'edit:custom-jus',
     'view:estimation-review',
-    'approve:estimation',
-    'reject:estimation',
+    'export:estimation-review',
     'send:hvt',
     'view:allocation',
     'edit:allocation',
     'view:k-euro-rates',
     'view:final-review',
     'export:final-review',
+    'send:stage3',
     'view:management',
   ],
   Admin: [
@@ -57,33 +60,36 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'copy:estimation',
     'edit:custom-jus',
     'view:estimation-review',
-    'approve:estimation',
-    'reject:estimation',
+    'export:estimation-review',
     'send:hvt',
     'view:allocation',
     'edit:allocation',
     'view:k-euro-rates',
     'view:final-review',
     'export:final-review',
+    'send:stage3',
     'view:management',
     'view:admin',
+    'upload:workload-standards',
   ],
   RCRC: [
     'view:pre-estimation',
     'view:estimation-review',
-    'view:final-review',
-    'view:management',
-  ],
-  CPO: [
-    'view:pre-estimation',
-    'view:estimation-review',
-    'approve:estimation',
-    'reject:estimation',
+    'export:estimation-review',
     'view:allocation',
+    'edit:allocation',
     'view:k-euro-rates',
     'view:final-review',
     'export:final-review',
-    'view:management',
+    'upload:workload-standards',
+  ],
+  CPO: [
+    'view:estimation-review',
+    'export:estimation-review',
+    'approve:estimation',
+    'reject:estimation',
+    'view:final-review',
+    'export:final-review',
   ],
 };
 

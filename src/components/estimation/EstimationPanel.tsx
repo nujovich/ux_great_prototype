@@ -760,13 +760,13 @@ function CustomJUSection({
             variant="secondary"
             onClick={() => onChange((j) => [...j, { id: `ju-${Date.now()}`, description: '', days: 1 }])}
           >
-            + Agregar JU
+            + Add JU
           </Button>
         )}
       </div>
       {customJUs.length === 0 ? (
         <div className="rounded-md border border-dashed border-slate-200 p-3 text-center text-[10px] text-slate-400">
-          {canEditCustomJU ? 'Sin JUs custom.' : 'Solo PMO/Admin pueden agregar Custom JUs.'}
+          {canEditCustomJU ? 'No custom JUs.' : 'Only Admin, PMO and Engineer can add Custom JUs.'}
         </div>
       ) : (
         <div className="space-y-1.5">
