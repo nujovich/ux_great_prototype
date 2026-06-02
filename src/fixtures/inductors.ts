@@ -1,8 +1,8 @@
 import type { PrototypeInductor, Metier, JU, Cran } from '../types';
 
-const ju = (id: string, name: string, variable: number, metier: Metier = 'H-DESIGN', fixed = 0): JU => ({
-  id, name, long_name: name, variable, fixed,
-  unit_type: 'man_day', occurrence: variable,
+const ju = (id: string, name: string, occurrence: number, metier: Metier = 'H-DESIGN'): JU => ({
+  id, name, long_name: name,
+  unit_type: 'man_day', occurrence,
   occurrence_locked: false, fmm: '', smm: '', dmm: '',
   generic_profile: '', custom: false, metier,
 });

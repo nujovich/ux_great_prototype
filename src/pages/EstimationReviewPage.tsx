@@ -23,6 +23,7 @@ export function EstimationReviewPage() {
 
 function ReviewContent() {
   const lines = useDataStore((s) => s.lines);
+  const activeCycleId = useDataStore((s) => s.cycles.find((c) => c.is_active)?.id);
   const setLineStatus = useDataStore((s) => s.setLineStatus);
   const rejectLine = useDataStore((s) => s.rejectLine);
   const can = useRoleStore((s) => s.can);
@@ -34,12 +35,14 @@ function ReviewContent() {
   const [rejectTarget, setRejectTarget] = useState<ProjectLine | null>(null);
   const [rejectComment, setRejectComment] = useState('');
 
+  // ERev-BR-09: only show lines from the active cycle
   const visibleLines = useMemo(() => {
+    let result = activeCycleId ? lines.filter((l) => l.cycleId === activeCycleId) : lines;
     if (currentRole === 'Engineer' && activeEngineerId) {
-      return lines.filter((l) => l.assignedEngineerId === activeEngineerId);
+      result = result.filter((l) => l.assignedEngineerId === activeEngineerId);
     }
-    return lines;
-  }, [lines, currentRole, activeEngineerId]);
+    return result;
+  }, [lines, activeCycleId, currentRole, activeEngineerId]);
 
   const groups = useMemo(() => ({
     estimated: visibleLines.filter((l) => l.status === 'Estimated'),

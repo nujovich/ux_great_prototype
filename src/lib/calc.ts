@@ -33,9 +33,8 @@ export function calcTotalDays(
       ?.jus ?? [];
     const selDays = cranJUs.reduce((sum, ju) => {
       const juOcc = sel.juOccurrences.find((o) => o.juId === ju.id);
-      const occ = juOcc?.occurrence ?? sel.inductorOccurrence;
-      // §9.1: Total = (Variable × Occurrence) + Fixed
-      return sum + occ * (ju.variable ?? 0) + (ju.fixed ?? 0);
+      const baseOcc = juOcc?.occurrence ?? ju.occurrence;
+      return sum + sel.inductorOccurrence * baseOcc;
     }, 0);
     return acc + selDays;
   }, 0);

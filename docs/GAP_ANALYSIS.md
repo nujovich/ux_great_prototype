@@ -142,7 +142,7 @@ custom, metier
 
 | Tipo SDD | pev.ts equivalente | Status |
 |----------|-------------------|--------|
-| JobUnit dataclass (15+ campos) | JU (6 campos) | INCOMPLETO |
+| JobUnit dataclass (15+ campos) | JU (6 campos) |  ✅ Estabalizado |
 | Inductor dataclass (con selected_cran, job_units, group_name) | Inductor (id, name, crans) | INCOMPLETO |
 | PrototypeEstimation (categories: dict) | PrototypePayload (PrototypeCategoryEntry[]) | Diferente estructura |
 | AllocationRule (ju_codes, variant_societies, priority, row_order) | AllocationRuleEntry | Parcial |

@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search } from 'lucide-react';
-import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine } from '../../types';
+import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran } from '../../types';
 import { INDUCTORS } from '../../fixtures/inductors';
-import { CRANS } from '../../fixtures/crans';
-import { JOB_UNITS } from '../../fixtures/jobUnits';
 import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
 import { validateBeforeSave } from '../../lib/validation';
 import { formatDays, formatKEuro } from '../../lib/format';
@@ -50,33 +48,29 @@ export function EstimationPanel({ line, onClose }: Props) {
 
   useEffect(() => {
     if (!line) return;
-    if (existing) {
-      setSelections(existing.inductorSelections);
-      setCustomJUs(existing.customJUs);
-      setGlobalOccurrences(existing.globalOccurrences);
-    } else {
-      setSelections([]);
-      setCustomJUs([]);
-      setGlobalOccurrences(1);
-    }
-    setSearch('');
-    setViewMode('inductors');
-    setExpanded(new Set());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [line?.id]);
+    // Batch state updates to avoid cascading renders
+    Promise.resolve().then(() => {
+      setSelections(existing?.inductorSelections ?? []);
+      setCustomJUs(existing?.customJUs ?? []);
+      setGlobalOccurrences(existing?.globalOccurrences ?? 1);
+      setSearch('');
+      setViewMode('inductors');
+      setExpanded(new Set());
+    });
+  }, [line, existing]);
 
   const locked = !line || line.status === 'Estimated' || line.status === 'Sent' || line.status === 'Approved';
   const canEdit = can('edit:estimation') && !locked;
   const canEditCustomJU = can('edit:custom-jus');
 
   const totalDays = useMemo(
-    () => calcTotalDays(selections, JOB_UNITS, customJUs, globalOccurrences),
+    () => calcTotalDays(selections, INDUCTORS, customJUs, globalOccurrences),
     [selections, customJUs, globalOccurrences],
   );
   const totalKEuro = useMemo(() => (line ? calcKEuro(totalDays, line.metier) : 0), [totalDays, line]);
   const breakdown = useMemo(() => yearlyBreakdown(totalDays), [totalDays]);
 
-  function addInductors(ids: string[]) {
+  const addInductors = useCallback((ids: string[]) => {
     setSelections((prev) => {
       const existingIds = prev.map((s) => s.inductorId);
       const toAdd: InductorSelection[] = ids
@@ -85,14 +79,14 @@ export function EstimationPanel({ line, onClose }: Props) {
       const toKeep = prev.filter((s) => ids.includes(s.inductorId));
       return [...toKeep, ...toAdd];
     });
-  }
+  }, []);
 
-  function removeInductor(inductorId: string) {
+  const removeInductor = useCallback((inductorId: string) => {
     setSelections((prev) => prev.filter((s) => s.inductorId !== inductorId));
-  }
+  }, []);
 
-  function selectCran(inductorId: string, cranId: string) {
-    const cranJUs = JOB_UNITS.filter((ju) => ju.cranId === cranId);
+  const selectCran = useCallback((inductorId: string, cranId: string) => {
+    const cranJUs = INDUCTORS.find((i) => i.id === inductorId)?.crans.find((c) => c.id === cranId)?.jus ?? [];
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
@@ -101,30 +95,24 @@ export function EstimationPanel({ line, onClose }: Props) {
           selectedCranId: cranId,
           juOccurrences: cranJUs.map((ju) => ({
             juId: ju.id,
-            occurrence: sel.inductorOccurrence,
+            occurrence: ju.occurrence,
             locked: false,
           })),
         };
       }),
     );
-  }
+  }, []);
 
-  function updateInductorOccurrence(inductorId: string, occ: number) {
+  const updateInductorOccurrence = useCallback((inductorId: string, occ: number) => {
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
-        return {
-          ...sel,
-          inductorOccurrence: occ,
-          juOccurrences: sel.juOccurrences.map((jo) =>
-            jo.locked ? jo : { ...jo, occurrence: occ },
-          ),
-        };
+        return { ...sel, inductorOccurrence: occ };
       }),
     );
-  }
+  }, []);
 
-  function updateJUOccurrence(inductorId: string, juId: string, occ: number) {
+  const updateJUOccurrence = useCallback((inductorId: string, juId: string, occ: number) => {
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
@@ -136,9 +124,9 @@ export function EstimationPanel({ line, onClose }: Props) {
         };
       }),
     );
-  }
+  }, []);
 
-  function toggleJULock(inductorId: string, juId: string) {
+  const toggleJULock = useCallback((inductorId: string, juId: string) => {
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
@@ -150,15 +138,21 @@ export function EstimationPanel({ line, onClose }: Props) {
         };
       }),
     );
-  }
+  }, []);
 
-  function toggleExpanded(inductorId: string) {
+  const toggleExpanded = useCallback((inductorId: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(inductorId) ? next.delete(inductorId) : next.add(inductorId);
+      const nextHasInductor = next.has(inductorId);
+      const isNew = !nextHasInductor;
+      if (isNew) {
+        next.add(inductorId);
+      } else {
+        next.delete(inductorId);
+      }
       return next;
     });
-  }
+  }, []);
 
   const q = search.trim().toLowerCase();
 
@@ -168,26 +162,27 @@ export function EstimationPanel({ line, onClose }: Props) {
       const ind = INDUCTORS.find((i) => i.id === sel.inductorId);
       if (ind?.name.toLowerCase().includes(q)) return true;
       if (!sel.selectedCranId) return false;
-      const cranJUs = JOB_UNITS.filter((ju) => ju.cranId === sel.selectedCranId);
+      const cranJUs = INDUCTORS.find((i) => i.id === sel.inductorId)?.crans.find((c) => c.id === sel.selectedCranId)?.jus ?? [];
       return cranJUs.some(
-        (ju) => ju.shortName.toLowerCase().includes(q) || ju.description.toLowerCase().includes(q),
+        (ju) => ju.name.toLowerCase().includes(q) || ju.long_name?.toLowerCase().includes(q),
       );
     });
   }, [selections, q]);
 
   const flatJUs = useMemo(() => {
-    const rows: Array<{ ju: (typeof JOB_UNITS)[0]; sel: InductorSelection; jo: JUOccurrence }> = [];
+    const rows: Array<{ ju: JU; sel: InductorSelection; jo: JUOccurrence }> = [];
     for (const sel of selections) {
       if (!sel.selectedCranId) continue;
+      const cranJUs = INDUCTORS.find((i) => i.id === sel.inductorId)?.crans.find((c) => c.id === sel.selectedCranId)?.jus ?? [];
       for (const jo of sel.juOccurrences) {
-        const ju = JOB_UNITS.find((j) => j.id === jo.juId);
+        const ju = cranJUs.find((j) => j.id === jo.juId);
         if (ju) rows.push({ ju, sel, jo });
       }
     }
     if (!q) return rows;
     return rows.filter(
       ({ ju }) =>
-        ju.shortName.toLowerCase().includes(q) || ju.description.toLowerCase().includes(q),
+        ju.name.toLowerCase().includes(q) || ju.long_name?.toLowerCase().includes(q),
     );
   }, [selections, q]);
 
@@ -530,16 +525,16 @@ function InductorTreeView({
     <div className="space-y-2">
       {selections.map((sel) => {
         const ind = INDUCTORS.find((i) => i.id === sel.inductorId)!;
-        const availableCrans = CRANS.filter((c) => c.inductorId === sel.inductorId);
+        const availableCrans = ind?.crans ?? [];
         const isExpanded = expanded.has(sel.inductorId);
         const cranJUs = sel.selectedCranId
-          ? JOB_UNITS.filter((ju) => ju.cranId === sel.selectedCranId)
+          ? (availableCrans.find((c) => c.id === sel.selectedCranId)?.jus ?? [])
           : [];
 
         const indDays = cranJUs.reduce((acc, ju) => {
           const jo = sel.juOccurrences.find((o) => o.juId === ju.id);
-          const occ = jo?.occurrence ?? sel.inductorOccurrence;
-          return acc + occ * ju.variable + ju.fixed;
+          const baseOcc = jo?.occurrence ?? ju.occurrence;
+          return acc + sel.inductorOccurrence * baseOcc;
         }, 0);
 
         return (
@@ -595,17 +590,14 @@ function InductorTreeView({
               const jo = sel.juOccurrences.find((o) => o.juId === ju.id) ?? {
                 juId: ju.id, occurrence: sel.inductorOccurrence, locked: false,
               };
-              const juDays = jo.occurrence * ju.variable + ju.fixed;
+              const juDays = sel.inductorOccurrence * jo.occurrence;
               return (
                 <div
                   key={ju.id}
                   className={`flex items-center gap-2 border-t border-slate-100 px-3 py-1.5 pl-8 ${jo.locked ? 'bg-amber-50' : 'bg-white'}`}
                 >
-                  <span className="w-16 font-mono text-[10px] text-slate-400">{ju.shortName}</span>
-                  <span className="flex-1 text-xs text-slate-700">{ju.description}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {ju.variable > 0 ? `×${ju.variable}` : ''}{ju.fixed > 0 ? `+${ju.fixed}` : ''}
-                  </span>
+                  <span className="w-16 font-mono text-[10px] text-slate-400">{ju.name}</span>
+                  <span className="flex-1 text-xs text-slate-700">{ju.long_name ?? ju.name}</span>
                   <input
                     type="number"
                     min={1}
@@ -651,7 +643,7 @@ function InductorTreeView({
 // FlatJUView
 // ─────────────────────────────────────────────
 interface FlatRow {
-  ju: (typeof JOB_UNITS)[0];
+  ju: JU;
   sel: InductorSelection;
   jo: JUOccurrence;
 }
@@ -681,8 +673,6 @@ function FlatJUView({
             <th className="px-3 py-2 text-left font-medium">{t('panel.colJobUnit')}</th>
             <th className="px-3 py-2 text-left font-medium">{t('panel.colInductorCran')}</th>
             <th className="px-3 py-2 text-right font-medium">{t('panel.colOcc')}</th>
-            <th className="px-3 py-2 text-right font-medium">{t('panel.colVar')}</th>
-            <th className="px-3 py-2 text-right font-medium">{t('panel.colFixed')}</th>
             <th className="px-3 py-2 text-right font-medium">{t('panel.colDays')}</th>
             {canEdit && <th className="w-8" />}
           </tr>
@@ -690,15 +680,15 @@ function FlatJUView({
         <tbody>
           {rows.map(({ ju, sel, jo }) => {
             const ind = INDUCTORS.find((i) => i.id === sel.inductorId);
-            const cran = CRANS.find((c) => c.id === sel.selectedCranId);
-            const juDays = jo.occurrence * ju.variable + ju.fixed;
+            const cran: Cran | undefined = INDUCTORS.find((i) => i.id === sel.inductorId)?.crans.find((c) => c.id === sel.selectedCranId);
+            const juDays = jo.occurrence * sel.inductorOccurrence;
             return (
               <tr
                 key={ju.id}
                 className={`border-t border-slate-100 ${jo.locked ? 'bg-amber-50' : ''}`}
               >
-                <td className="px-3 py-1.5 font-mono text-[10px] text-slate-400">{ju.shortName}</td>
-                <td className="px-3 py-1.5 text-slate-700">{ju.description}</td>
+                <td className="px-3 py-1.5 font-mono text-[10px] text-slate-400">{ju.name}</td>
+                <td className="px-3 py-1.5 text-slate-700">{ju.long_name ?? ju.name}</td>
                 <td className="px-3 py-1.5 text-[10px] text-slate-400">
                   {ind?.name} / {cran?.name}
                 </td>
@@ -716,8 +706,6 @@ function FlatJUView({
                     }`}
                   />
                 </td>
-                <td className="px-3 py-1.5 text-right font-mono text-[10px] text-slate-400">{ju.variable}</td>
-                <td className="px-3 py-1.5 text-right font-mono text-[10px] text-slate-400">{ju.fixed}</td>
                 <td className="px-3 py-1.5 text-right font-semibold text-brand-700">{formatDays(juDays)}</td>
                 {canEdit && (
                   <td className="px-2">
