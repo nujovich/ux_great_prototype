@@ -45,7 +45,7 @@ export function EstimationPanel({ line, onClose }: Props) {
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [confirmPromote, setConfirmPromote] = useState(false);
   const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(
-    line?.status === 'draft' || line?.status === 'estimated' || line?.status === 'rejected',
+    line?.status === 'Draft' || line?.status === 'Estimated' || line?.status === 'Rejected',
   );
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export function EstimationPanel({ line, onClose }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [line?.id]);
 
-  const locked = !line || line.status === 'estimated' || line.status === 'sent' || line.status === 'approved';
+  const locked = !line || line.status === 'Estimated' || line.status === 'Sent' || line.status === 'Approved';
   const canEdit = can('edit:estimation') && !locked;
   const canEditCustomJU = can('edit:custom-jus');
 
@@ -191,7 +191,7 @@ export function EstimationPanel({ line, onClose }: Props) {
     );
   }, [selections, q]);
 
-  function persist(status: 'draft' | 'estimated') {
+  function persist(status: 'Draft' | 'Estimated') {
     setEstimation(line!.id, {
       lineId: line!.id,
       inductorSelections: selections,
@@ -201,7 +201,7 @@ export function EstimationPanel({ line, onClose }: Props) {
       totalDays,
       totalKEuro,
       status,
-      ...(status === 'draft'
+      ...(status === 'Draft'
         ? { draftedAt: new Date().toISOString() }
         : { estimatedAt: new Date().toISOString() }),
     });
@@ -214,7 +214,7 @@ export function EstimationPanel({ line, onClose }: Props) {
       pushToast(validation.errors.join(' '), 'error');
       return;
     }
-    persist('draft');
+    persist('Draft');
     setHasDraftedThisSession(true);
     pushToast(t('panel.toastDraftSaved', { id: line!.id }), 'success');
     onClose();
@@ -227,7 +227,7 @@ export function EstimationPanel({ line, onClose }: Props) {
       setConfirmPromote(false);
       return;
     }
-    persist('estimated');
+    persist('Estimated');
     pushToast(t('panel.toastPromoted', { id: line!.id }), 'success');
     setConfirmPromote(false);
     onClose();
@@ -271,7 +271,7 @@ export function EstimationPanel({ line, onClose }: Props) {
           </div>
 
           {/* Rejection banner */}
-          {line.status === 'rejected' && line.rejectionComment && (
+          {line.status === 'Rejected' && line.rejectionComment && (
             <div className="mx-6 mt-3 flex-shrink-0 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
               <div className="font-semibold">{t('panel.rejectionBanner')}</div>
               <p className="mt-1">{line.rejectionComment}</p>
@@ -354,7 +354,7 @@ export function EstimationPanel({ line, onClose }: Props) {
                       lineId: line.id,
                       metier: line.metier,
                       text,
-                      authorId: activeEngineerId ?? currentRole,
+                      author: activeEngineerId ?? currentRole,
                     })
                   }
                   readOnly={locked}

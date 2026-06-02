@@ -1,42 +1,46 @@
-import type { Cran } from '../types';
+import type { PrototypeCran } from '../types';
 
-export const CRANS: Cran[] = [
+// inductorId derivado del patrón cr-X-Y → ind-X
+const indOf = (id: string): string => `ind-${id.split('-')[1]}`;
+const make = (id: string, name: string): PrototypeCran => ({ id, name, inductorId: indOf(id), jus: [] });
+
+export const CRANS: PrototypeCran[] = [
   // ind-1: API endpoints
-  { id: 'cr-1-1', inductorId: 'ind-1', name: 'REST Standard' },
-  { id: 'cr-1-2', inductorId: 'ind-1', name: 'REST + Auth' },
-  { id: 'cr-1-3', inductorId: 'ind-1', name: 'GraphQL' },
+  make('cr-1-1', 'REST Standard'),
+  make('cr-1-2', 'REST + Auth'),
+  make('cr-1-3', 'GraphQL'),
   // ind-2: DB tables
-  { id: 'cr-2-1', inductorId: 'ind-2', name: 'PostgreSQL' },
-  { id: 'cr-2-2', inductorId: 'ind-2', name: 'MySQL' },
-  // ind-3: Integraciones externas
-  { id: 'cr-3-1', inductorId: 'ind-3', name: 'HTTP REST' },
-  { id: 'cr-3-2', inductorId: 'ind-3', name: 'SOAP' },
-  { id: 'cr-3-3', inductorId: 'ind-3', name: 'Event-Driven' },
-  // ind-4: Pantallas UI
-  { id: 'cr-4-1', inductorId: 'ind-4', name: 'Basic' },
-  { id: 'cr-4-2', inductorId: 'ind-4', name: 'Rich / Interactive' },
-  // ind-5: Componentes reutilizables
-  { id: 'cr-5-1', inductorId: 'ind-5', name: 'Simple' },
-  { id: 'cr-5-2', inductorId: 'ind-5', name: 'Complex' },
-  // ind-6: Pipelines ETL
-  { id: 'cr-6-1', inductorId: 'ind-6', name: 'Batch' },
-  { id: 'cr-6-2', inductorId: 'ind-6', name: 'Streaming' },
-  // ind-7: Reportes / dashboards
-  { id: 'cr-7-1', inductorId: 'ind-7', name: 'Static' },
-  { id: 'cr-7-2', inductorId: 'ind-7', name: 'Interactive' },
-  // ind-8: Despliegues infra
-  { id: 'cr-8-1', inductorId: 'ind-8', name: 'Standard' },
-  { id: 'cr-8-2', inductorId: 'ind-8', name: 'Blue-Green' },
-  // ind-9: Test cases E2E
-  { id: 'cr-9-1', inductorId: 'ind-9', name: 'Selenium' },
-  { id: 'cr-9-2', inductorId: 'ind-9', name: 'Playwright' },
-  // ind-10: Vistas mobile
-  { id: 'cr-10-1', inductorId: 'ind-10', name: 'Native iOS/Android' },
-  { id: 'cr-10-2', inductorId: 'ind-10', name: 'React Native' },
-  // ind-11: Migraciones de datos
-  { id: 'cr-11-1', inductorId: 'ind-11', name: 'Simple (CSV/flat)' },
-  { id: 'cr-11-2', inductorId: 'ind-11', name: 'Complex (relational)' },
-  // ind-12: Documentación técnica
-  { id: 'cr-12-1', inductorId: 'ind-12', name: 'Standard' },
-  { id: 'cr-12-2', inductorId: 'ind-12', name: 'Extended' },
+  make('cr-2-1', 'PostgreSQL'),
+  make('cr-2-2', 'MySQL'),
+  // ind-3: External integrations
+  make('cr-3-1', 'HTTP REST'),
+  make('cr-3-2', 'SOAP'),
+  make('cr-3-3', 'Event-Driven'),
+  // ind-4: UI screens
+  make('cr-4-1', 'Basic'),
+  make('cr-4-2', 'Rich / Interactive'),
+  // ind-5: Reusable components
+  make('cr-5-1', 'Simple'),
+  make('cr-5-2', 'Complex'),
+  // ind-6: ETL pipelines
+  make('cr-6-1', 'Batch'),
+  make('cr-6-2', 'Streaming'),
+  // ind-7: Reports / dashboards
+  make('cr-7-1', 'Static'),
+  make('cr-7-2', 'Interactive'),
+  // ind-8: Infra deployments
+  make('cr-8-1', 'Standard'),
+  make('cr-8-2', 'Blue-Green'),
+  // ind-9: E2E test cases
+  make('cr-9-1', 'Selenium'),
+  make('cr-9-2', 'Playwright'),
+  // ind-10: Mobile views
+  make('cr-10-1', 'Native iOS/Android'),
+  make('cr-10-2', 'React Native'),
+  // ind-11: Data migrations
+  make('cr-11-1', 'Simple (CSV/flat)'),
+  make('cr-11-2', 'Complex (relational)'),
+  // ind-12: Technical documentation
+  make('cr-12-1', 'Standard'),
+  make('cr-12-2', 'Extended'),
 ];

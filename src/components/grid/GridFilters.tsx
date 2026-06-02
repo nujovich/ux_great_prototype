@@ -1,8 +1,8 @@
 import type { LineStatus, Metier } from '../../types';
 import { useT } from '../../i18n/useT';
 
-const STATUSES: LineStatus[] = ['to_do', 'draft', 'estimated', 'sent', 'rejected', 'approved'];
-const METIERS: Metier[] = ['Backend', 'Frontend', 'Data', 'DevOps', 'QA', 'Mobile'];
+const STATUSES: LineStatus[] = ['To do', 'Draft', 'Estimated', 'Sent', 'Rejected', 'Approved'];
+const METIERS: Metier[] = ['H-DESIGN', 'H-SOFTWARE', 'H-TUNING', 'H-PROJECT', 'H-CUSTOMER', 'H-TESTING', 'H-NP'];
 
 export interface GridFilters {
   status: LineStatus | 'all';

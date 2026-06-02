@@ -25,7 +25,7 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
           l.id !== sourceLine.id &&
           l.metier === sourceLine.metier &&
           l.cycleId === sourceLine.cycleId &&
-          (l.status === 'to_do' || l.status === 'draft'),
+          (l.status === 'To do' || l.status === 'Draft'),
       ),
     [lines, sourceLine],
   );

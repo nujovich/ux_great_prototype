@@ -122,3 +122,90 @@ export type KEuroRate = {
   rate: number;
   cycleId: string;
 };
+
+// ── Legacy Prototype Types (no están en el API spec) ─────
+
+export interface JUOccurrence {
+  juId: string;
+  occurrence: number;
+  locked: boolean;
+}
+
+export interface InductorSelection {
+  inductorId: string;
+  selectedCranId: string | null;
+  inductorOccurrence: number;
+  juOccurrences: JUOccurrence[];
+}
+
+export interface CustomJU {
+  id: string;
+  description: string;
+  days: number;
+}
+
+/** JU del prototipo con coeficientes del workload standard (no está en el API spec). */
+export interface JobUnit {
+  id: string;
+  cranId: string;
+  shortName: string;
+  description: string;
+  variable: number;
+  fixed: number;
+  unitType: string;
+  fmm: string;
+  smm: string;
+  dmm: string;
+  genericProfile: string;
+  metier: Metier;
+}
+
+export interface EstimationComment {
+  id: string;
+  lineId: string;
+  text: string;
+  author: string;
+  createdAt: string;
+  metier: Metier;
+}
+
+export interface Estimation {
+  lineId: string;
+  inductorSelections: InductorSelection[];
+  customJUs: CustomJU[];
+  globalOccurrences: number;
+  yearlyBreakdown: number[];
+  totalDays: number;
+  totalKEuro: number;
+  status: LineStatus;
+  draftedAt?: string;
+  estimatedAt?: string;
+  comments?: EstimationComment[];
+}
+
+export interface AllocationSplit {
+  engineerId: string;
+  percentage: number;
+  days: number;
+}
+
+export interface Allocation {
+  lineId: string;
+  splits: AllocationSplit[];
+}
+
+export interface PrototypeEstimation {
+  lineId: string;
+  quantities: Record<string, number>;
+  comment: string;
+}
+
+/** Prototype Inductor with category grouping (not in API spec). */
+export interface PrototypeInductor extends Inductor {
+  category: string;
+}
+
+/** Prototype Cran with back-reference to parent inductor (not in API spec). */
+export interface PrototypeCran extends Cran {
+  inductorId: string;
+}

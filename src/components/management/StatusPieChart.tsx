@@ -2,12 +2,12 @@ import type { LineStatus } from '../../types';
 import { useT } from '../../i18n/useT';
 
 const STATUS_COLORS: Record<LineStatus, string> = {
-  to_do:     '#94a3b8',
-  draft:     '#f59e0b',
-  estimated: '#3b82f6',
-  sent:      '#a855f7',
-  rejected:  '#ef4444',
-  approved:  '#22c55e',
+  'To do':    '#94a3b8',
+  'Draft':    '#f59e0b',
+  'Estimated': '#3b82f6',
+  'Sent':     '#a855f7',
+  'Rejected': '#ef4444',
+  'Approved': '#22c55e',
 };
 
 interface Props {

@@ -2,59 +2,59 @@ import { describe, it, expect } from 'vitest';
 import { canTransition, LOCKED_STATUSES, TERMINAL_STATUSES } from '../stateMachine';
 
 describe('canTransition', () => {
-  it('to_do → draft is allowed', () => {
-    expect(canTransition('to_do', 'draft')).toBe(true);
+  it('To do → Draft is allowed', () => {
+    expect(canTransition('To do', 'Draft')).toBe(true);
   });
-  it('to_do → estimated is blocked', () => {
-    expect(canTransition('to_do', 'estimated')).toBe(false);
+  it('To do → Estimated is blocked', () => {
+    expect(canTransition('To do', 'Estimated')).toBe(false);
   });
-  it('draft → estimated is allowed', () => {
-    expect(canTransition('draft', 'estimated')).toBe(true);
+  it('Draft → Estimated is allowed', () => {
+    expect(canTransition('Draft', 'Estimated')).toBe(true);
   });
-  it('draft → draft is allowed (re-save)', () => {
-    expect(canTransition('draft', 'draft')).toBe(true);
+  it('Draft → Draft is allowed (re-save)', () => {
+    expect(canTransition('Draft', 'Draft')).toBe(true);
   });
-  it('estimated → sent is allowed', () => {
-    expect(canTransition('estimated', 'sent')).toBe(true);
+  it('Estimated → Sent is allowed', () => {
+    expect(canTransition('Estimated', 'Sent')).toBe(true);
   });
-  it('estimated → rejected is allowed', () => {
-    expect(canTransition('estimated', 'rejected')).toBe(true);
+  it('Estimated → Rejected is allowed', () => {
+    expect(canTransition('Estimated', 'Rejected')).toBe(true);
   });
-  it('sent → approved is allowed', () => {
-    expect(canTransition('sent', 'approved')).toBe(true);
+  it('Sent → Approved is allowed', () => {
+    expect(canTransition('Sent', 'Approved')).toBe(true);
   });
-  it('sent → rejected is allowed', () => {
-    expect(canTransition('sent', 'rejected')).toBe(true);
+  it('Sent → Rejected is allowed', () => {
+    expect(canTransition('Sent', 'Rejected')).toBe(true);
   });
-  it('sent → draft is blocked (BR-16)', () => {
-    expect(canTransition('sent', 'draft')).toBe(false);
+  it('Sent → Draft is blocked (BR-16)', () => {
+    expect(canTransition('Sent', 'Draft')).toBe(false);
   });
-  it('rejected → draft is allowed', () => {
-    expect(canTransition('rejected', 'draft')).toBe(true);
+  it('Rejected → Draft is allowed', () => {
+    expect(canTransition('Rejected', 'Draft')).toBe(true);
   });
-  it('approved → anything is blocked (BR-04)', () => {
-    expect(canTransition('approved', 'draft')).toBe(false);
-    expect(canTransition('approved', 'estimated')).toBe(false);
-    expect(canTransition('approved', 'sent')).toBe(false);
-    expect(canTransition('approved', 'rejected')).toBe(false);
+  it('Approved → anything is blocked (BR-04)', () => {
+    expect(canTransition('Approved', 'Draft')).toBe(false);
+    expect(canTransition('Approved', 'Estimated')).toBe(false);
+    expect(canTransition('Approved', 'Sent')).toBe(false);
+    expect(canTransition('Approved', 'Rejected')).toBe(false);
   });
 });
 
 describe('LOCKED_STATUSES', () => {
-  it('includes estimated, sent, approved', () => {
-    expect(LOCKED_STATUSES.has('estimated')).toBe(true);
-    expect(LOCKED_STATUSES.has('sent')).toBe(true);
-    expect(LOCKED_STATUSES.has('approved')).toBe(true);
+  it('includes Estimated, Sent, Approved', () => {
+    expect(LOCKED_STATUSES.has('Estimated')).toBe(true);
+    expect(LOCKED_STATUSES.has('Sent')).toBe(true);
+    expect(LOCKED_STATUSES.has('Approved')).toBe(true);
   });
-  it('does not include to_do or draft', () => {
-    expect(LOCKED_STATUSES.has('to_do')).toBe(false);
-    expect(LOCKED_STATUSES.has('draft')).toBe(false);
+  it('does not include To do or Draft', () => {
+    expect(LOCKED_STATUSES.has('To do')).toBe(false);
+    expect(LOCKED_STATUSES.has('Draft')).toBe(false);
   });
 });
 
 describe('TERMINAL_STATUSES', () => {
-  it('only approved is terminal', () => {
-    expect(TERMINAL_STATUSES.has('approved')).toBe(true);
-    expect(TERMINAL_STATUSES.has('sent')).toBe(false);
+  it('only Approved is terminal', () => {
+    expect(TERMINAL_STATUSES.has('Approved')).toBe(true);
+    expect(TERMINAL_STATUSES.has('Sent')).toBe(false);
   });
 });

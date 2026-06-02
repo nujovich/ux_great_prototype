@@ -35,7 +35,7 @@ export function CommentSection({ comments, metier, onAdd, readOnly }: Props) {
 
       {filtered.map((c) => (
         <div key={c.id} className="rounded border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-700">
-          <span className="font-medium">{c.authorId}</span>{' '}
+          <span className="font-medium">{c.author}</span>{' '}
           <span className="text-slate-400">
             {new Date(c.createdAt).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
           </span>

@@ -6,14 +6,16 @@ import type { Permission } from '../../fixtures/roles';
 
 interface Props {
   permission: Permission;
+  fallbackPermission?: Permission;
   children: ReactNode;
 }
 
-export function RoleGate({ permission, children }: Props) {
+export function RoleGate({ permission, fallbackPermission, children }: Props) {
   const can = useRoleStore((s) => s.can(permission));
+  const canFallback = useRoleStore((s) => fallbackPermission ? s.can(fallbackPermission) : false);
   const role = useRoleStore((s) => s.currentRole);
   const t = useT();
-  if (!can) {
+  if (!can && !canFallback) {
     return (
       <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
         <div className="flex items-start gap-3">

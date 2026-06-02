@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation, EstimationComment, Cycle, PrototypeEstimation } from '../types';
+import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation, EstimationComment, PrototypeEstimation, Cycle } from '../types';
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
 import { CYCLES } from '../fixtures/cycles';
@@ -50,11 +50,11 @@ export const useDataStore = create<DataState>((set, get) => ({
   rejectLine: (id, comment) =>
     set((s) => {
       const line = s.lines.find((l) => l.id === id);
-      if (!line || !canTransition(line.status, 'rejected')) return s;
+      if (!line || !canTransition(line.status, 'Rejected')) return s;
       return {
         lines: s.lines.map((l) =>
           l.id === id
-            ? { ...l, status: 'rejected', rejectionComment: comment, lastUpdatedAt: new Date().toISOString(), lastUpdatedBy: 'CPO' }
+            ? { ...l, status: 'Rejected' as LineStatus, rejectionComment: comment, lastUpdatedAt: new Date().toISOString(), lastUpdatedBy: 'CPO' }
             : l,
         ),
       };
@@ -69,10 +69,10 @@ export const useDataStore = create<DataState>((set, get) => ({
       const updated = { ...s.estimations };
       const updatedLines = s.lines.map((l) => {
         if (!targetIds.includes(l.id)) return l;
-        updated[l.id] = { ...src, lineId: l.id, status: 'draft' };
+        updated[l.id] = { ...src, lineId: l.id, status: 'Draft' as LineStatus };
         return {
           ...l,
-          status: 'draft' as LineStatus,
+          status: 'Draft' as LineStatus,
           estimatedDays: src.totalDays,
           estimatedKEuro: src.totalKEuro,
           lastUpdatedAt: new Date().toISOString(),
@@ -100,11 +100,11 @@ export const useDataStore = create<DataState>((set, get) => ({
         },
       };
     }),
-  createCycle: (name, startDate, endDate) =>
+  createCycle: (name, startDate, _endDate) =>
     set((s) => ({
       cycles: [
-        ...s.cycles.map((c) => ({ ...c, isActive: false })), // CYCLE-BR-04: deactivate all existing
-        { id: `cyc-${Date.now()}`, name, isActive: true, startDate, endDate },
+        ...s.cycles.map((c) => ({ ...c, is_active: false })), // CYCLE-BR-04: deactivate all existing
+        { id: `cyc-${Date.now()}`, name, is_active: true, start_date: startDate, created_at: new Date().toISOString() },
       ],
     })),
   setPrototypeEstimation: (lineId, est) =>

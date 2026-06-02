@@ -4,17 +4,19 @@ import type { ProjectLine } from '../../types';
 
 const baseLine: ProjectLine = {
   id: 'L1',
-  projectId: 'P1',
+  project_id: 'P1',
   projectName: 'PROJ-ALPHA',
   lineName: 'Line 1',
-  metier: 'Backend',
-  status: 'approved',
+  metier: 'H-DESIGN',
+  status: 'Approved',
+  updated_at: '2026-01-15T10:00:00Z',
   cycleId: 'cyc-2026h1',
   assignedEngineerId: 'eng-1',
   estimatedDays: 100,
   estimatedKEuro: 50,
   lastUpdatedBy: 'PMO',
   lastUpdatedAt: '2026-01-15T10:00:00Z',
+  name: 'Line 1',
 };
 
 describe('buildCsvRows', () => {
@@ -24,7 +26,7 @@ describe('buildCsvRows', () => {
     expect(rows[0]).toContain('Project Name');
     expect(rows[0]).toContain('Métier');
     expect(rows[1]).toContain('PROJ-ALPHA');
-    expect(rows[1]).toContain('Backend');
+    expect(rows[1]).toContain('H-DESIGN');
   });
 
   it('returns only header when lines array is empty', () => {

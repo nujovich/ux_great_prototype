@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Upload, Plus, Trash2, CalendarPlus, Lock } from 'lucide-react';
 import { clsx } from 'clsx';
 import { RoleGate } from '../components/shared/RoleGate';
+import { useRoleStore } from '../store/roleStore';
 import { Button } from '../components/shared/Button';
 import { WORKLOAD_STANDARDS, PROTOTYPE_CATEGORIES, ALLOCATION_RULES } from '../fixtures/admin';
 import { K_EURO_RATES } from '../fixtures/cycles';
@@ -15,7 +16,7 @@ type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles';
 
 export function AdminPage() {
   return (
-    <RoleGate permission="view:admin">
+    <RoleGate permission="view:admin" fallbackPermission="upload:workload-standards">
       <AdminContent />
     </RoleGate>
   );
@@ -23,14 +24,16 @@ export function AdminPage() {
 
 function AdminContent() {
   const [tab, setTab] = useState<Tab>('workload');
+  const can = useRoleStore((s) => s.can);
   const t = useT();
-  const tabs: { key: Tab; label: string }[] = [
-    { key: 'workload', label: t('admin.tabWorkload') },
-    { key: 'categories', label: t('admin.tabCategories') },
-    { key: 'rules', label: t('admin.tabRules') },
-    { key: 'rates', label: t('admin.tabRates') },
-    { key: 'cycles', label: t('admin.tabCycles') },
+  const allTabs: { key: Tab; label: string; requiresAdmin?: boolean }[] = [
+    { key: 'workload',    label: t('admin.tabWorkload') },
+    { key: 'categories',  label: t('admin.tabCategories'),  requiresAdmin: true },
+    { key: 'rules',       label: t('admin.tabRules'),        requiresAdmin: true },
+    { key: 'rates',       label: t('admin.tabRates'),        requiresAdmin: true },
+    { key: 'cycles',      label: t('admin.tabCycles'),       requiresAdmin: true },
   ];
+  const tabs = allTabs.filter((tb) => !tb.requiresAdmin || can('view:admin'));
   return (
     <div className="space-y-4">
       <div>
@@ -64,7 +67,7 @@ function AdminContent() {
 
 function WorkloadStandardsTab() {
   const [items, setItems] = useState(WORKLOAD_STANDARDS);
-  const [metier, setMetier] = useState<Metier>('Backend');
+  const [metier, setMetier] = useState<Metier>('H-DESIGN');
   const pushToast = useUIStore((s) => s.pushToast);
   const t = useT();
 
@@ -89,7 +92,7 @@ function WorkloadStandardsTab() {
               onChange={(e) => setMetier(e.target.value as Metier)}
               className="mt-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm"
             >
-              {(['Backend', 'Frontend', 'Data', 'DevOps', 'QA', 'Mobile'] as Metier[]).map((m) => (
+              {(['H-DESIGN', 'H-TUNING', 'H-SOFTWARE', 'H-CUSTOMER', 'H-PROJECT', 'H-NP', 'H-TESTING'] as Metier[]).map((m) => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
@@ -261,7 +264,7 @@ function CyclesTab() {
   const t = useT();
 
   function handleCreateCycle() {
-    const activeCycle = cycles.find((c) => c.isActive);
+    const activeCycle = cycles.find((c) => c.is_active);
     const name = window.prompt('Nombre del nuevo ciclo (ej: 2026 H2):');
     if (!name?.trim()) return;
     const msg = activeCycle
@@ -272,7 +275,7 @@ function CyclesTab() {
     pushToast(`Ciclo "${name}" creado y activado`, 'success');
   }
 
-  function closeCycle(_id: string) {
+  function closeCycle() {
     pushToast('Para cerrar un ciclo, creá uno nuevo — esto lo desactiva automáticamente (CYCLE-BR-04)', 'info');
   }
 
@@ -297,20 +300,19 @@ function CyclesTab() {
             {cycles.map((c) => (
               <tr key={c.id} className="border-t border-slate-100">
                 <td className="px-3 py-2.5 font-medium text-slate-800">{c.name}</td>
-                <td className="px-3 py-2.5 text-slate-600">{c.startDate} → {c.endDate}</td>
                 <td className="px-3 py-2.5">
                   <span
                     className={clsx(
                       'rounded-full border px-2 py-0.5 text-xs font-medium',
-                      c.isActive ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-600',
+                      c.is_active ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-600',
                     )}
                   >
-                    {c.isActive ? t('admin.cyclesActive') : t('admin.cyclesClosed')}
+                    {c.is_active ? t('admin.cyclesActive') : t('admin.cyclesClosed')}
                   </span>
                 </td>
                 <td className="px-3 py-2.5 text-right">
-                  {c.isActive && (
-                    <Button size="sm" variant="secondary" onClick={() => closeCycle(c.id)}>
+                  {c.is_active && (
+                    <Button size="sm" variant="secondary" onClick={() => closeCycle()}>
                       <Lock size={14} /> {t('admin.cyclesClose')}
                     </Button>
                   )}

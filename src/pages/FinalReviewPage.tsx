@@ -23,8 +23,8 @@ function FinalReviewContent() {
   const can = useRoleStore((s) => s.can);
   const t = useT();
 
-  const activeCycleId = useMemo(() => cycles.find((c) => c.isActive)?.id ?? 'export', [cycles]);
-  const approvedLines = useMemo(() => lines.filter((l) => l.status === 'approved'), [lines]);
+  const activeCycleId = useMemo(() => cycles.find((c) => c.is_active)?.id ?? 'export', [cycles]);
+  const approvedLines = useMemo(() => lines.filter((l) => l.status === 'Approved'), [lines]);
 
   const byMetier = useMemo(() => {
     const map = new Map<Metier, { count: number; days: number; kEuro: number }>();

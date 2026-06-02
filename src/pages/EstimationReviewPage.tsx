@@ -42,19 +42,19 @@ function ReviewContent() {
   }, [lines, currentRole, activeEngineerId]);
 
   const groups = useMemo(() => ({
-    estimated: visibleLines.filter((l) => l.status === 'estimated'),
-    sent:      visibleLines.filter((l) => l.status === 'sent'),
-    rejected:  visibleLines.filter((l) => l.status === 'rejected'),
-    approved:  visibleLines.filter((l) => l.status === 'approved'),
+    estimated: visibleLines.filter((l) => l.status === 'Estimated'),
+    sent:      visibleLines.filter((l) => l.status === 'Sent'),
+    rejected:  visibleLines.filter((l) => l.status === 'Rejected'),
+    approved:  visibleLines.filter((l) => l.status === 'Approved'),
   }), [visibleLines]);
 
   function handleSendToHVT(line: ProjectLine) {
-    setLineStatus(line.id, 'sent');
+    setLineStatus(line.id, 'Sent');
     pushToast(`${line.lineName} enviada al HVT — estado: Enviada (BR-16)`, 'info');
   }
 
   function handleSendAllToHVT() {
-    groups.estimated.forEach((l) => setLineStatus(l.id, 'sent'));
+    groups.estimated.forEach((l) => setLineStatus(l.id, 'Sent'));
     pushToast(`${groups.estimated.length} línea(s) enviadas al HVT`, 'success');
   }
 
@@ -123,7 +123,7 @@ function ReviewContent() {
               <Button
                 size="sm"
                 variant="primary"
-                onClick={() => { setLineStatus(l.id, 'approved'); pushToast(`${l.lineName} aprobada por CPO`, 'success'); }}
+                onClick={() => { setLineStatus(l.id, 'Approved'); pushToast(`${l.lineName} aprobada por CPO`, 'success'); }}
               >
                 <CheckCircle2 size={14} /> {t('estReview.approve')}
               </Button>
