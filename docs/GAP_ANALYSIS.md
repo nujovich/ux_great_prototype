@@ -125,16 +125,23 @@ custom, metier
 
 ## 6. Endpoints faltantes en OpenAPI
 
-1. DELETE /bulk-inductor — DEL-BR-01..10 (10 reglas SDD sin endpoint)
-2. GET /estimation/review/view — Vista Estimation Review completa
-3. PUT /estimation/review/send-all — Send all eligible (no solo unitario)
-4. GET /allocation/auto-rules-preview — Preview de asignacion automatica
-5. GET /allocation/ju/{id}/yearly-values — Valores yearly de un JU
-6. GET /final-review — Lineas approved por ciclo
-7. GET /final-review/export-csv — Export CSV flat
-8. GET /cycles/{id}/summary — Resumen del ciclo
-9. CRUD /prototype-categories — Admin CRUD, no solo listado
-10. POST /project-lines/{id}/custom-ju — Crear Custom JU (BR-20)
+**Estado: Resuelto en v2.0 (2026-06-02)**
+
+| # | Endpoint | Resolucion |
+|---|----------|------------|
+| 1 | ~~DELETE /bulk-inductor — DEL-BR-01..10~~ | ✅ Añadido. Operacion admin global sobre versiones del WS catalog (roles ADMIN/RCRC) |
+| 2 | ~~GET /estimation/review/view~~ | ✅ No requeria path nuevo — GET /project-lines extendido con `assignee` y `pl_number_name` |
+| 3 | ~~PUT /estimation/review/send-all~~ | ✅ Añadido. Tag EstimationReview (nuevo). Filtra por cycle_id + metier + assignee + pl_number_name |
+| 4 | ~~GET /allocation/auto-rules-preview~~ | ✅ Añadido. Scope por ?metier (optional). No persiste cambios (ALLOC-BR-02) |
+| 5 | ~~GET /allocation/ju/{id}/yearly-values~~ | ✅ Añadido. Retorna JUYearlyValuesResponse |
+| 6 | ~~GET /final-review~~ | ✅ Añadido. Lista lineas Approved del ciclo activo con filtro ?metier |
+| 7 | ~~GET /final-review/export-csv~~ | ✅ Añadido. Content-Type text/csv, param ?cycle_id (default: ciclo activo) |
+| 8 | ~~GET /cycles/{id}/summary~~ | ✅ Añadido. Retorna CycleSummaryResponse (total_lines + by_status) |
+| 9 | ~~CRUD /prototype-categories~~ | ✅ Añadido POST, PUT /{id}, DELETE /{id}. GET ya existia |
+| 10 | ~~POST /project-lines/{id}/custom-ju~~ | ✅ Añadido. BR-20: Engineer/PMO/Admin. Retorna JU |
+
+**Schemas nuevos generados en pev.ts:**
+`BulkDeleteInductorRequest`, `BulkDeleteResponse`, `SendAllToHvtRequest`, `SendAllToHvtResponse`, `FinalReviewResponse`, `AutoRulesPreviewItem`, `AutoRulesPreviewResponse`, `JUYearlyValueItem`, `JUYearlyValuesResponse`, `CycleSummaryResponse`, `CreatePrototypeCategoryRequest`, `UpdatePrototypeCategoryRequest`, `CustomJURequest`
 
 ---
 

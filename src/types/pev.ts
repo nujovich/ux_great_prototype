@@ -41,6 +41,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/project-lines/{id}/custom-ju": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a custom job unit to a project line estimation (BR-20)
+         * @description Engineer/PMO/Admin only (BR-20). Creates a custom JU attached to the
+         *     line's estimation. Custom JUs are not part of the workload standard.
+         */
+        post: operations["createCustomJU"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/project-lines/{id}/estimation": {
         parameters: {
             query?: never;
@@ -206,8 +230,39 @@ export interface paths {
         /** List active prototype categories */
         get: operations["listPrototypeCategories"];
         put?: never;
-        post?: never;
+        /**
+         * Create a prototype category
+         * @description Admin only.
+         */
+        post: operations["createPrototypeCategory"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/prototype-categories/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update a prototype category
+         * @description Admin only.
+         */
+        put: operations["updatePrototypeCategory"];
+        post?: never;
+        /**
+         * Delete a prototype category
+         * @description Admin only. Returns 409 if category is in use.
+         */
+        delete: operations["deletePrototypeCategory"];
         options?: never;
         head?: never;
         patch?: never;
@@ -232,6 +287,28 @@ export interface paths {
          *     - Sent status is irreversible (ERev-BR-02)
          */
         post: operations["sendToHvt"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimation/review/send-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Send all eligible Estimated lines to HVT (bulk, filtered view)
+         * @description PMO/Admin only. Sends all lines with status=Estimated that match the
+         *     provided filters. ERev-BR-05: send-all operates on the current filtered
+         *     view only. ERev-BR-04: only Estimated lines are eligible.
+         */
+        put: operations["sendAllEstimatedToHvt"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -337,6 +414,47 @@ export interface paths {
         patch: operations["bulkAssignAllocation"];
         trace?: never;
     };
+    "/allocation/auto-rules-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview what auto-rules would assign to unassigned JUs
+         * @description Admin/PMO only. Runs AllocationRuleMatcher on unassigned JUs (no societe) and
+         *     returns the preview without persisting any changes (ALLOC-BR-02).
+         */
+        get: operations["getAllocationAutoRulesPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/allocation/ju/{id}/yearly-values": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        /** Yearly FTE and K€ breakdown for a job unit */
+        get: operations["getJUYearlyValues"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/allocation/rules/{metier}": {
         parameters: {
             query?: never;
@@ -399,6 +517,47 @@ export interface paths {
          *     Only Admin/PMO.
          */
         put: operations["putMetierDistribution"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/final-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Approved project lines for the active cycle
+         * @description PMO/Admin/RCRC/CPO. Returns all lines with status=Approved for the active cycle.
+         *     FR-BR-03: byMetier breakdown uses only approved lines from this endpoint.
+         */
+        get: operations["getFinalReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/final-review/export-csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Final Review approved lines as flat CSV
+         * @description PMO/Admin only. Exports all Approved lines for the active cycle.
+         */
+        get: operations["exportFinalReviewCsv"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -508,6 +667,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/cycles/{id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        /** Summary statistics for a cycle (total lines, breakdown by status) */
+        get: operations["getCycleSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workload-standard/upload": {
         parameters: {
             query?: never;
@@ -525,6 +704,28 @@ export interface paths {
          */
         post: operations["uploadWorkloadStandard"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bulk-inductor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete inductors from a workload standard version (DEL-BR-01..10)
+         * @description Admin/RCRC only. Deletes inductors from a specific workload standard version.
+         *     DEL-BR-05: Cannot delete from the active version if it is the only version.
+         *     DEL-BR-07: Deleting from a superseded version does not affect the active version.
+         */
+        delete: operations["bulkDeleteInductors"];
         options?: never;
         head?: never;
         patch?: never;
@@ -932,6 +1133,84 @@ export interface components {
             /** Format: uuid */
             email_log_id: string;
         };
+        BulkDeleteInductorRequest: {
+            /**
+             * Format: uuid
+             * @description Workload standard version to delete from (DEL-BR-05, DEL-BR-07).
+             */
+            version_id: string;
+            inductor_ids: string[];
+        };
+        BulkDeleteResponse: {
+            deleted: number;
+            /** @description Non-blocking warnings (e.g. DEL-BR-05 active version protection). */
+            warnings?: string[];
+        };
+        SendAllToHvtRequest: {
+            /** Format: uuid */
+            cycle_id: string;
+            metier?: components["schemas"]["Metier"];
+            /** @description Filter by assignee OID. Visible to PMO/Admin only (ERev-BR-06). */
+            assignee?: string;
+            /** @description Free-text filter on PL number or name (ERev-BR-05). */
+            pl_number_name?: string;
+        };
+        SendAllToHvtResponse: {
+            sent: number;
+            skipped: number;
+            warnings?: string[];
+        };
+        FinalReviewResponse: {
+            items: components["schemas"]["ProjectLineListItem"][];
+            total: number;
+        };
+        AutoRulesPreviewItem: {
+            /** Format: uuid */
+            job_unit_id: string;
+            suggested_societe: string;
+            matched_rule_id?: string | null;
+        };
+        AutoRulesPreviewResponse: {
+            items: components["schemas"]["AutoRulesPreviewItem"][];
+        };
+        JUYearlyValueItem: {
+            year: number;
+            /** Format: float */
+            fte: number;
+            /** Format: float */
+            ke: number;
+        };
+        JUYearlyValuesResponse: {
+            /** Format: uuid */
+            job_unit_id: string;
+            values: components["schemas"]["JUYearlyValueItem"][];
+        };
+        CycleSummaryResponse: {
+            /** Format: uuid */
+            cycle_id: string;
+            total_lines: number;
+            by_status: {
+                [key: string]: number;
+            };
+        };
+        CreatePrototypeCategoryRequest: {
+            name: string;
+        };
+        UpdatePrototypeCategoryRequest: {
+            name: string;
+        };
+        CustomJURequest: {
+            /** @description Short display name. */
+            name: string;
+            /** @description Full descriptive name. */
+            long_name?: string;
+            /**
+             * Format: float
+             * @description Workload value for this JU (man-days per inductor occurrence).
+             */
+            occurrence: number;
+            metier: components["schemas"]["Metier"];
+        };
         ErrorResponse: {
             code: string;
             message: string;
@@ -1005,6 +1284,10 @@ export interface operations {
                 status?: components["schemas"]["Status"];
                 metier?: components["schemas"]["Metier"];
                 project_id?: string;
+                /** @description Filter by assignee OID. Only returned when role is PMO/Admin (ERev-BR-06). */
+                assignee?: string;
+                /** @description Free-text search on PL number or name (ERev grid filter). */
+                pl_number_name?: string;
                 sort?: "name" | "-name" | "status" | "-status" | "updated_at" | "-updated_at";
                 page?: number;
                 page_size?: number;
@@ -1053,6 +1336,38 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    createCustomJU: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomJURequest"];
+            };
+        };
+        responses: {
+            /** @description Custom JU created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JU"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     getEstimation: {
@@ -1339,6 +1654,89 @@ export interface operations {
             403: components["responses"]["Forbidden"];
         };
     };
+    createPrototypeCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePrototypeCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Category created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrototypeCategory"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    updatePrototypeCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePrototypeCategoryRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrototypeCategory"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deletePrototypeCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     sendToHvt: {
         parameters: {
             query?: never;
@@ -1384,6 +1782,40 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ErrorResponse"];
                 };
+            };
+        };
+    };
+    sendAllEstimatedToHvt: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendAllToHvtRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SendAllToHvtResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            /** @description HVT service unavailable */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -1558,6 +1990,55 @@ export interface operations {
             409: components["responses"]["Conflict"];
         };
     };
+    getAllocationAutoRulesPreview: {
+        parameters: {
+            query?: {
+                /** @description Scope preview to a specific metier. Omit for all metiers. */
+                metier?: components["schemas"]["Metier"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutoRulesPreviewResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getJUYearlyValues: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JUYearlyValuesResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
     putAllocationRules: {
         parameters: {
             query?: never;
@@ -1644,6 +2125,55 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    getFinalReview: {
+        parameters: {
+            query?: {
+                metier?: components["schemas"]["Metier"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FinalReviewResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    exportFinalReviewCsv: {
+        parameters: {
+            query?: {
+                /** @description Defaults to active cycle if omitted. */
+                cycle_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV file download */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     sendStage3Hvt: {
@@ -1797,6 +2327,31 @@ export interface operations {
             404: components["responses"]["NotFound"];
         };
     };
+    getCycleSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Unique identifier of the resource (UUID) */
+                id: components["parameters"]["PathId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CycleSummaryResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
     uploadWorkloadStandard: {
         parameters: {
             query?: never;
@@ -1828,6 +2383,34 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    bulkDeleteInductors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BulkDeleteInductorRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkDeleteResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     getCurrentWorkloadStandard: {

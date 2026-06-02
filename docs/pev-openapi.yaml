@@ -835,6 +835,178 @@ components:
           type: string
           format: uuid
 
+    # ── Bulk Inductor Deletion ──
+
+    BulkDeleteInductorRequest:
+      type: object
+      required: [version_id, inductor_ids]
+      properties:
+        version_id:
+          type: string
+          format: uuid
+          description: Workload standard version to delete from (DEL-BR-05, DEL-BR-07).
+        inductor_ids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+
+    BulkDeleteResponse:
+      type: object
+      required: [deleted]
+      properties:
+        deleted:
+          type: integer
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Non-blocking warnings (e.g. DEL-BR-05 active version protection).
+
+    # ── Estimation Review ──
+
+    SendAllToHvtRequest:
+      type: object
+      required: [cycle_id]
+      properties:
+        cycle_id:
+          type: string
+          format: uuid
+        metier:
+          $ref: '#/components/schemas/Metier'
+        assignee:
+          type: string
+          description: Filter by assignee OID. Visible to PMO/Admin only (ERev-BR-06).
+        pl_number_name:
+          type: string
+          description: Free-text filter on PL number or name (ERev-BR-05).
+
+    SendAllToHvtResponse:
+      type: object
+      required: [sent, skipped]
+      properties:
+        sent:
+          type: integer
+        skipped:
+          type: integer
+        warnings:
+          type: array
+          items:
+            type: string
+
+    FinalReviewResponse:
+      type: object
+      required: [items, total]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectLineListItem'
+        total:
+          type: integer
+
+    # ── Allocation Auto-Rules Preview ──
+
+    AutoRulesPreviewItem:
+      type: object
+      required: [job_unit_id, suggested_societe]
+      properties:
+        job_unit_id:
+          type: string
+          format: uuid
+        suggested_societe:
+          type: string
+        matched_rule_id:
+          type: string
+          nullable: true
+
+    AutoRulesPreviewResponse:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AutoRulesPreviewItem'
+
+    # ── Allocation JU Yearly Values ──
+
+    JUYearlyValueItem:
+      type: object
+      required: [year, fte, ke]
+      properties:
+        year:
+          type: integer
+        fte:
+          type: number
+          format: float
+        ke:
+          type: number
+          format: float
+
+    JUYearlyValuesResponse:
+      type: object
+      required: [job_unit_id, values]
+      properties:
+        job_unit_id:
+          type: string
+          format: uuid
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/JUYearlyValueItem'
+
+    # ── Cycle Summary ──
+
+    CycleSummaryResponse:
+      type: object
+      required: [cycle_id, total_lines, by_status]
+      properties:
+        cycle_id:
+          type: string
+          format: uuid
+        total_lines:
+          type: integer
+        by_status:
+          type: object
+          additionalProperties:
+            type: integer
+
+    # ── Prototype Categories Admin ──
+
+    CreatePrototypeCategoryRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    UpdatePrototypeCategoryRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+
+    # ── Custom JU ──
+
+    CustomJURequest:
+      type: object
+      required: [name, occurrence, metier]
+      properties:
+        name:
+          type: string
+          description: Short display name.
+        long_name:
+          type: string
+          description: Full descriptive name.
+        occurrence:
+          type: number
+          format: float
+          description: Workload value for this JU (man-days per inductor occurrence).
+        metier:
+          $ref: '#/components/schemas/Metier'
+
     # ── Shared ──
 
     ErrorResponse:
@@ -858,6 +1030,8 @@ tags:
     description: Prototype quantities per project line
   - name: HVT
     description: HVT integration (send, callback)
+  - name: EstimationReview
+    description: Estimation review operations (send-all to HVT)
   - name: Allocation
     description: Job unit allocation to societes
   - name: AllocationConfig
@@ -891,6 +1065,16 @@ paths:
             $ref: '#/components/schemas/Metier'
         - name: project_id
           in: query
+          schema:
+            type: string
+        - name: assignee
+          in: query
+          description: Filter by assignee OID. Only returned when role is PMO/Admin (ERev-BR-06).
+          schema:
+            type: string
+        - name: pl_number_name
+          in: query
+          description: Free-text search on PL number or name (ERev grid filter).
           schema:
             type: string
         - name: sort
@@ -939,6 +1123,35 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
         '404': { $ref: '#/components/responses/NotFound' }
+
+  /project-lines/{id}/custom-ju:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    post:
+      operationId: createCustomJU
+      summary: Add a custom job unit to a project line estimation (BR-20)
+      description: |
+        Engineer/PMO/Admin only (BR-20). Creates a custom JU attached to the
+        line's estimation. Custom JUs are not part of the workload standard.
+      tags: [Estimation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomJURequest'
+      responses:
+        '201':
+          description: Custom JU created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JU'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   # ═══════════════════════════════════════════
   # ESTIMATION (Pre-Estimation)
@@ -1164,6 +1377,65 @@ paths:
                   $ref: '#/components/schemas/PrototypeCategory'
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      operationId: createPrototypeCategory
+      summary: Create a prototype category
+      description: Admin only.
+      tags: [Prototype]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePrototypeCategoryRequest'
+      responses:
+        '201':
+          description: Category created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrototypeCategory'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /prototype-categories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    put:
+      operationId: updatePrototypeCategory
+      summary: Update a prototype category
+      description: Admin only.
+      tags: [Prototype]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePrototypeCategoryRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrototypeCategory'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      operationId: deletePrototypeCategory
+      summary: Delete a prototype category
+      description: Admin only. Returns 409 if category is in use.
+      tags: [Prototype]
+      responses:
+        '204':
+          description: Category deleted
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   # ═══════════════════════════════════════════
   # ESTIMATION REVIEW — HVT
@@ -1208,6 +1480,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /estimation/review/send-all:
+    put:
+      operationId: sendAllEstimatedToHvt
+      summary: Send all eligible Estimated lines to HVT (bulk, filtered view)
+      description: |
+        PMO/Admin only. Sends all lines with status=Estimated that match the
+        provided filters. ERev-BR-05: send-all operates on the current filtered
+        view only. ERev-BR-04: only Estimated lines are eligible.
+      tags: [EstimationReview]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendAllToHvtRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendAllToHvtResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502':
+          description: HVT service unavailable
 
   /hvt/stage2-callback:
     post:
@@ -1358,6 +1658,46 @@ paths:
         '403': { $ref: '#/components/responses/Forbidden' }
         '409': { $ref: '#/components/responses/Conflict' }
 
+  /allocation/auto-rules-preview:
+    get:
+      operationId: getAllocationAutoRulesPreview
+      summary: Preview what auto-rules would assign to unassigned JUs
+      description: |
+        Admin/PMO only. Runs AllocationRuleMatcher on unassigned JUs (no societe) and
+        returns the preview without persisting any changes (ALLOC-BR-02).
+      tags: [Allocation]
+      parameters:
+        - name: metier
+          in: query
+          schema:
+            $ref: '#/components/schemas/Metier'
+          description: Scope preview to a specific metier. Omit for all metiers.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AutoRulesPreviewResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /allocation/ju/{id}/yearly-values:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      operationId: getJUYearlyValues
+      summary: Yearly FTE and K€ breakdown for a job unit
+      tags: [Allocation]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JUYearlyValuesResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   # ═══════════════════════════════════════════
   # ALLOCATION CONFIG
   # ═══════════════════════════════════════════
@@ -1455,6 +1795,53 @@ paths:
   # ═══════════════════════════════════════════
   # FINAL REVIEW
   # ═══════════════════════════════════════════
+
+  /final-review:
+    get:
+      operationId: getFinalReview
+      summary: List Approved project lines for the active cycle
+      description: |
+        PMO/Admin/RCRC/CPO. Returns all lines with status=Approved for the active cycle.
+        FR-BR-03: byMetier breakdown uses only approved lines from this endpoint.
+      tags: [FinalReview]
+      parameters:
+        - name: metier
+          in: query
+          schema:
+            $ref: '#/components/schemas/Metier'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinalReviewResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /final-review/export-csv:
+    get:
+      operationId: exportFinalReviewCsv
+      summary: Export Final Review approved lines as flat CSV
+      description: PMO/Admin only. Exports all Approved lines for the active cycle.
+      tags: [FinalReview]
+      parameters:
+        - name: cycle_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Defaults to active cycle if omitted.
+      responses:
+        '200':
+          description: CSV file download
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /final-review/send-stage3-hvt:
     post:
@@ -1596,6 +1983,23 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /cycles/{id}/summary:
+    parameters:
+      - $ref: '#/components/parameters/PathId'
+    get:
+      operationId: getCycleSummary
+      summary: Summary statistics for a cycle (total lines, breakdown by status)
+      tags: [Transversal]
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CycleSummaryResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   # ═══════════════════════════════════════════
   # TRANSVERSAL — WORKLOAD STANDARD
   # ═══════════════════════════════════════════
@@ -1632,6 +2036,33 @@ paths:
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '403': { $ref: '#/components/responses/Forbidden' }
+
+  /bulk-inductor:
+    delete:
+      operationId: bulkDeleteInductors
+      summary: Delete inductors from a workload standard version (DEL-BR-01..10)
+      description: |
+        Admin/RCRC only. Deletes inductors from a specific workload standard version.
+        DEL-BR-05: Cannot delete from the active version if it is the only version.
+        DEL-BR-07: Deleting from a superseded version does not affect the active version.
+      tags: [Transversal]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkDeleteInductorRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkDeleteResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
 
   /workload-standard/current:
     get:
