@@ -121,6 +121,19 @@ export interface Translations {
     selectEngineer: string;
     addEngineer: string;
     total: string;
+    colFte: string;
+    colSociete: string;
+    colCostType: string;
+    colDiversity: string;
+    colKeuro: string;
+    unsaved: string;
+    saveAll: string;
+    bulkSociete: string;
+    bulkSocieteApply: string;
+    saveFailed: string;
+    saveSuccess: string;
+    filterMetier: string;
+    noCycle: string;
   };
   finalReview: {
     title: string;
