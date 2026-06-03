@@ -42,8 +42,8 @@ export function calcTotalDays(
   // Custom JUs (BR-11: permitidos incluso sin workload standard)
   const customDays = customJUs.reduce((acc, j) => acc + j.days, 0);
 
-  // globalOccurrences se conserva para compatibilidad con UI existente
-  return (inductorDays + customDays) * Math.max(globalOccurrences, 1);
+  // BR-13: zero occurrence is allowed and contributes zero to the output
+  return (inductorDays + customDays) * (globalOccurrences <= 0 ? 0 : globalOccurrences);
 }
 
 /**
