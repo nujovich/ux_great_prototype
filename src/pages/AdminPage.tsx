@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Upload, Plus, Trash2, CalendarPlus, Lock, CheckCircle2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { RoleGate } from '../components/shared/RoleGate';
@@ -75,23 +75,57 @@ function AdminContent() {
 function WorkloadStandardsTab() {
   const [items, setItems] = useState(WORKLOAD_STANDARDS);
   const [metier, setMetier] = useState<Metier>('H-DESIGN');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const pushToast = useUIStore((s) => s.pushToast);
   const t = useT();
 
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setSelectedFile(file);
+    setValidationError(null);
+
+    if (file && !file.name.endsWith('.xlsx')) {
+      // WL-BR-02: only .xlsx accepted
+      setValidationError('Only .xlsx files are accepted (WL-BR-02). Please select a valid Excel file.');
+      setSelectedFile(null);
+    }
+  }
+
   function handleUpload() {
+    if (!selectedFile) {
+      setValidationError('Please select a file first.');
+      return;
+    }
+
+    // WL-BR-06: structural validation before commit (simulated for prototype)
+    if (selectedFile.size === 0) {
+      setValidationError('File appears to be empty. Upload aborted (WL-BR-06).');
+      return;
+    }
+
+    // WL-BR-04: versioned — add new version, old versions retained
     const id = `ws-${Date.now()}`;
     setItems((i) => [
-      { id, metier, fileName: `${metier.toLowerCase()}-uploaded-${Date.now()}.xlsx`, uploadedAt: new Date().toISOString(), rowCount: 100 },
+      {
+        id,
+        metier,
+        fileName: selectedFile.name,
+        uploadedAt: new Date().toISOString(),
+        rowCount: 100,  // prototype: row count unknown until backend processes
+      },
       ...i,
     ]);
-    pushToast(`Archivo cargado para métier ${metier}`, 'success');
+    pushToast(`Archivo ${selectedFile.name} cargado para métier ${metier}`, 'success');
+    setSelectedFile(null);
+    setValidationError(null);
   }
 
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <h3 className="mb-2 font-semibold text-slate-800">{t('admin.workloadUpload')}</h3>
-        <div className="flex items-end gap-2">
+        <div className="flex flex-wrap items-end gap-2">
           <div className="flex flex-col">
             <label className="text-xs font-medium text-slate-500">{t('admin.workloadMetier')}</label>
             <select
@@ -104,10 +138,22 @@ function WorkloadStandardsTab() {
               ))}
             </select>
           </div>
-          <Button onClick={handleUpload}>
+          <div className="flex flex-col">
+            <label className="text-xs font-medium text-slate-500">File (.xlsx only — WL-BR-02)</label>
+            <input
+              type="file"
+              accept=".xlsx"
+              onChange={handleFileSelect}
+              className="mt-1 text-sm text-slate-600 file:mr-2 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
+            />
+          </div>
+          <Button onClick={handleUpload} disabled={!selectedFile || !!validationError}>
             <Upload size={14} /> {t('admin.workloadBtn')}
           </Button>
         </div>
+        {validationError && (
+          <p className="mt-2 text-sm text-red-600">{validationError}</p>
+        )}
       </div>
       <table className="w-full overflow-hidden rounded-lg border border-slate-200 bg-white text-sm">
         <thead className="bg-slate-50 text-xs uppercase text-slate-500">
