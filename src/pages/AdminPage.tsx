@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Upload, Plus, Trash2, CalendarPlus, Lock } from 'lucide-react';
+import { Upload, Plus, Trash2, CalendarPlus, Lock, CheckCircle2 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { RoleGate } from '../components/shared/RoleGate';
+import { StatusBadge } from '../components/shared/StatusBadge';
+import { EmptyState } from '../components/shared/EmptyState';
 import { useRoleStore } from '../store/roleStore';
 import { Button } from '../components/shared/Button';
 import { WORKLOAD_STANDARDS, PROTOTYPE_CATEGORIES, ALLOCATION_RULES } from '../fixtures/admin';
@@ -12,7 +14,7 @@ import { useT } from '../i18n/useT';
 import { formatDate } from '../lib/format';
 import type { Metier } from '../types';
 
-type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles';
+type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles' | 'hvt';
 
 export function AdminPage() {
   return (
@@ -32,6 +34,7 @@ function AdminContent() {
     { key: 'rules',       label: t('admin.tabRules'),        requiresAdmin: true },
     { key: 'rates',       label: t('admin.tabRates'),        requiresAdmin: true },
     { key: 'cycles',      label: t('admin.tabCycles'),       requiresAdmin: true },
+    { key: 'hvt',         label: t('admin.tabHvt'),          requiresAdmin: true },
   ];
   const tabs = allTabs.filter((tb) => !tb.requiresAdmin || can('view:admin'));
   return (
@@ -61,6 +64,7 @@ function AdminContent() {
       {tab === 'rules' && <RulesTab />}
       {tab === 'rates' && <RatesTab />}
       {tab === 'cycles' && <CyclesTab />}
+      {tab === 'hvt' && <HvtSimulationTab />}
     </div>
   );
 }
@@ -253,6 +257,58 @@ function RatesTab() {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function HvtSimulationTab() {
+  const lines = useDataStore((s) => s.lines);
+  const simulateHvtApproval = useDataStore((s) => s.simulateHvtApproval);
+  const pushToast = useUIStore((s) => s.pushToast);
+  const t = useT();
+
+  const sentLines = lines.filter((l) => l.status === 'Sent');
+
+  function handleApproveAll() {
+    const ids = sentLines.map((l) => l.id);
+    simulateHvtApproval(ids);
+    pushToast(`HVT simulado: ${ids.length} línea(s) → Approved`, 'success');
+  }
+
+  if (sentLines.length === 0) {
+    return <EmptyState title={t('admin.hvtNoSent')} />;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <p className="text-sm text-amber-800">{t('admin.hvtDesc')}</p>
+      </div>
+      <div className="flex justify-end">
+        <Button onClick={handleApproveAll}>
+          <CheckCircle2 size={14} /> {t('admin.hvtApproveAll')} ({sentLines.length})
+        </Button>
+      </div>
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">Line</th>
+              <th className="px-3 py-2 text-left font-medium">Métier</th>
+              <th className="px-3 py-2 text-left font-medium">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sentLines.map((l) => (
+              <tr key={l.id} className="border-t border-slate-100">
+                <td className="px-3 py-2.5 font-medium">{l.lineName}</td>
+                <td className="px-3 py-2.5">{l.metier}</td>
+                <td className="px-3 py-2.5"><StatusBadge status={l.status} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

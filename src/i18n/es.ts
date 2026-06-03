@@ -132,6 +132,7 @@ export const es: Translations = {
     colDays: 'Días',
     colDistribution: 'Distribución',
     exportCsv: 'Exportar CSV (FR-BR-10)',
+    sendStage3: 'Enviar Stage 3 al HVT',
   },
   mgmt: {
     title: 'Management',
@@ -173,6 +174,10 @@ export const es: Translations = {
     cyclesActive: 'Activo',
     cyclesClosed: 'Cerrado',
     cyclesClose: 'Cerrar',
+    tabHvt: 'Simulación HVT',
+    hvtDesc: 'Simular procesamiento HVT Sent → Approved (solo prototipo — ERev-BR-10)',
+    hvtApproveAll: 'Aprobar todas las Sent',
+    hvtNoSent: 'No hay líneas en estado Sent',
   },
   comments: {
     title: 'Comentarios — {metier}',

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { Download } from 'lucide-react';
+import { Download, Send } from 'lucide-react';
 import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
+import { useUIStore } from '../store/uiStore';
 import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { formatDays, formatKEuro } from '../lib/format';
@@ -21,6 +22,7 @@ function FinalReviewContent() {
   const lines = useDataStore((s) => s.lines);
   const cycles = useDataStore((s) => s.cycles);
   const can = useRoleStore((s) => s.can);
+  const pushToast = useUIStore((s) => s.pushToast);
   const t = useT();
 
   const activeCycleId = useMemo(() => cycles.find((c) => c.is_active)?.id ?? 'export', [cycles]);
@@ -28,7 +30,7 @@ function FinalReviewContent() {
 
   const byMetier = useMemo(() => {
     const map = new Map<Metier, { count: number; days: number; kEuro: number }>();
-    lines.forEach((l) => {
+    approvedLines.forEach((l) => {
       if (l.estimatedDays == null) return;
       const cur = map.get(l.metier) ?? { count: 0, days: 0, kEuro: 0 };
       cur.count += 1;
@@ -37,12 +39,22 @@ function FinalReviewContent() {
       map.set(l.metier, cur);
     });
     return [...map.entries()].sort((a, b) => b[1].kEuro - a[1].kEuro);
-  }, [lines]);
+  }, [approvedLines]);
 
   const totals = byMetier.reduce(
     (acc, [, v]) => ({ count: acc.count + v.count, days: acc.days + v.days, kEuro: acc.kEuro + v.kEuro }),
     { count: 0, days: 0, kEuro: 0 },
   );
+
+  function handleSendStage3() {
+    // FR-BR-06: non-blocking — sends even if allocation is incomplete
+    // FR-BR-07: re-sendable — each send transmits current state
+    // FR-BR-08: sends entire active cycle (approvedLines)
+    pushToast(
+      `Stage 3 enviado al HVT — ${approvedLines.length} línea(s) aprobadas del ciclo ${activeCycleId}`,
+      'success',
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -51,14 +63,21 @@ function FinalReviewContent() {
           <h1 className="text-xl font-bold text-slate-900">{t('finalReview.title')}</h1>
           <p className="text-sm text-slate-600">{t('finalReview.subtitle')}</p>
         </div>
-        {can('export:final-review') && (
-          <Button
-            variant="secondary"
-            onClick={() => exportToCsv(approvedLines, `final-review-${activeCycleId}.csv`)}
-          >
-            <Download size={14} /> {t('finalReview.exportCsv')}
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {can('export:final-review') && (
+            <Button
+              variant="secondary"
+              onClick={() => exportToCsv(approvedLines, `final-review-${activeCycleId}.csv`)}
+            >
+              <Download size={14} /> {t('finalReview.exportCsv')}
+            </Button>
+          )}
+          {can('send:stage3') && (
+            <Button variant="primary" onClick={handleSendStage3}>
+              <Send size={14} /> {t('finalReview.sendStage3')}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">

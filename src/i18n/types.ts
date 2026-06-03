@@ -132,6 +132,7 @@ export interface Translations {
     colDays: string;
     colDistribution: string;
     exportCsv: string;
+    sendStage3: string;
   };
   mgmt: {
     title: string;
@@ -173,6 +174,10 @@ export interface Translations {
     cyclesActive: string;
     cyclesClosed: string;
     cyclesClose: string;
+    tabHvt: string;
+    hvtDesc: string;
+    hvtApproveAll: string;
+    hvtNoSent: string;
   };
   comments: {
     title: string;
