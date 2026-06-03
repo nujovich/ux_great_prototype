@@ -4,10 +4,10 @@ import { RoleGate } from '../components/shared/RoleGate';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { StatusPieChart } from '../components/management/StatusPieChart';
 import { useT } from '../i18n/useT';
-import { CYCLES } from '../fixtures/cycles';
 import type { LineStatus, Metier } from '../types';
 
-const METIERS: Metier[] = ['H-DESIGN', 'H-SOFTWARE', 'H-TUNING', 'H-PROJECT', 'H-CUSTOMER', 'H-TESTING', 'H-NP'];
+// MGMT-BR-04: H-NP and H-PROJECT are excluded from Management View
+const METIERS: Metier[] = ['H-DESIGN', 'H-SOFTWARE', 'H-TUNING', 'H-CUSTOMER', 'H-TESTING'];
 const STATUSES: LineStatus[] = ['To do', 'Draft', 'Estimated', 'Sent', 'Rejected', 'Approved'];
 
 export function ManagementPage() {
@@ -20,8 +20,9 @@ export function ManagementPage() {
 
 function ManagementContent() {
   const lines = useDataStore((s) => s.lines);
+  // MGMT-BR-06: only the active cycle is shown; historical cycles are not selectable
+  const activeCycleId = useDataStore((s) => s.cycles.find((c) => c.is_active)?.id ?? '');
   const t = useT();
-  const [cycleId, setCycleId] = useState<string>('cyc-2026h1');
   const [statusFilter, setStatusFilter] = useState<LineStatus | 'all'>('all');
   const [metierFilter, setMetierFilter] = useState<Metier | 'all'>('all');
 
@@ -29,11 +30,11 @@ function ManagementContent() {
     () =>
       lines.filter(
         (l) =>
-          l.cycleId === cycleId &&
+          l.cycleId === activeCycleId &&
           (statusFilter === 'all' || l.status === statusFilter) &&
           (metierFilter === 'all' || l.metier === metierFilter),
       ),
-    [lines, cycleId, statusFilter, metierFilter],
+    [lines, activeCycleId, statusFilter, metierFilter],
   );
 
   const matrix = useMemo(() => {
@@ -63,11 +64,6 @@ function ManagementContent() {
       </div>
 
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-3">
-        <FilterSelect label="Cycle" value={cycleId} onChange={setCycleId}>
-          {CYCLES.map((c) => (
-            <option key={c.id} value={c.id}>{c.name} {c.is_active ? '(activo)' : '(cerrado)'}</option>
-          ))}
-        </FilterSelect>
         <FilterSelect label={t('filters.status')} value={statusFilter} onChange={(v) => setStatusFilter(v as LineStatus | 'all')}>
           <option value="all">{t('filters.all')}</option>
           {STATUSES.map((s) => (<option key={s} value={s}>{t(`status.${s}`)}</option>))}
