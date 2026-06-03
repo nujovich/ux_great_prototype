@@ -174,9 +174,19 @@ export interface AllocationSplit {
   days: number;
 }
 
+export interface AllocationRow extends AllocationSplit {
+  id: string;
+  fte: number;
+  societe: string | null;
+  costType: CostType;
+  diversity: string | null;
+  keuro: number;
+  isDirty: boolean;
+}
+
 export interface Allocation {
   lineId: string;
-  splits: AllocationSplit[];
+  splits: AllocationRow[];
 }
 
 export interface PrototypeEstimation {

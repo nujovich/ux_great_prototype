@@ -11,7 +11,7 @@ import { EmptyState } from '../components/shared/EmptyState';
 import { formatDays, formatKEuro } from '../lib/format';
 import { useT } from '../i18n/useT';
 import { ENGINEERS } from '../fixtures/engineers';
-import type { AllocationSplit, ProjectLine } from '../types';
+import type { AllocationRow, ProjectLine } from '../types';
 
 export function AllocationPage() {
   return (
@@ -131,20 +131,24 @@ function AllocationContent() {
 
 interface SplitProps {
   line: ProjectLine;
-  currentSplits: AllocationSplit[];
+  currentSplits: AllocationRow[];
   onClose: () => void;
-  onSave: (splits: AllocationSplit[]) => void;
+  onSave: (splits: AllocationRow[]) => void;
+}
+
+function newRow(days = 0, percentage = 0): AllocationRow {
+  return { id: `row-new-${Date.now()}-${Math.random().toString(36).slice(2)}`, engineerId: '', percentage, days, fte: 0, societe: null, costType: 'FTE', diversity: null, keuro: 0, isDirty: true };
 }
 
 function SplitModal({ line, currentSplits, onClose, onSave }: SplitProps) {
   const t = useT();
-  const [splits, setSplits] = useState<AllocationSplit[]>(
-    currentSplits.length > 0 ? currentSplits : [{ engineerId: '', percentage: 100, days: line.estimatedDays ?? 0 }],
+  const [splits, setSplits] = useState<AllocationRow[]>(
+    currentSplits.length > 0 ? currentSplits : [newRow(line.estimatedDays ?? 0, 100)],
   );
   const candidateEngs = ENGINEERS.filter((e) => e.metier === line.metier);
   const totalPct = splits.reduce((acc, s) => acc + s.percentage, 0);
 
-  function update(idx: number, patch: Partial<AllocationSplit>) {
+  function update(idx: number, patch: Partial<AllocationRow>) {
     setSplits((s) =>
       s.map((x, i) =>
         i === idx
@@ -213,7 +217,7 @@ function SplitModal({ line, currentSplits, onClose, onSave }: SplitProps) {
         <Button
           size="sm"
           variant="secondary"
-          onClick={() => setSplits((s) => [...s, { engineerId: '', percentage: 0, days: 0 }])}
+          onClick={() => setSplits((s) => [...s, newRow()])}
         >
           <Plus size={14} /> {t('alloc.addEngineer')}
         </Button>

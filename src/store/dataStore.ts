@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ProjectLine, LineStatus, Allocation, AllocationSplit, Estimation, EstimationComment, PrototypeEstimation, Cycle } from '../types';
+import type { ProjectLine, LineStatus, Allocation, AllocationRow, Estimation, EstimationComment, PrototypeEstimation, Cycle } from '../types';
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
 import { CYCLES } from '../fixtures/cycles';
@@ -19,8 +19,10 @@ interface DataState {
   createCycle: (name: string, startDate: string, endDate: string) => void;
   prototypeEstimations: Record<string, PrototypeEstimation>;
   setPrototypeEstimation: (lineId: string, est: PrototypeEstimation) => void;
-  setAllocation: (lineId: string, splits: AllocationSplit[]) => void;
+  setAllocation: (lineId: string, splits: AllocationRow[]) => void;
   bulkAssign: (lineIds: string[], engineerId: string) => void;
+  bulkAssignSociete: (lineIds: string[], societe: string) => void;
+  saveDirtyAllocations: (lineId: string, splits: AllocationRow[]) => void;
   simulateHvtApproval: (lineIds: string[]) => void;
 }
 
@@ -126,6 +128,25 @@ export const useDataStore = create<DataState>((set, get) => ({
         lineIds.includes(l.id) ? { ...l, assignedEngineerId: engineerId, lastUpdatedAt: new Date().toISOString() } : l,
       ),
     })),
+  bulkAssignSociete: (lineIds, societe) =>
+    set((s) => ({
+      allocations: s.allocations.map((a) => {
+        if (!lineIds.includes(a.lineId)) return a;
+        return {
+          ...a,
+          splits: a.splits.map((sp) => ({ ...sp, societe, isDirty: true })),
+        };
+      }),
+    })),
+  saveDirtyAllocations: (lineId, splits) =>
+    set((s) => {
+      const cleaned = splits.map((sp) => ({ ...sp, isDirty: false }));
+      const exists = s.allocations.find((a) => a.lineId === lineId);
+      if (exists) {
+        return { allocations: s.allocations.map((a) => (a.lineId === lineId ? { ...a, splits: cleaned } : a)) };
+      }
+      return { allocations: [...s.allocations, { lineId, splits: cleaned }] };
+    }),
   simulateHvtApproval: (lineIds) =>
     set((s) => ({
       lines: s.lines.map((l) =>
