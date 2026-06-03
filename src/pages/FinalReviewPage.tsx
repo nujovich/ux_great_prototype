@@ -8,6 +8,7 @@ import { Button } from '../components/shared/Button';
 import { formatDays, formatKEuro } from '../lib/format';
 import { exportToCsv } from '../lib/csvExport';
 import { useT } from '../i18n/useT';
+import { useSortable } from '../lib/useSortable';
 import type { Metier } from '../types';
 
 export function FinalReviewPage() {
@@ -40,6 +41,12 @@ function FinalReviewContent() {
     });
     return [...map.entries()].sort((a, b) => b[1].kEuro - a[1].kEuro);
   }, [approvedLines]);
+
+  const metierRows = useMemo(
+    () => byMetier.map(([m, v]) => ({ metier: m, ...v })),
+    [byMetier],
+  );
+  const { sorted: sortedMetier, requestSort, getSortIcon } = useSortable(metierRows);
 
   const totals = byMetier.reduce(
     (acc, [, v]) => ({ count: acc.count + v.count, days: acc.days + v.days, kEuro: acc.kEuro + v.kEuro }),
@@ -90,22 +97,30 @@ function FinalReviewContent() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <th className="px-3 py-2 text-left font-medium">{t('finalReview.colMetier')}</th>
-              <th className="px-3 py-2 text-right font-medium">{t('finalReview.colLines')}</th>
-              <th className="px-3 py-2 text-right font-medium">{t('finalReview.colDays')}</th>
-              <th className="px-3 py-2 text-right font-medium">k€</th>
+              <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('metier')}>
+                {t('finalReview.colMetier')} {getSortIcon('metier')}
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('count')}>
+                {t('finalReview.colLines')} {getSortIcon('count')}
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('days')}>
+                {t('finalReview.colDays')} {getSortIcon('days')}
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('kEuro')}>
+                k€ {getSortIcon('kEuro')}
+              </th>
               <th className="px-3 py-2 text-left font-medium">{t('finalReview.colDistribution')}</th>
             </tr>
           </thead>
           <tbody>
-            {byMetier.map(([m, v]) => {
-              const pct = totals.kEuro > 0 ? (v.kEuro / totals.kEuro) * 100 : 0;
+            {sortedMetier.map((row) => {
+              const pct = totals.kEuro > 0 ? (row.kEuro / totals.kEuro) * 100 : 0;
               return (
-                <tr key={m} className="border-t border-slate-100">
-                  <td className="px-3 py-2.5 font-medium text-slate-800">{m}</td>
-                  <td className="px-3 py-2.5 text-right">{v.count}</td>
-                  <td className="px-3 py-2.5 text-right">{formatDays(v.days)}</td>
-                  <td className="px-3 py-2.5 text-right font-medium">{formatKEuro(v.kEuro)}</td>
+                <tr key={row.metier} className="border-t border-slate-100">
+                  <td className="px-3 py-2.5 font-medium text-slate-800">{row.metier}</td>
+                  <td className="px-3 py-2.5 text-right">{row.count}</td>
+                  <td className="px-3 py-2.5 text-right">{formatDays(row.days)}</td>
+                  <td className="px-3 py-2.5 text-right font-medium">{formatKEuro(row.kEuro)}</td>
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">
                       <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">

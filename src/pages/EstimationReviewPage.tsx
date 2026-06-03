@@ -10,6 +10,7 @@ import { StatusBadge } from '../components/shared/StatusBadge';
 import { EmptyState } from '../components/shared/EmptyState';
 import { formatDays, formatKEuro, formatDate } from '../lib/format';
 import { useT } from '../i18n/useT';
+import { useSortable } from '../lib/useSortable';
 import { ENGINEERS } from '../fixtures/engineers';
 import type { ProjectLine } from '../types';
 
@@ -189,6 +190,7 @@ interface SectionProps {
 }
 
 function Section({ title, description, lines, emptyText, renderActions }: SectionProps) {
+  const { sorted, requestSort, getSortIcon } = useSortable(lines);
   const t = useT();
   return (
     <section>
@@ -205,17 +207,29 @@ function Section({ title, description, lines, emptyText, renderActions }: Sectio
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-3 py-2 text-left font-medium">{t('estReview.colLine')}</th>
-                <th className="px-3 py-2 text-left font-medium">{t('estReview.colEngineer')}</th>
-                <th className="px-3 py-2 text-left font-medium">{t('estReview.colStatus')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('estReview.colDays')}</th>
-                <th className="px-3 py-2 text-right font-medium">{t('estReview.colKeuro')}</th>
-                <th className="px-3 py-2 text-left font-medium">{t('estReview.colUpdated')}</th>
+                <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('lineName')}>
+                  {t('estReview.colLine')} {getSortIcon('lineName')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('assignedEngineerId')}>
+                  {t('estReview.colEngineer')} {getSortIcon('assignedEngineerId')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('status')}>
+                  {t('estReview.colStatus')} {getSortIcon('status')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('estimatedDays')}>
+                  {t('estReview.colDays')} {getSortIcon('estimatedDays')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('estimatedKEuro')}>
+                  {t('estReview.colKeuro')} {getSortIcon('estimatedKEuro')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('lastUpdatedAt')}>
+                  {t('estReview.colUpdated')} {getSortIcon('lastUpdatedAt')}
+                </th>
                 {renderActions && <th className="px-3 py-2 text-right font-medium">{t('estReview.colActions')}</th>}
               </tr>
             </thead>
             <tbody>
-              {lines.map((l) => {
+              {sorted.map((l) => {
                 const eng = ENGINEERS.find((e) => e.id === l.assignedEngineerId);
                 return (
                   <tr key={l.id} className="border-t border-slate-100">
