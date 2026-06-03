@@ -21,6 +21,7 @@ interface DataState {
   setPrototypeEstimation: (lineId: string, est: PrototypeEstimation) => void;
   setAllocation: (lineId: string, splits: AllocationSplit[]) => void;
   bulkAssign: (lineIds: string[], engineerId: string) => void;
+  simulateHvtApproval: (lineIds: string[]) => void;
 }
 
 export const useDataStore = create<DataState>((set, get) => ({
@@ -123,6 +124,14 @@ export const useDataStore = create<DataState>((set, get) => ({
     set((s) => ({
       lines: s.lines.map((l) =>
         lineIds.includes(l.id) ? { ...l, assignedEngineerId: engineerId, lastUpdatedAt: new Date().toISOString() } : l,
+      ),
+    })),
+  simulateHvtApproval: (lineIds) =>
+    set((s) => ({
+      lines: s.lines.map((l) =>
+        lineIds.includes(l.id) && l.status === 'Sent'
+          ? { ...l, status: 'Approved' as LineStatus, lastUpdatedAt: new Date().toISOString() }
+          : l,
       ),
     })),
 }));

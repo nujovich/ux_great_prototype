@@ -23,7 +23,8 @@ export type Permission =
   | 'send:stage3'
   | 'upload:workload-standards'
   | 'view:management'
-  | 'view:admin';
+  | 'view:admin'
+  | 'simulate:hvt-approval';  // Admin-only: simulate HVT sending approval back (ERev-BR-10)
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   Engineer: [
@@ -71,6 +72,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'view:management',
     'view:admin',
     'upload:workload-standards',
+    'simulate:hvt-approval',
   ],
   RCRC: [
     'view:pre-estimation',
@@ -86,7 +88,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   CPO: [
     'view:estimation-review',
     'export:estimation-review',
-    'approve:estimation',
+    // ERev-BR-10: CPO cannot approve directly — approval comes from HVT only
     'reject:estimation',
     'view:final-review',
     'export:final-review',

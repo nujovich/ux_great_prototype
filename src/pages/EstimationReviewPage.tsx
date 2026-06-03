@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, XCircle, Send, MessageSquare } from 'lucide-react';
+import { XCircle, Send } from 'lucide-react';
 import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
 import { useUIStore } from '../store/uiStore';
@@ -123,13 +123,7 @@ function ReviewContent() {
           lines={groups.sent}
           renderActions={(l) => (
             <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() => { setLineStatus(l.id, 'Approved'); pushToast(`${l.lineName} aprobada por CPO`, 'success'); }}
-              >
-                <CheckCircle2 size={14} /> {t('estReview.approve')}
-              </Button>
+              {/* ERev-BR-10: CPO cannot approve directly — approval comes from HVT only */}
               <Button
                 size="sm"
                 variant="danger"
@@ -142,17 +136,12 @@ function ReviewContent() {
         />
       )}
 
+      {/* ERev-BR-07: rejection comments are not shown in the Estimation Review grid */}
       <Section
         title={t('estReview.rejected')}
         description={t('estReview.rejectedDesc')}
         lines={groups.rejected}
         emptyText={t('estReview.noRejected')}
-        renderActions={(l) => (
-          <div className="flex items-start gap-2 text-xs text-red-700 max-w-md">
-            <MessageSquare size={14} className="mt-0.5 shrink-0" />
-            <span>{l.rejectionComment}</span>
-          </div>
-        )}
       />
 
       <Section
