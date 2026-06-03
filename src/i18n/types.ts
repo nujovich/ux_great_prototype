@@ -203,6 +203,14 @@ export interface Translations {
     delSummary: string;
     delEmpty: string;
     delFilterCategory: string;
+    tabEmailLog: string;
+    emailLogTitle: string;
+    emailLogDesc: string;
+    emailColTime: string;
+    emailColRecipient: string;
+    emailColType: string;
+    emailColCycle: string;
+    emailColStatus: string;
   };
   comments: {
     title: string;

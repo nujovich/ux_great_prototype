@@ -13,9 +13,10 @@ import { useUIStore } from '../store/uiStore';
 import { useT } from '../i18n/useT';
 import { formatDate } from '../lib/format';
 import { InductorDeleteTab } from '../components/admin/InductorDeleteTab';
+import { EMAIL_LOG } from '../fixtures/emailLog';
 import type { Metier } from '../types';
 
-type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles' | 'inductors' | 'hvt';
+type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles' | 'inductors' | 'hvt' | 'emailLog';
 
 export function AdminPage() {
   return (
@@ -37,6 +38,7 @@ function AdminContent() {
     { key: 'cycles',      label: t('admin.tabCycles'),       requiresAdmin: true },
     { key: 'inductors',   label: t('admin.tabInductors') },   // No requiresAdmin: RCRC can access (DEL-BR-01)
     { key: 'hvt',         label: t('admin.tabHvt'),          requiresAdmin: true },
+    { key: 'emailLog',    label: t('admin.tabEmailLog'),     requiresAdmin: true },
   ];
   const tabs = allTabs.filter((tb) => !tb.requiresAdmin || can('view:admin'));
   return (
@@ -68,6 +70,7 @@ function AdminContent() {
       {tab === 'cycles' && <CyclesTab />}
       {tab === 'inductors' && <InductorDeleteTab />}
       {tab === 'hvt' && <HvtSimulationTab />}
+      {tab === 'emailLog' && <EmailLogTab />}
     </div>
   );
 }
@@ -424,6 +427,68 @@ function CyclesTab() {
                 </td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function EmailLogTab() {
+  const cycles = useDataStore((s) => s.cycles);
+  const activeCycleId = cycles.find((c) => c.is_active)?.id;
+  const t = useT();
+
+  // EMAIL-BR-04: filter to active cycle only
+  const logs = EMAIL_LOG.filter((e) => e.cycleId === activeCycleId);
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-slate-200 bg-white p-3">
+        <h3 className="font-semibold text-slate-800">{t('admin.emailLogTitle')}</h3>
+        <p className="mt-1 text-xs text-slate-500">{t('admin.emailLogDesc')}</p>
+      </div>
+      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.emailColTime')}</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.emailColRecipient')}</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.emailColType')}</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.emailColCycle')}</th>
+              <th className="px-3 py-2 text-left font-medium">{t('admin.emailColStatus')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="px-3 py-4 text-center text-sm text-slate-400">
+                  No emails logged for the active cycle.
+                </td>
+              </tr>
+            ) : (
+              logs.map((log) => (
+                <tr key={log.id} className="border-t border-slate-100">
+                  <td className="px-3 py-2 text-xs text-slate-600">{formatDate(log.timestamp)}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-slate-700">{log.recipient}</td>
+                  <td className="px-3 py-2 text-xs">
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 font-medium text-slate-600">
+                      {log.type}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-xs text-slate-600">{log.cycleId}</td>
+                  <td className="px-3 py-2">
+                    {log.success ? (
+                      <span className="text-xs font-medium text-emerald-700">✓ sent</span>
+                    ) : (
+                      <span className="text-xs font-medium text-red-600" title={log.errorMessage}>
+                        ✗ failed
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
