@@ -191,6 +191,18 @@ export interface Translations {
     hvtDesc: string;
     hvtApproveAll: string;
     hvtNoSent: string;
+    tabInductors: string;
+    delTitle: string;
+    delDesc: string;
+    delSelectAll: string;
+    delDeleteBtn: string;
+    delConfirmTitle: string;
+    delConfirmDesc: string;
+    delConfirm: string;
+    delCancel: string;
+    delSummary: string;
+    delEmpty: string;
+    delFilterCategory: string;
   };
   comments: {
     title: string;

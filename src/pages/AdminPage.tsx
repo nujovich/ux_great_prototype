@@ -12,9 +12,10 @@ import { useDataStore } from '../store/dataStore';
 import { useUIStore } from '../store/uiStore';
 import { useT } from '../i18n/useT';
 import { formatDate } from '../lib/format';
+import { InductorDeleteTab } from '../components/admin/InductorDeleteTab';
 import type { Metier } from '../types';
 
-type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles' | 'hvt';
+type Tab = 'workload' | 'categories' | 'rules' | 'rates' | 'cycles' | 'inductors' | 'hvt';
 
 export function AdminPage() {
   return (
@@ -34,6 +35,7 @@ function AdminContent() {
     { key: 'rules',       label: t('admin.tabRules'),        requiresAdmin: true },
     { key: 'rates',       label: t('admin.tabRates'),        requiresAdmin: true },
     { key: 'cycles',      label: t('admin.tabCycles'),       requiresAdmin: true },
+    { key: 'inductors',   label: t('admin.tabInductors') },   // No requiresAdmin: RCRC can access (DEL-BR-01)
     { key: 'hvt',         label: t('admin.tabHvt'),          requiresAdmin: true },
   ];
   const tabs = allTabs.filter((tb) => !tb.requiresAdmin || can('view:admin'));
@@ -64,6 +66,7 @@ function AdminContent() {
       {tab === 'rules' && <RulesTab />}
       {tab === 'rates' && <RatesTab />}
       {tab === 'cycles' && <CyclesTab />}
+      {tab === 'inductors' && <InductorDeleteTab />}
       {tab === 'hvt' && <HvtSimulationTab />}
     </div>
   );
