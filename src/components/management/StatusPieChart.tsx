@@ -1,5 +1,6 @@
 import type { LineStatus } from '../../types';
 import { useT } from '../../i18n/useT';
+import { statusI18nKey } from '../../lib/stateMachine';
 
 const STATUS_COLORS: Record<LineStatus, string> = {
   'To do':    '#94a3b8',
@@ -67,7 +68,7 @@ export function StatusPieChart({ data, title }: Props) {
                 className="inline-block h-3 w-3 shrink-0 rounded-full"
                 style={{ background: STATUS_COLORS[status] }}
               />
-              <span className="text-slate-700">{t(`status.${status}`)}</span>
+              <span className="text-slate-700">{t(statusI18nKey(status))}</span>
               <span className="font-mono text-slate-500">
                 {count} ({Math.round(frac * 100)}%)
               </span>

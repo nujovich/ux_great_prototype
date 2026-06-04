@@ -32,9 +32,11 @@ export function calcTotalDays(
       ?.crans.find((c) => c.id === sel.selectedCranId)
       ?.jus ?? [];
     const selDays = cranJUs.reduce((sum, ju) => {
+      // Day value = the JU's own occurrence. Non-locked JUs mirror the inductor
+      // occurrence (set in updateInductorOccurrence); locked JUs keep their value.
       const juOcc = sel.juOccurrences.find((o) => o.juId === ju.id);
       const baseOcc = juOcc?.occurrence ?? ju.occurrence;
-      return sum + sel.inductorOccurrence * baseOcc;
+      return sum + baseOcc;
     }, 0);
     return acc + selDays;
   }, 0);

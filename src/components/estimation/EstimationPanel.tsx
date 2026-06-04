@@ -107,7 +107,15 @@ export function EstimationPanel({ line, onClose }: Props) {
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
-        return { ...sel, inductorOccurrence: occ };
+        // Non-locked JUs mirror the inductor occurrence; locked JUs keep their
+        // manually-set value (BR-09: occurrence_locked defaults to false).
+        return {
+          ...sel,
+          inductorOccurrence: occ,
+          juOccurrences: sel.juOccurrences.map((jo) =>
+            jo.locked ? jo : { ...jo, occurrence: occ },
+          ),
+        };
       }),
     );
   }, []);
@@ -534,7 +542,7 @@ function InductorTreeView({
         const indDays = cranJUs.reduce((acc, ju) => {
           const jo = sel.juOccurrences.find((o) => o.juId === ju.id);
           const baseOcc = jo?.occurrence ?? ju.occurrence;
-          return acc + sel.inductorOccurrence * baseOcc;
+          return acc + baseOcc;
         }, 0);
 
         return (
@@ -590,7 +598,7 @@ function InductorTreeView({
               const jo = sel.juOccurrences.find((o) => o.juId === ju.id) ?? {
                 juId: ju.id, occurrence: sel.inductorOccurrence, locked: false,
               };
-              const juDays = sel.inductorOccurrence * jo.occurrence;
+              const juDays = jo.occurrence;
               return (
                 <div
                   key={ju.id}
@@ -681,7 +689,7 @@ function FlatJUView({
           {rows.map(({ ju, sel, jo }) => {
             const ind = INDUCTORS.find((i) => i.id === sel.inductorId);
             const cran: Cran | undefined = INDUCTORS.find((i) => i.id === sel.inductorId)?.crans.find((c) => c.id === sel.selectedCranId);
-            const juDays = jo.occurrence * sel.inductorOccurrence;
+            const juDays = jo.occurrence;
             return (
               <tr
                 key={ju.id}

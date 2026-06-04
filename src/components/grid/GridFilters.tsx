@@ -1,5 +1,6 @@
 import type { LineStatus, Metier } from '../../types';
 import { useT } from '../../i18n/useT';
+import { statusI18nKey } from '../../lib/stateMachine';
 
 const STATUSES: LineStatus[] = ['To do', 'Draft', 'Estimated', 'Sent', 'Rejected', 'Approved'];
 const METIERS: Metier[] = ['H-DESIGN', 'H-SOFTWARE', 'H-TUNING', 'H-PROJECT', 'H-CUSTOMER', 'H-TESTING', 'H-NP'];
@@ -37,7 +38,7 @@ export function GridFiltersBar({ value, onChange }: Props) {
         >
           <option value="all">{t('filters.all')}</option>
           {STATUSES.map((s) => (
-            <option key={s} value={s}>{t(`status.${s}`)}</option>
+            <option key={s} value={s}>{t(statusI18nKey(s))}</option>
           ))}
         </select>
       </div>

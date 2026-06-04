@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 import type { LineStatus } from '../../types';
 import { useT } from '../../i18n/useT';
+import { statusI18nKey } from '../../lib/stateMachine';
 
 const classes: Record<LineStatus, string> = {
   'To do':    'bg-slate-100 text-slate-600 border-slate-200',
@@ -20,7 +21,7 @@ export function StatusBadge({ status }: { status: LineStatus }) {
         classes[status],
       )}
     >
-      {t(`status.${status}`)}
+      {t(statusI18nKey(status))}
     </span>
   );
 }

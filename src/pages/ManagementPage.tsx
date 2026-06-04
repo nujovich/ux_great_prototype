@@ -4,6 +4,7 @@ import { RoleGate } from '../components/shared/RoleGate';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { StatusPieChart } from '../components/management/StatusPieChart';
 import { useT } from '../i18n/useT';
+import { statusI18nKey } from '../lib/stateMachine';
 import type { LineStatus, Metier } from '../types';
 
 // MGMT-BR-04: H-NP and H-PROJECT are excluded from Management View
@@ -66,7 +67,7 @@ function ManagementContent() {
       <div className="flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-3">
         <FilterSelect label={t('filters.status')} value={statusFilter} onChange={(v) => setStatusFilter(v as LineStatus | 'all')}>
           <option value="all">{t('filters.all')}</option>
-          {STATUSES.map((s) => (<option key={s} value={s}>{t(`status.${s}`)}</option>))}
+          {STATUSES.map((s) => (<option key={s} value={s}>{t(statusI18nKey(s))}</option>))}
         </FilterSelect>
         <FilterSelect label={t('filters.metier')} value={metierFilter} onChange={(v) => setMetierFilter(v as Metier | 'all')}>
           <option value="all">{t('filters.all')}</option>
