@@ -27,7 +27,10 @@ function FinalReviewContent() {
   const t = useT();
 
   const activeCycleId = useMemo(() => cycles.find((c) => c.is_active)?.id ?? 'export', [cycles]);
-  const approvedLines = useMemo(() => lines.filter((l) => l.status === 'Approved'), [lines]);
+  const approvedLines = useMemo(
+    () => lines.filter((l) => l.status === 'Approved' && l.cycleId === activeCycleId),
+    [lines, activeCycleId],
+  );
 
   const byMetier = useMemo(() => {
     const map = new Map<Metier, { count: number; days: number; kEuro: number }>();
