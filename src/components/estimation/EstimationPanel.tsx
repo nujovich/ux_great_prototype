@@ -343,7 +343,6 @@ export function EstimationPanel({ line, onClose }: Props) {
 
               <CustomJUSection
                 customJUs={customJUs}
-                canEdit={canEdit}
                 canEditCustomJU={canEditCustomJU}
                 onChange={setCustomJUs}
               />
@@ -739,10 +738,9 @@ function FlatJUView({
 // CustomJUSection
 // ─────────────────────────────────────────────
 function CustomJUSection({
-  customJUs, canEdit, canEditCustomJU, onChange,
+  customJUs, canEditCustomJU, onChange,
 }: {
   customJUs: CustomJU[];
-  canEdit: boolean;
   canEditCustomJU: boolean;
   onChange: React.Dispatch<React.SetStateAction<CustomJU[]>>;
 }) {
@@ -750,7 +748,7 @@ function CustomJUSection({
     <div className="mt-6 border-t border-slate-100 pt-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Custom JUs</span>
-        {canEdit && canEditCustomJU && (
+        {canEditCustomJU && (
           <Button
             size="sm"
             variant="secondary"
@@ -772,7 +770,7 @@ function CustomJUSection({
                 value={ju.description}
                 placeholder="Descripción"
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)))}
-                disabled={!canEdit || !canEditCustomJU}
+                disabled={!canEditCustomJU}
                 className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-50"
               />
               <input
@@ -781,10 +779,10 @@ function CustomJUSection({
                 step={0.5}
                 value={ju.days}
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, days: Number(e.target.value) } : x)))}
-                disabled={!canEdit || !canEditCustomJU}
+                disabled={!canEditCustomJU}
                 className="w-16 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50"
               />
-              {canEdit && canEditCustomJU && (
+              {canEditCustomJU && (
                 <button onClick={() => onChange((j) => j.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500">
                   <Trash2 size={13} />
                 </button>

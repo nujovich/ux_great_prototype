@@ -127,3 +127,16 @@ describe('Workload Standard permissions (transversal_specs.py)', () => {
     expect(can('CPO', 'upload:workload-standards')).toBe(false);
   });
 });
+
+describe('Custom JU permissions (pre_estimation_specs.py — BR-20)', () => {
+  it('Engineer, PMO, and Admin can create Custom JUs (BR-20)', () => {
+    expect(can('Engineer', 'edit:custom-jus')).toBe(true);
+    expect(can('PMO', 'edit:custom-jus')).toBe(true);
+    expect(can('Admin', 'edit:custom-jus')).toBe(true);
+  });
+
+  it('RCRC and CPO cannot create Custom JUs (BR-20)', () => {
+    expect(can('RCRC', 'edit:custom-jus')).toBe(false);
+    expect(can('CPO', 'edit:custom-jus')).toBe(false);
+  });
+});
