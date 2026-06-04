@@ -61,7 +61,7 @@ export function EstimationPanel({ line, onClose }: Props) {
 
   const locked = !line || line.status === 'Estimated' || line.status === 'Sent' || line.status === 'Approved';
   const canEdit = can('edit:estimation') && !locked;
-  const canEditCustomJU = can('edit:custom-jus');
+  const canEditCustomJU = can('edit:custom-jus') && !locked;
 
   const totalDays = useMemo(
     () => calcTotalDays(selections, INDUCTORS, customJUs, globalOccurrences),
