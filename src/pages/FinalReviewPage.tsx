@@ -6,7 +6,7 @@ import { useUIStore } from '../store/uiStore';
 import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { formatDays, formatKEuro } from '../lib/format';
-import { exportToCsv } from '../lib/csvExport';
+import { exportFinalReviewCsv } from '../lib/finalReviewCsv';
 import { useT } from '../i18n/useT';
 import { useSortable } from '../lib/useSortable';
 import type { Metier } from '../types';
@@ -22,6 +22,7 @@ export function FinalReviewPage() {
 function FinalReviewContent() {
   const lines = useDataStore((s) => s.lines);
   const cycles = useDataStore((s) => s.cycles);
+  const allocations = useDataStore((s) => s.allocations);
   const can = useRoleStore((s) => s.can);
   const pushToast = useUIStore((s) => s.pushToast);
   const t = useT();
@@ -77,7 +78,7 @@ function FinalReviewContent() {
           {can('export:final-review') && (
             <Button
               variant="secondary"
-              onClick={() => exportToCsv(approvedLines, `final-review-${activeCycleId}.csv`)}
+              onClick={() => exportFinalReviewCsv(approvedLines, allocations, `final-review-${activeCycleId}.csv`)}
             >
               <Download size={14} /> {t('finalReview.exportCsv')}
             </Button>
