@@ -273,6 +273,7 @@ export interface Translations {
     colFixed: string;
     colDays: string;
     selectCranWarning: string;
+    noWorkloadStandard: string;
     toastDraftSaved: string;
     toastPromoted: string;
   };

@@ -273,6 +273,7 @@ export const es: Translations = {
     colFixed: 'Fixed',
     colDays: 'Días',
     selectCranWarning: '⚠ Seleccioná un cran para cargar las Job Units',
+    noWorkloadStandard: 'Sin estándar de carga para esta combinación',
     toastDraftSaved: 'Borrador guardado para {id}',
     toastPromoted: '{id} promovida a estimación definitiva',
   },

@@ -28,4 +28,14 @@ describe('getT', () => {
     const result = t('bulk.selected', { n: 5 });
     expect(result).toContain('5');
   });
+
+  it('translates the no-workload-standard message (es)', () => {
+    const t = getT('es');
+    expect(t('panel.noWorkloadStandard')).toBe('Sin estándar de carga para esta combinación');
+  });
+
+  it('translates the no-workload-standard message (en)', () => {
+    const t = getT('en');
+    expect(t('panel.noWorkloadStandard')).toBe('No workload standard found for this combination');
+  });
 });

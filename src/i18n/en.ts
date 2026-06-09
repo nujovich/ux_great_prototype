@@ -273,6 +273,7 @@ export const en: Translations = {
     colFixed: 'Fixed',
     colDays: 'Days',
     selectCranWarning: '⚠ Select a cran to load Job Units',
+    noWorkloadStandard: 'No workload standard found for this combination',
     toastDraftSaved: 'Draft saved for {id}',
     toastPromoted: '{id} promoted to definitive estimation',
   },

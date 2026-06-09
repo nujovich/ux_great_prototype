@@ -524,7 +524,8 @@ function InductorTreeView({
   if (selections.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
-        {t('panel.noInductors')}
+        <div>{t('panel.noInductors')}</div>
+        <div className="mt-1 text-slate-400">{t('panel.noWorkloadStandard')}</div>
       </div>
     );
   }
@@ -587,11 +588,15 @@ function InductorTreeView({
               )}
             </div>
 
-            {!sel.selectedCranId && (
+            {availableCrans.length === 0 || (sel.selectedCranId && cranJUs.length === 0) ? (
+              <div className="border-t border-slate-100 bg-slate-50 px-4 py-1.5 text-[10px] text-slate-500">
+                {t('panel.noWorkloadStandard')}
+              </div>
+            ) : !sel.selectedCranId ? (
               <div className="border-t border-amber-100 bg-amber-50 px-4 py-1.5 text-[10px] text-amber-700">
                 {t('panel.selectCranWarning')}
               </div>
-            )}
+            ) : null}
 
             {sel.selectedCranId && isExpanded && cranJUs.map((ju) => {
               const jo = sel.juOccurrences.find((o) => o.juId === ju.id) ?? {

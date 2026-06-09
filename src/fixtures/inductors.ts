@@ -179,4 +179,10 @@ export const INDUCTORS: PrototypeInductor[] = [
       ]),
     ],
   },
+  // Edge case (QA): inductor with no cran → no workload standard available for it.
+  // Exercises the "Sin estándar de carga para esta combinación" message in the panel.
+  {
+    id: 'ind-13', name: 'R&D spike', category: 'General',
+    crans: [],
+  },
 ];
