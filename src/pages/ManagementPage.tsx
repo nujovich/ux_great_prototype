@@ -9,7 +9,7 @@ import type { LineStatus, Metier } from '../types';
 
 // MGMT-BR-04: H-NP and H-PROJECT are excluded from Management View
 const METIERS: Metier[] = ['H-DESIGN', 'H-SOFTWARE', 'H-TUNING', 'H-CUSTOMER', 'H-TESTING'];
-const STATUSES: LineStatus[] = ['To do', 'Draft', 'Estimated', 'Sent', 'Rejected', 'Approved'];
+const STATUSES: LineStatus[] = ['To do', 'Draft', 'Estimated', 'Sent', 'Modification Requested', 'Approved'];
 
 export function ManagementPage() {
   return (
@@ -41,7 +41,7 @@ function ManagementContent() {
   const matrix = useMemo(() => {
     const m: Record<Metier, Record<LineStatus, number>> = {} as never;
     METIERS.forEach((met) => {
-      m[met] = { 'To do': 0, 'Draft': 0, 'Estimated': 0, 'Sent': 0, 'Rejected': 0, 'Approved': 0 };
+      m[met] = { 'To do': 0, 'Draft': 0, 'Estimated': 0, 'Sent': 0, 'Modification Requested': 0, 'Approved': 0 };
     });
     filtered.forEach((l) => {
       m[l.metier][l.status] += 1;

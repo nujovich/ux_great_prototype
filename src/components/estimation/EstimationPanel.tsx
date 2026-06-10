@@ -43,7 +43,7 @@ export function EstimationPanel({ line, onClose }: Props) {
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [confirmPromote, setConfirmPromote] = useState(false);
   const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(
-    line?.status === 'Draft' || line?.status === 'Estimated' || line?.status === 'Rejected',
+    line?.status === 'Draft' || line?.status === 'Estimated' || line?.status === 'Modification Requested',
   );
 
   useEffect(() => {
@@ -274,7 +274,7 @@ export function EstimationPanel({ line, onClose }: Props) {
           </div>
 
           {/* Rejection banner */}
-          {line.status === 'Rejected' && line.rejectionComment && (
+          {line.status === 'Modification Requested' && line.rejectionComment && (
             <div className="mx-6 mt-3 flex-shrink-0 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
               <div className="font-semibold">{t('panel.rejectionBanner')}</div>
               <p className="mt-1">{line.rejectionComment}</p>

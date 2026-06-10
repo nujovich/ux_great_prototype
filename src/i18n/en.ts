@@ -16,7 +16,7 @@ export const en: Translations = {
     draft: 'Draft',
     estimated: 'Estimated',
     sent: 'Sent',
-    rejected: 'Rejected',
+    modification_requested: 'Modification Requested',
     approved: 'Approved',
   },
   roleDesc: {

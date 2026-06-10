@@ -789,7 +789,7 @@ export interface components {
         /** @enum {string} */
         Metier: "H-DESIGN" | "H-TUNING" | "H-SOFTWARE" | "H-CUSTOMER" | "H-PROJECT" | "H-NP" | "H-TESTING";
         /** @enum {string} */
-        Status: "To do" | "Draft" | "Estimated" | "Sent" | "Rejected" | "Approved";
+        Status: "To do" | "Draft" | "Estimated" | "Sent" | "Modification Requested" | "Approved";
         /** @enum {string} */
         CostType: "FTE" | "TSA" | "TC";
         ProjectLineListItem: {

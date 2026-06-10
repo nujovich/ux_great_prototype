@@ -7,7 +7,7 @@ const STATUS_COLORS: Record<LineStatus, string> = {
   'Draft':    '#f59e0b',
   'Estimated': '#3b82f6',
   'Sent':     '#a855f7',
-  'Rejected': '#ef4444',
+  'Modification Requested': '#ef4444',
   'Approved': '#22c55e',
 };
 

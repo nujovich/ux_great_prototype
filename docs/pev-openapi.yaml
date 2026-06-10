@@ -85,7 +85,7 @@ components:
 
     Status:
       type: string
-      enum: ["To do", Draft, Estimated, Sent, Rejected, Approved]
+      enum: ["To do", Draft, Estimated, Sent, "Modification Requested", Approved]
 
     CostType:
       type: string

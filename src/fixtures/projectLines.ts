@@ -197,7 +197,7 @@ export const PROJECT_LINES: ProjectLine[] = [
   // ── Rejected (3) ───────────────────────────────────────────
   {
     id: 'PL-021', project_id: 'P-AUTH-H-DESIGN', name: 'Password recovery v2',
-    metier: M('H-DESIGN'), status: S('Rejected'), updated_at: '2026-05-21T16:00:00Z',
+    metier: M('H-DESIGN'), status: S('Modification Requested'), updated_at: '2026-05-21T16:00:00Z',
     lineName: 'Password recovery v2', projectName: 'Auth Platform',
     assignedEngineerId: 'eng-1', estimatedDays: 6, estimatedKEuro: 5.1,
     rejectionComment: 'Missing transactional emails and rate limiting. Review and re-estimate including those inductors.',
@@ -208,7 +208,7 @@ export const PROJECT_LINES: ProjectLine[] = [
   },
   {
     id: 'PL-022', project_id: 'P-MKT-H-SOFTWARE', name: 'CRM connector',
-    metier: M('H-SOFTWARE'), status: S('Rejected'), updated_at: '2026-05-21T16:00:00Z',
+    metier: M('H-SOFTWARE'), status: S('Modification Requested'), updated_at: '2026-05-21T16:00:00Z',
     lineName: 'CRM connector', projectName: 'Marketing Tools',
     assignedEngineerId: 'eng-3', estimatedDays: 9, estimatedKEuro: 7.2,
     rejectionComment: 'Estimation too low vs. previous cycle. Review external integration inductors.',
@@ -218,7 +218,7 @@ export const PROJECT_LINES: ProjectLine[] = [
   },
   {
     id: 'PL-023', project_id: 'P-DATA-H-TUNING', name: 'Data lineage',
-    metier: M('H-TUNING'), status: S('Rejected'), updated_at: '2026-05-20T16:00:00Z',
+    metier: M('H-TUNING'), status: S('Modification Requested'), updated_at: '2026-05-20T16:00:00Z',
     lineName: 'Data lineage tooling', projectName: 'Data Platform',
     assignedEngineerId: 'eng-5', estimatedDays: 18, estimatedKEuro: 17.1,
     rejectionComment: 'Define scope with DataGov first. Pause and re-estimate.',

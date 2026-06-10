@@ -48,7 +48,7 @@ function ReviewContent() {
   const groups = useMemo(() => ({
     estimated: visibleLines.filter((l) => l.status === 'Estimated'),
     sent:      visibleLines.filter((l) => l.status === 'Sent'),
-    rejected:  visibleLines.filter((l) => l.status === 'Rejected'),
+    rejected:  visibleLines.filter((l) => l.status === 'Modification Requested'),
     approved:  visibleLines.filter((l) => l.status === 'Approved'),
   }), [visibleLines]);
 
