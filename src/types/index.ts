@@ -105,6 +105,18 @@ export interface ProjectLine extends Omit<ProjectLineListItem, 'status'> {
   projectRanking?: string;
   injectionSystem?: string | null;
   spDate?: string;
+  // ── PRD grid columns (HIW-174 Phase 2) ──────────────────
+  requestType?: string;
+  client?: string;
+  market?: string;
+  allianceCode?: string;
+  vehicleCode?: string;
+  energy?: string;
+  estimateType?: string;
+  engineering?: string;
+  pcDate?: string;
+  coDate?: string;
+  sopDate?: string;
   durationMonths?: number;
   description?: string;
   cycleId: string;
