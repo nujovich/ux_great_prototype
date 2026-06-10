@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CheckCircle2, XCircle, Send, MessageSquare } from 'lucide-react';
+import { XCircle, Send } from 'lucide-react';
 import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
 import { useUIStore } from '../store/uiStore';
@@ -9,6 +9,8 @@ import { Modal } from '../components/shared/Modal';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { EmptyState } from '../components/shared/EmptyState';
 import { formatDays, formatKEuro, formatDate } from '../lib/format';
+import { useT } from '../i18n/useT';
+import { useSortable } from '../lib/useSortable';
 import { ENGINEERS } from '../fixtures/engineers';
 import type { ProjectLine } from '../types';
 
@@ -22,35 +24,48 @@ export function EstimationReviewPage() {
 
 function ReviewContent() {
   const lines = useDataStore((s) => s.lines);
+  const activeCycleId = useDataStore((s) => s.cycles.find((c) => c.is_active)?.id);
   const setLineStatus = useDataStore((s) => s.setLineStatus);
   const rejectLine = useDataStore((s) => s.rejectLine);
   const can = useRoleStore((s) => s.can);
+  const currentRole = useRoleStore((s) => s.currentRole);
+  const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
   const pushToast = useUIStore((s) => s.pushToast);
+  const t = useT();
 
   const [rejectTarget, setRejectTarget] = useState<ProjectLine | null>(null);
   const [rejectComment, setRejectComment] = useState('');
 
-  const groups = useMemo(() => {
-    return {
-      estimated: lines.filter((l) => l.status === 'estimated'),
-      rejected: lines.filter((l) => l.status === 'rejected'),
-      approved: lines.filter((l) => l.status === 'approved' || l.status === 'allocated'),
-    };
-  }, [lines]);
+  // ERev-BR-09: only show lines from the active cycle
+  const visibleLines = useMemo(() => {
+    let result = activeCycleId ? lines.filter((l) => l.cycleId === activeCycleId) : lines;
+    if (currentRole === 'Engineer' && activeEngineerId) {
+      result = result.filter((l) => l.assignedEngineerId === activeEngineerId);
+    }
+    return result;
+  }, [lines, activeCycleId, currentRole, activeEngineerId]);
 
-  function handleApprove(line: ProjectLine) {
-    setLineStatus(line.id, 'approved');
-    pushToast(`${line.id} aprobada`, 'success');
+  const groups = useMemo(() => ({
+    estimated: visibleLines.filter((l) => l.status === 'Estimated'),
+    sent:      visibleLines.filter((l) => l.status === 'Sent'),
+    rejected:  visibleLines.filter((l) => l.status === 'Modification Requested'),
+    approved:  visibleLines.filter((l) => l.status === 'Approved'),
+  }), [visibleLines]);
+
+  function handleSendToHVT(line: ProjectLine) {
+    setLineStatus(line.id, 'Sent');
+    pushToast(`${line.lineName} enviada al HVT — estado: Enviada (BR-16)`, 'info');
   }
 
-  function handleSendToCPO(line: ProjectLine) {
-    pushToast(`${line.id} enviada al CPO para aprobación final`, 'info');
+  function handleSendAllToHVT() {
+    groups.estimated.forEach((l) => setLineStatus(l.id, 'Sent'));
+    pushToast(`${groups.estimated.length} línea(s) enviadas al HVT`, 'success');
   }
 
   function submitReject() {
     if (!rejectTarget || !rejectComment.trim()) return;
     rejectLine(rejectTarget.id, rejectComment.trim());
-    pushToast(`${rejectTarget.id} rechazada y devuelta al engineer`, 'info');
+    pushToast(`${rejectTarget.id} devuelta para modificación al engineer`, 'info');
     setRejectTarget(null);
     setRejectComment('');
   }
@@ -58,32 +73,36 @@ function ReviewContent() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Estimation Review</h1>
-        <p className="text-sm text-slate-600">
-          Revisión de estimaciones definitivas. Aprobá, enviá al CPO o rechazá con comentario.
-        </p>
+        <h1 className="text-xl font-bold text-slate-900">{t('estReview.title')}</h1>
+        <p className="text-sm text-slate-600">{t('estReview.subtitle')}</p>
       </div>
 
+      {groups.estimated.length > 0 && can('send:hvt') && (
+        <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5">
+          <span className="text-sm text-blue-700">
+            {t('estReview.bulkBar', { n: groups.estimated.length })}
+          </span>
+          <Button size="sm" variant="primary" onClick={handleSendAllToHVT}>
+            <Send size={14} /> {t('estReview.sendAll', { n: groups.estimated.length })}
+          </Button>
+        </div>
+      )}
+
       <Section
-        title="Pendientes de revisión"
-        description="Líneas con estimación definitiva esperando aprobación."
+        title={t('estReview.pending')}
+        description={t('estReview.pendingDesc')}
         lines={groups.estimated}
-        emptyText="No hay estimaciones pendientes de revisión."
+        emptyText={t('estReview.noPending')}
         renderActions={(l) => (
           <div className="flex gap-2">
-            {can('approve:estimation') && (
-              <Button size="sm" variant="primary" onClick={() => handleApprove(l)}>
-                <CheckCircle2 size={14} /> Aprobar
-              </Button>
-            )}
-            {can('send:cpo') && (
-              <Button size="sm" variant="secondary" onClick={() => handleSendToCPO(l)}>
-                <Send size={14} /> Enviar a CPO
+            {can('send:hvt') && (
+              <Button size="sm" variant="secondary" onClick={() => handleSendToHVT(l)}>
+                <Send size={14} /> {t('estReview.sendToHvt')}
               </Button>
             )}
             {can('reject:estimation') && (
               <Button size="sm" variant="danger" onClick={() => setRejectTarget(l)}>
-                <XCircle size={14} /> Rechazar
+                <XCircle size={14} /> {t('estReview.reject')}
               </Button>
             )}
           </div>
@@ -91,49 +110,72 @@ function ReviewContent() {
       />
 
       <Section
-        title="Rechazadas (en rework)"
-        description="Devueltas al engineer con comentario."
+        title={t('estReview.sent')}
+        description={t('estReview.sentDesc')}
+        lines={groups.sent}
+        emptyText={t('estReview.noSent')}
+      />
+
+      {can('reject:estimation') && groups.sent.length > 0 && (
+        <Section
+          title={t('estReview.cpoPanel')}
+          description={t('estReview.cpoPanelDesc')}
+          emptyText={t('estReview.noSent')}
+          lines={groups.sent}
+          renderActions={(l) => (
+            <div className="flex gap-2">
+              {/* ERev-BR-10: CPO cannot approve directly — approval comes from HVT only */}
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => setRejectTarget(l)}
+              >
+                <XCircle size={14} /> {t('estReview.reject')}
+              </Button>
+            </div>
+          )}
+        />
+      )}
+
+      {/* ERev-BR-07: rejection comments are not shown in the Estimation Review grid */}
+      <Section
+        title={t('estReview.rejected')}
+        description={t('estReview.rejectedDesc')}
         lines={groups.rejected}
-        emptyText="Sin líneas rechazadas."
-        renderActions={(l) => (
-          <div className="flex items-start gap-2 text-xs text-red-700 max-w-md">
-            <MessageSquare size={14} className="mt-0.5 shrink-0" />
-            <span>{l.rejectionComment}</span>
-          </div>
-        )}
+        emptyText={t('estReview.noRejected')}
       />
 
       <Section
-        title="Aprobadas"
-        description="Listas para allocation."
+        title={t('estReview.approved')}
+        description={t('estReview.approvedDesc')}
         lines={groups.approved}
-        emptyText="Aún no hay aprobaciones."
+        emptyText={t('estReview.noApproved')}
       />
 
       <Modal
         open={rejectTarget !== null}
         onClose={() => setRejectTarget(null)}
-        title={`Rechazar ${rejectTarget?.id ?? ''}`}
+        title={t('estReview.rejectModalTitle', { id: rejectTarget?.id ?? '' })}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setRejectTarget(null)}>Cancelar</Button>
+            <Button variant="secondary" onClick={() => setRejectTarget(null)}>{t('estReview.cancel')}</Button>
             <Button variant="danger" onClick={submitReject} disabled={!rejectComment.trim()}>
-              Rechazar y devolver
+              {t('estReview.rejectConfirm')}
             </Button>
           </>
         }
       >
         <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Motivo del rechazo *
+          {t('estReview.rejectReason')}
         </label>
         <textarea
           value={rejectComment}
           onChange={(e) => setRejectComment(e.target.value)}
           rows={4}
-          placeholder="Explicá qué hay que ajustar para que el engineer pueda re-estimar…"
+          placeholder={t('estReview.rejectPlaceholder')}
           className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none"
         />
-        <p className="mt-2 text-xs text-slate-500">El engineer verá este comentario en el panel de estimación.</p>
+        <p className="mt-2 text-xs text-slate-500">{t('estReview.rejectNote')}</p>
       </Modal>
     </div>
   );
@@ -148,6 +190,8 @@ interface SectionProps {
 }
 
 function Section({ title, description, lines, emptyText, renderActions }: SectionProps) {
+  const { sorted, requestSort, getSortIcon } = useSortable(lines);
+  const t = useT();
   return (
     <section>
       <div className="mb-2">
@@ -163,17 +207,29 @@ function Section({ title, description, lines, emptyText, renderActions }: Sectio
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500">
               <tr>
-                <th className="px-3 py-2 text-left font-medium">Línea</th>
-                <th className="px-3 py-2 text-left font-medium">Engineer</th>
-                <th className="px-3 py-2 text-left font-medium">Status</th>
-                <th className="px-3 py-2 text-right font-medium">Días</th>
-                <th className="px-3 py-2 text-right font-medium">k€</th>
-                <th className="px-3 py-2 text-left font-medium">Actualizada</th>
-                {renderActions && <th className="px-3 py-2 text-right font-medium">Acciones</th>}
+                <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('lineName')}>
+                  {t('estReview.colLine')} {getSortIcon('lineName')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('assignedEngineerId')}>
+                  {t('estReview.colEngineer')} {getSortIcon('assignedEngineerId')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('status')}>
+                  {t('estReview.colStatus')} {getSortIcon('status')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('estimatedDays')}>
+                  {t('estReview.colDays')} {getSortIcon('estimatedDays')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('estimatedKEuro')}>
+                  {t('estReview.colKeuro')} {getSortIcon('estimatedKEuro')}
+                </th>
+                <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('lastUpdatedAt')}>
+                  {t('estReview.colUpdated')} {getSortIcon('lastUpdatedAt')}
+                </th>
+                {renderActions && <th className="px-3 py-2 text-right font-medium">{t('estReview.colActions')}</th>}
               </tr>
             </thead>
             <tbody>
-              {lines.map((l) => {
+              {sorted.map((l) => {
                 const eng = ENGINEERS.find((e) => e.id === l.assignedEngineerId);
                 return (
                   <tr key={l.id} className="border-t border-slate-100">

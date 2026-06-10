@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search } from 'lucide-react';
-import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine } from '../../types';
+import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran } from '../../types';
 import { INDUCTORS } from '../../fixtures/inductors';
-import { CRANS } from '../../fixtures/crans';
-import { JOB_UNITS } from '../../fixtures/jobUnits';
 import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
+import { validateBeforeSave } from '../../lib/validation';
 import { formatDays, formatKEuro } from '../../lib/format';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
@@ -13,6 +12,9 @@ import { useDataStore } from '../../store/dataStore';
 import { useUIStore } from '../../store/uiStore';
 import { CopyEstimationModal } from './CopyEstimationModal';
 import { ManageInductorsModal } from './ManageInductorsModal';
+import { CommentSection } from './CommentSection';
+import { PrototypeEstimationForm } from './PrototypeEstimationForm';
+import { useT } from '../../i18n/useT';
 
 interface Props {
   line: ProjectLine | null;
@@ -21,9 +23,14 @@ interface Props {
 
 export function EstimationPanel({ line, onClose }: Props) {
   const can = useRoleStore((s) => s.can);
+  const currentRole = useRoleStore((s) => s.currentRole);
+  const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
   const existing = useDataStore((s) => (line ? s.estimations[line.id] : undefined));
   const setEstimation = useDataStore((s) => s.setEstimation);
   const setLineStatus = useDataStore((s) => s.setLineStatus);
+  const addComment = useDataStore((s) => s.addComment);
+  const protoEst = useDataStore((s) => (line ? s.prototypeEstimations[line.id] : undefined));
+  const setPrototypeEstimation = useDataStore((s) => s.setPrototypeEstimation);
   const pushToast = useUIStore((s) => s.pushToast);
 
   const [selections, setSelections] = useState<InductorSelection[]>([]);
@@ -35,36 +42,35 @@ export function EstimationPanel({ line, onClose }: Props) {
   const [showManage, setShowManage] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [confirmPromote, setConfirmPromote] = useState(false);
+  const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(
+    line?.status === 'Draft' || line?.status === 'Estimated' || line?.status === 'Modification Requested',
+  );
 
   useEffect(() => {
     if (!line) return;
-    if (existing) {
-      setSelections(existing.inductorSelections);
-      setCustomJUs(existing.customJUs);
-      setGlobalOccurrences(existing.globalOccurrences);
-    } else {
-      setSelections([]);
-      setCustomJUs([]);
-      setGlobalOccurrences(1);
-    }
-    setSearch('');
-    setViewMode('inductors');
-    setExpanded(new Set());
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [line?.id]);
+    // Batch state updates to avoid cascading renders
+    Promise.resolve().then(() => {
+      setSelections(existing?.inductorSelections ?? []);
+      setCustomJUs(existing?.customJUs ?? []);
+      setGlobalOccurrences(existing?.globalOccurrences ?? 1);
+      setSearch('');
+      setViewMode('inductors');
+      setExpanded(new Set());
+    });
+  }, [line, existing]);
 
-  const locked = !line || line.status === 'estimated' || line.status === 'approved' || line.status === 'allocated';
+  const locked = !line || line.status === 'Estimated' || line.status === 'Sent' || line.status === 'Approved';
   const canEdit = can('edit:estimation') && !locked;
-  const canEditCustomJU = can('edit:custom-jus');
+  const canEditCustomJU = can('edit:custom-jus') && !locked;
 
   const totalDays = useMemo(
-    () => calcTotalDays(selections, JOB_UNITS, customJUs, globalOccurrences),
+    () => calcTotalDays(selections, INDUCTORS, customJUs, globalOccurrences),
     [selections, customJUs, globalOccurrences],
   );
   const totalKEuro = useMemo(() => (line ? calcKEuro(totalDays, line.metier) : 0), [totalDays, line]);
   const breakdown = useMemo(() => yearlyBreakdown(totalDays), [totalDays]);
 
-  function addInductors(ids: string[]) {
+  const addInductors = useCallback((ids: string[]) => {
     setSelections((prev) => {
       const existingIds = prev.map((s) => s.inductorId);
       const toAdd: InductorSelection[] = ids
@@ -73,14 +79,14 @@ export function EstimationPanel({ line, onClose }: Props) {
       const toKeep = prev.filter((s) => ids.includes(s.inductorId));
       return [...toKeep, ...toAdd];
     });
-  }
+  }, []);
 
-  function removeInductor(inductorId: string) {
+  const removeInductor = useCallback((inductorId: string) => {
     setSelections((prev) => prev.filter((s) => s.inductorId !== inductorId));
-  }
+  }, []);
 
-  function selectCran(inductorId: string, cranId: string) {
-    const cranJUs = JOB_UNITS.filter((ju) => ju.cranId === cranId);
+  const selectCran = useCallback((inductorId: string, cranId: string) => {
+    const cranJUs = INDUCTORS.find((i) => i.id === inductorId)?.crans.find((c) => c.id === cranId)?.jus ?? [];
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
@@ -89,18 +95,20 @@ export function EstimationPanel({ line, onClose }: Props) {
           selectedCranId: cranId,
           juOccurrences: cranJUs.map((ju) => ({
             juId: ju.id,
-            occurrence: sel.inductorOccurrence,
+            occurrence: ju.occurrence,
             locked: false,
           })),
         };
       }),
     );
-  }
+  }, []);
 
-  function updateInductorOccurrence(inductorId: string, occ: number) {
+  const updateInductorOccurrence = useCallback((inductorId: string, occ: number) => {
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
+        // Non-locked JUs mirror the inductor occurrence; locked JUs keep their
+        // manually-set value (BR-09: occurrence_locked defaults to false).
         return {
           ...sel,
           inductorOccurrence: occ,
@@ -110,9 +118,9 @@ export function EstimationPanel({ line, onClose }: Props) {
         };
       }),
     );
-  }
+  }, []);
 
-  function updateJUOccurrence(inductorId: string, juId: string, occ: number) {
+  const updateJUOccurrence = useCallback((inductorId: string, juId: string, occ: number) => {
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
@@ -124,9 +132,9 @@ export function EstimationPanel({ line, onClose }: Props) {
         };
       }),
     );
-  }
+  }, []);
 
-  function toggleJULock(inductorId: string, juId: string) {
+  const toggleJULock = useCallback((inductorId: string, juId: string) => {
     setSelections((prev) =>
       prev.map((sel) => {
         if (sel.inductorId !== inductorId) return sel;
@@ -138,15 +146,21 @@ export function EstimationPanel({ line, onClose }: Props) {
         };
       }),
     );
-  }
+  }, []);
 
-  function toggleExpanded(inductorId: string) {
+  const toggleExpanded = useCallback((inductorId: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(inductorId) ? next.delete(inductorId) : next.add(inductorId);
+      const nextHasInductor = next.has(inductorId);
+      const isNew = !nextHasInductor;
+      if (isNew) {
+        next.add(inductorId);
+      } else {
+        next.delete(inductorId);
+      }
       return next;
     });
-  }
+  }, []);
 
   const q = search.trim().toLowerCase();
 
@@ -156,30 +170,31 @@ export function EstimationPanel({ line, onClose }: Props) {
       const ind = INDUCTORS.find((i) => i.id === sel.inductorId);
       if (ind?.name.toLowerCase().includes(q)) return true;
       if (!sel.selectedCranId) return false;
-      const cranJUs = JOB_UNITS.filter((ju) => ju.cranId === sel.selectedCranId);
+      const cranJUs = INDUCTORS.find((i) => i.id === sel.inductorId)?.crans.find((c) => c.id === sel.selectedCranId)?.jus ?? [];
       return cranJUs.some(
-        (ju) => ju.shortName.toLowerCase().includes(q) || ju.description.toLowerCase().includes(q),
+        (ju) => ju.name.toLowerCase().includes(q) || ju.long_name?.toLowerCase().includes(q),
       );
     });
   }, [selections, q]);
 
   const flatJUs = useMemo(() => {
-    const rows: Array<{ ju: (typeof JOB_UNITS)[0]; sel: InductorSelection; jo: JUOccurrence }> = [];
+    const rows: Array<{ ju: JU; sel: InductorSelection; jo: JUOccurrence }> = [];
     for (const sel of selections) {
       if (!sel.selectedCranId) continue;
+      const cranJUs = INDUCTORS.find((i) => i.id === sel.inductorId)?.crans.find((c) => c.id === sel.selectedCranId)?.jus ?? [];
       for (const jo of sel.juOccurrences) {
-        const ju = JOB_UNITS.find((j) => j.id === jo.juId);
+        const ju = cranJUs.find((j) => j.id === jo.juId);
         if (ju) rows.push({ ju, sel, jo });
       }
     }
     if (!q) return rows;
     return rows.filter(
       ({ ju }) =>
-        ju.shortName.toLowerCase().includes(q) || ju.description.toLowerCase().includes(q),
+        ju.name.toLowerCase().includes(q) || ju.long_name?.toLowerCase().includes(q),
     );
   }, [selections, q]);
 
-  function persist(status: 'draft' | 'estimated') {
+  function persist(status: 'Draft' | 'Estimated') {
     setEstimation(line!.id, {
       lineId: line!.id,
       inductorSelections: selections,
@@ -189,7 +204,7 @@ export function EstimationPanel({ line, onClose }: Props) {
       totalDays,
       totalKEuro,
       status,
-      ...(status === 'draft'
+      ...(status === 'Draft'
         ? { draftedAt: new Date().toISOString() }
         : { estimatedAt: new Date().toISOString() }),
     });
@@ -197,18 +212,31 @@ export function EstimationPanel({ line, onClose }: Props) {
   }
 
   function handleSaveDraft() {
-    persist('draft');
-    pushToast(`Borrador guardado para ${line!.id}`, 'success');
+    const validation = validateBeforeSave(line!);
+    if (!validation.valid) {
+      pushToast(validation.errors.join(' '), 'error');
+      return;
+    }
+    persist('Draft');
+    setHasDraftedThisSession(true);
+    pushToast(t('panel.toastDraftSaved', { id: line!.id }), 'success');
     onClose();
   }
 
   function handlePromote() {
-    persist('estimated');
-    pushToast(`${line!.id} promovida a estimación definitiva`, 'success');
+    const validation = validateBeforeSave(line!);
+    if (!validation.valid) {
+      pushToast(validation.errors.join(' '), 'error');
+      setConfirmPromote(false);
+      return;
+    }
+    persist('Estimated');
+    pushToast(t('panel.toastPromoted', { id: line!.id }), 'success');
     setConfirmPromote(false);
     onClose();
   }
 
+  const t = useT();
   const hasMinimumForDraft = globalOccurrences > 0;
   const hasMinimumForDefinitive =
     globalOccurrences > 0 &&
@@ -232,7 +260,7 @@ export function EstimationPanel({ line, onClose }: Props) {
                 <h2 className="text-base font-semibold text-slate-900">{line.lineName}</h2>
                 {locked && (
                   <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
-                    <Lock size={12} /> Bloqueada
+                    <Lock size={12} /> {t('panel.locked')}
                   </span>
                 )}
               </div>
@@ -246,9 +274,9 @@ export function EstimationPanel({ line, onClose }: Props) {
           </div>
 
           {/* Rejection banner */}
-          {line.status === 'rejected' && line.rejectionComment && (
+          {line.status === 'Modification Requested' && line.rejectionComment && (
             <div className="mx-6 mt-3 flex-shrink-0 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-              <div className="font-semibold">Comentario del CPO (rechazo)</div>
+              <div className="font-semibold">{t('panel.rejectionBanner')}</div>
               <p className="mt-1">{line.rejectionComment}</p>
             </div>
           )}
@@ -260,13 +288,13 @@ export function EstimationPanel({ line, onClose }: Props) {
                 onClick={() => setViewMode('inductors')}
                 className={`px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'inductors' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
               >
-                Inductores
+                {t('panel.inductors')}
               </button>
               <button
                 onClick={() => setViewMode('flat')}
                 className={`border-l border-slate-200 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === 'flat' ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
               >
-                Job Units
+                {t('panel.jobUnits')}
               </button>
             </div>
             <div className="relative">
@@ -274,14 +302,16 @@ export function EstimationPanel({ line, onClose }: Props) {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar inductor o JU…"
+                placeholder={t('panel.searchPlaceholder')}
                 className="w-52 rounded-md border border-slate-200 py-1.5 pl-8 pr-3 text-xs focus:border-brand-400 focus:outline-none"
               />
             </div>
             <div className="flex-1" />
             {canEdit && (
               <Button size="sm" variant="secondary" onClick={() => setShowManage(true)}>
-                Manage Inductors
+                {selections.length > 0
+                  ? t('panel.editInductors', { n: selections.length })
+                  : t('panel.loadInductors')}
               </Button>
             )}
           </div>
@@ -313,17 +343,42 @@ export function EstimationPanel({ line, onClose }: Props) {
 
               <CustomJUSection
                 customJUs={customJUs}
-                canEdit={canEdit}
                 canEditCustomJU={canEditCustomJU}
                 onChange={setCustomJUs}
               />
+
+              {existing && line && (
+                <CommentSection
+                  comments={existing.comments ?? []}
+                  metier={line.metier}
+                  onAdd={(text) =>
+                    addComment({
+                      lineId: line.id,
+                      metier: line.metier,
+                      text,
+                      author: activeEngineerId ?? currentRole,
+                    })
+                  }
+                  readOnly={locked}
+                />
+              )}
+
+              {line && (
+                <PrototypeEstimationForm
+                  lineId={line.id}
+                  initial={protoEst}
+                  onSave={(est) => setPrototypeEstimation(line.id, est)}
+                  onClose={onClose}
+                  readOnly={locked}
+                />
+              )}
             </div>
 
             {/* Right: summary */}
             <div className="w-52 flex-shrink-0 overflow-y-auto px-4 py-4">
               <div className="mb-3">
                 <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                  Ocurr. global
+                  {t('panel.globalOccurrence')}
                 </label>
                 <input
                   type="number"
@@ -333,20 +388,20 @@ export function EstimationPanel({ line, onClose }: Props) {
                   disabled={!canEdit}
                   className="w-16 rounded-md border border-slate-300 px-2 py-1.5 text-sm disabled:bg-slate-50 focus:border-brand-500 focus:outline-none"
                 />
-                <p className="mt-1 text-[10px] text-slate-400">Multiplicador final</p>
+                <p className="mt-1 text-[10px] text-slate-400">{t('panel.globalOccurrenceHint')}</p>
               </div>
 
               <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[10px] text-slate-500">Total días</div>
+                <div className="text-[10px] text-slate-500">{t('panel.totalDays')}</div>
                 <div className="text-xl font-bold text-slate-900">{formatDays(totalDays)}</div>
               </div>
               <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[10px] text-slate-500">Total k€</div>
+                <div className="text-[10px] text-slate-500">{t('panel.totalKeuro')}</div>
                 <div className="text-xl font-bold text-slate-900">{formatKEuro(totalKEuro)}</div>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-1.5 text-[10px] font-semibold uppercase text-slate-500">Distribución anual</div>
+                <div className="mb-1.5 text-[10px] font-semibold uppercase text-slate-500">{t('panel.yearlyDist')}</div>
                 <div className="flex items-end gap-0.5" style={{ height: 48 }}>
                   {breakdown.map((m, i) => {
                     const max = Math.max(...breakdown, 0.01);
@@ -370,11 +425,11 @@ export function EstimationPanel({ line, onClose }: Props) {
               <div className="mt-3 space-y-1">
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                   <div className="h-2.5 w-2.5 rounded-sm border border-blue-300 bg-blue-100" />
-                  Hereda ocurr. inductor
+                  {t('panel.legendInherits')}
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
                   <div className="h-2.5 w-2.5 rounded-sm border border-amber-400 bg-amber-100" />
-                  Bloqueada 🔒
+                  {t('panel.legendLocked')}
                 </div>
               </div>
             </div>
@@ -385,19 +440,25 @@ export function EstimationPanel({ line, onClose }: Props) {
             <div>
               {existing && canEdit && (
                 <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
-                  <Copy size={14} /> Copiar a otras líneas
+                  <Copy size={14} /> {t('panel.copyToLines')}
                 </Button>
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button size="md" variant="ghost" onClick={onClose}>Cerrar</Button>
+              <Button size="md" variant="ghost" onClick={onClose}>{t('panel.close')}</Button>
               {canEdit && (
                 <>
                   <Button size="md" variant="secondary" onClick={handleSaveDraft} disabled={!hasMinimumForDraft}>
-                    Guardar borrador
+                    {t('panel.saveDraft')}
                   </Button>
-                  <Button size="md" variant="primary" onClick={() => setConfirmPromote(true)} disabled={!hasMinimumForDefinitive}>
-                    Promover a definitiva
+                  <Button
+                    size="md"
+                    variant="primary"
+                    onClick={() => setConfirmPromote(true)}
+                    disabled={!hasMinimumForDefinitive || !hasDraftedThisSession}
+                    title={!hasDraftedThisSession ? t('panel.draftBtnTitle') : undefined}
+                  >
+                    {t('panel.promote')}
                   </Button>
                 </>
               )}
@@ -410,20 +471,20 @@ export function EstimationPanel({ line, onClose }: Props) {
       <Modal
         open={confirmPromote}
         onClose={() => setConfirmPromote(false)}
-        title="Promover a estimación definitiva"
+        title={t('panel.confirmTitle')}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setConfirmPromote(false)}>Cancelar</Button>
-            <Button variant="primary" onClick={handlePromote}>Promover</Button>
+            <Button variant="secondary" onClick={() => setConfirmPromote(false)}>{t('panel.confirmCancel')}</Button>
+            <Button variant="primary" onClick={handlePromote}>{t('panel.confirmPromote')}</Button>
           </>
         }
       >
         <p className="text-sm text-slate-700">
-          La línea <strong>{line.id}</strong> pasará a estado <strong>Estimada</strong>.
+          {t('panel.confirmBody', { id: line.id })}
         </p>
         <ul className="mt-3 space-y-1 text-sm text-slate-600">
-          <li>• Total días: <strong>{formatDays(totalDays)}</strong></li>
-          <li>• Total k€: <strong>{formatKEuro(totalKEuro)}</strong></li>
+          <li>• {t('panel.confirmDays', { n: formatDays(totalDays) })}</li>
+          <li>• {t('panel.confirmKeuro', { n: formatKEuro(totalKEuro) })}</li>
         </ul>
       </Modal>
 
@@ -431,7 +492,7 @@ export function EstimationPanel({ line, onClose }: Props) {
       {showManage && (
         <ManageInductorsModal
           activeInductorIds={selections.map((s) => s.inductorId)}
-          onApply={(ids) => { addInductors(ids); setShowManage(false); }}
+          onApply={(ids: string[]) => { addInductors(ids); setShowManage(false); }}
           onClose={() => setShowManage(false)}
         />
       )}
@@ -459,10 +520,12 @@ function InductorTreeView({
   onToggleExpanded, onSelectCran, onUpdateInductorOccurrence,
   onUpdateJUOccurrence, onToggleJULock, onRemoveInductor,
 }: TreeProps) {
+  const t = useT();
   if (selections.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
-        Sin inductores. Usá "Manage Inductors" para añadir.
+        <div>{t('panel.noInductors')}</div>
+        <div className="mt-1 text-slate-400">{t('panel.noWorkloadStandard')}</div>
       </div>
     );
   }
@@ -470,16 +533,16 @@ function InductorTreeView({
     <div className="space-y-2">
       {selections.map((sel) => {
         const ind = INDUCTORS.find((i) => i.id === sel.inductorId)!;
-        const availableCrans = CRANS.filter((c) => c.inductorId === sel.inductorId);
+        const availableCrans = ind?.crans ?? [];
         const isExpanded = expanded.has(sel.inductorId);
         const cranJUs = sel.selectedCranId
-          ? JOB_UNITS.filter((ju) => ju.cranId === sel.selectedCranId)
+          ? (availableCrans.find((c) => c.id === sel.selectedCranId)?.jus ?? [])
           : [];
 
         const indDays = cranJUs.reduce((acc, ju) => {
           const jo = sel.juOccurrences.find((o) => o.juId === ju.id);
-          const occ = jo?.occurrence ?? sel.inductorOccurrence;
-          return acc + occ * ju.variable + ju.fixed;
+          const baseOcc = jo?.occurrence ?? ju.occurrence;
+          return acc + baseOcc;
         }, 0);
 
         return (
@@ -496,19 +559,19 @@ function InductorTreeView({
                 <span className="text-xs font-semibold text-slate-800">{ind.name}</span>
                 <span className="ml-2 text-[10px] text-slate-400">{ind.category}</span>
               </div>
-              <span className="text-[10px] text-slate-400">Cran:</span>
+              <span className="text-[10px] text-slate-400">{t('panel.cranLabel')}</span>
               <select
                 value={sel.selectedCranId ?? ''}
                 onChange={(e) => e.target.value && onSelectCran(sel.inductorId, e.target.value)}
                 disabled={!canEdit}
                 className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs focus:border-brand-400 focus:outline-none disabled:bg-slate-50"
               >
-                <option value="">— seleccionar —</option>
+                <option value="">{t('panel.selectCran')}</option>
                 {availableCrans.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-              <span className="text-[10px] text-slate-400">Ocurr.</span>
+              <span className="text-[10px] text-slate-400">{t('panel.occLabel')}</span>
               <input
                 type="number"
                 min={1}
@@ -525,27 +588,28 @@ function InductorTreeView({
               )}
             </div>
 
-            {!sel.selectedCranId && (
-              <div className="border-t border-amber-100 bg-amber-50 px-4 py-1.5 text-[10px] text-amber-700">
-                ⚠ Seleccioná un cran para cargar las Job Units
+            {availableCrans.length === 0 || (sel.selectedCranId && cranJUs.length === 0) ? (
+              <div className="border-t border-slate-100 bg-slate-50 px-4 py-1.5 text-[10px] text-slate-500">
+                {t('panel.noWorkloadStandard')}
               </div>
-            )}
+            ) : !sel.selectedCranId ? (
+              <div className="border-t border-amber-100 bg-amber-50 px-4 py-1.5 text-[10px] text-amber-700">
+                {t('panel.selectCranWarning')}
+              </div>
+            ) : null}
 
             {sel.selectedCranId && isExpanded && cranJUs.map((ju) => {
               const jo = sel.juOccurrences.find((o) => o.juId === ju.id) ?? {
                 juId: ju.id, occurrence: sel.inductorOccurrence, locked: false,
               };
-              const juDays = jo.occurrence * ju.variable + ju.fixed;
+              const juDays = jo.occurrence;
               return (
                 <div
                   key={ju.id}
                   className={`flex items-center gap-2 border-t border-slate-100 px-3 py-1.5 pl-8 ${jo.locked ? 'bg-amber-50' : 'bg-white'}`}
                 >
-                  <span className="w-16 font-mono text-[10px] text-slate-400">{ju.shortName}</span>
-                  <span className="flex-1 text-xs text-slate-700">{ju.description}</span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    {ju.variable > 0 ? `×${ju.variable}` : ''}{ju.fixed > 0 ? `+${ju.fixed}` : ''}
-                  </span>
+                  <span className="w-16 font-mono text-[10px] text-slate-400">{ju.name}</span>
+                  <span className="flex-1 text-xs text-slate-700">{ju.long_name ?? ju.name}</span>
                   <input
                     type="number"
                     min={1}
@@ -563,7 +627,7 @@ function InductorTreeView({
                     <button
                       onClick={() => onToggleJULock(sel.inductorId, ju.id)}
                       className={`rounded p-0.5 text-xs transition-colors ${jo.locked ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}`}
-                      title={jo.locked ? 'Desbloquear JU' : 'Bloquear JU'}
+                      title={jo.locked ? t('panel.unlockTitle') : t('panel.lockTitle')}
                     >
                       <Lock size={12} />
                     </button>
@@ -577,7 +641,7 @@ function InductorTreeView({
                 className="cursor-pointer border-t border-slate-100 bg-white px-4 py-1 text-[10px] text-slate-400 hover:text-slate-600"
                 onClick={() => onToggleExpanded(sel.inductorId)}
               >
-                {cranJUs.length} JU{cranJUs.length !== 1 ? 's' : ''} · clic para expandir
+                {t('panel.expandHint', { n: cranJUs.length, s: cranJUs.length !== 1 ? 's' : '' })}
               </div>
             )}
           </div>
@@ -591,7 +655,7 @@ function InductorTreeView({
 // FlatJUView
 // ─────────────────────────────────────────────
 interface FlatRow {
-  ju: (typeof JOB_UNITS)[0];
+  ju: JU;
   sel: InductorSelection;
   jo: JUOccurrence;
 }
@@ -604,10 +668,11 @@ function FlatJUView({
   onUpdateOccurrence: (inductorId: string, juId: string, occ: number) => void;
   onToggleLock: (inductorId: string, juId: string) => void;
 }) {
+  const t = useT();
   if (rows.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
-        Sin Job Units. Añadí inductores y seleccioná un cran primero.
+        {t('panel.noJobUnits')}
       </div>
     );
   }
@@ -616,28 +681,26 @@ function FlatJUView({
       <table className="w-full text-xs">
         <thead className="bg-slate-50 text-[10px] uppercase text-slate-500">
           <tr>
-            <th className="px-3 py-2 text-left font-medium">Short</th>
-            <th className="px-3 py-2 text-left font-medium">Job Unit</th>
-            <th className="px-3 py-2 text-left font-medium">Inductor / Cran</th>
-            <th className="px-3 py-2 text-right font-medium">Ocurr.</th>
-            <th className="px-3 py-2 text-right font-medium">Var.</th>
-            <th className="px-3 py-2 text-right font-medium">Fixed</th>
-            <th className="px-3 py-2 text-right font-medium">Días</th>
+            <th className="px-3 py-2 text-left font-medium">{t('panel.colShort')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('panel.colJobUnit')}</th>
+            <th className="px-3 py-2 text-left font-medium">{t('panel.colInductorCran')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('panel.colOcc')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('panel.colDays')}</th>
             {canEdit && <th className="w-8" />}
           </tr>
         </thead>
         <tbody>
           {rows.map(({ ju, sel, jo }) => {
             const ind = INDUCTORS.find((i) => i.id === sel.inductorId);
-            const cran = CRANS.find((c) => c.id === sel.selectedCranId);
-            const juDays = jo.occurrence * ju.variable + ju.fixed;
+            const cran: Cran | undefined = INDUCTORS.find((i) => i.id === sel.inductorId)?.crans.find((c) => c.id === sel.selectedCranId);
+            const juDays = jo.occurrence;
             return (
               <tr
                 key={ju.id}
                 className={`border-t border-slate-100 ${jo.locked ? 'bg-amber-50' : ''}`}
               >
-                <td className="px-3 py-1.5 font-mono text-[10px] text-slate-400">{ju.shortName}</td>
-                <td className="px-3 py-1.5 text-slate-700">{ju.description}</td>
+                <td className="px-3 py-1.5 font-mono text-[10px] text-slate-400">{ju.name}</td>
+                <td className="px-3 py-1.5 text-slate-700">{ju.long_name ?? ju.name}</td>
                 <td className="px-3 py-1.5 text-[10px] text-slate-400">
                   {ind?.name} / {cran?.name}
                 </td>
@@ -655,15 +718,13 @@ function FlatJUView({
                     }`}
                   />
                 </td>
-                <td className="px-3 py-1.5 text-right font-mono text-[10px] text-slate-400">{ju.variable}</td>
-                <td className="px-3 py-1.5 text-right font-mono text-[10px] text-slate-400">{ju.fixed}</td>
                 <td className="px-3 py-1.5 text-right font-semibold text-brand-700">{formatDays(juDays)}</td>
                 {canEdit && (
                   <td className="px-2">
                     <button
                       onClick={() => onToggleLock(sel.inductorId, ju.id)}
                       className={`rounded p-0.5 ${jo.locked ? 'text-amber-600' : 'text-slate-300 hover:text-slate-500'}`}
-                      title={jo.locked ? 'Desbloquear' : 'Bloquear'}
+                      title={jo.locked ? t('panel.unlockTitle') : t('panel.lockTitle')}
                     >
                       <Lock size={12} />
                     </button>
@@ -682,10 +743,9 @@ function FlatJUView({
 // CustomJUSection
 // ─────────────────────────────────────────────
 function CustomJUSection({
-  customJUs, canEdit, canEditCustomJU, onChange,
+  customJUs, canEditCustomJU, onChange,
 }: {
   customJUs: CustomJU[];
-  canEdit: boolean;
   canEditCustomJU: boolean;
   onChange: React.Dispatch<React.SetStateAction<CustomJU[]>>;
 }) {
@@ -693,19 +753,19 @@ function CustomJUSection({
     <div className="mt-6 border-t border-slate-100 pt-4">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Custom JUs</span>
-        {canEdit && canEditCustomJU && (
+        {canEditCustomJU && (
           <Button
             size="sm"
             variant="secondary"
             onClick={() => onChange((j) => [...j, { id: `ju-${Date.now()}`, description: '', days: 1 }])}
           >
-            + Agregar JU
+            + Add JU
           </Button>
         )}
       </div>
       {customJUs.length === 0 ? (
         <div className="rounded-md border border-dashed border-slate-200 p-3 text-center text-[10px] text-slate-400">
-          {canEditCustomJU ? 'Sin JUs custom.' : 'Solo PMO/Admin pueden agregar Custom JUs.'}
+          {canEditCustomJU ? 'No custom JUs.' : 'Only Admin and Engineer can add Custom JUs.'}
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -715,7 +775,7 @@ function CustomJUSection({
                 value={ju.description}
                 placeholder="Descripción"
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)))}
-                disabled={!canEdit || !canEditCustomJU}
+                disabled={!canEditCustomJU}
                 className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-50"
               />
               <input
@@ -724,10 +784,10 @@ function CustomJUSection({
                 step={0.5}
                 value={ju.days}
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, days: Number(e.target.value) } : x)))}
-                disabled={!canEdit || !canEditCustomJU}
+                disabled={!canEditCustomJU}
                 className="w-16 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50"
               />
-              {canEdit && canEditCustomJU && (
+              {canEditCustomJU && (
                 <button onClick={() => onChange((j) => j.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500">
                   <Trash2 size={13} />
                 </button>

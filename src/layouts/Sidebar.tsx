@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useRoleStore } from '../store/roleStore';
 import { visibleNavFor } from '../lib/permissions';
+import { useT } from '../i18n/useT';
 
 const icons: Record<string, ReactElement> = {
   'pre-estimation': <ClipboardList size={16} />,
@@ -25,6 +26,7 @@ const icons: Record<string, ReactElement> = {
 export function Sidebar() {
   const role = useRoleStore((s) => s.currentRole);
   const items = visibleNavFor(role);
+  const t = useT();
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
       <div className="px-5 py-4">
@@ -42,10 +44,10 @@ export function Sidebar() {
             )
           }
         >
-          <Home size={16} /> Inicio
+          <Home size={16} /> {t('nav.home')}
         </NavLink>
         <div className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
-          Vistas
+          {t('nav.views')}
         </div>
         {items.map((item) => (
           <NavLink
@@ -63,7 +65,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-400">
-        Datos en memoria · reset al recargar
+        {t('nav.footer')}
       </div>
     </aside>
   );

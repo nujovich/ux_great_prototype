@@ -11,16 +11,20 @@ export type Permission =
   | 'copy:estimation'
   | 'edit:custom-jus'
   | 'view:estimation-review'
+  | 'export:estimation-review'
   | 'approve:estimation'
   | 'reject:estimation'
-  | 'send:cpo'
+  | 'send:hvt'
   | 'view:allocation'
   | 'edit:allocation'
   | 'view:k-euro-rates'
   | 'view:final-review'
   | 'export:final-review'
+  | 'send:stage3'
+  | 'upload:workload-standards'
   | 'view:management'
-  | 'view:admin';
+  | 'view:admin'
+  | 'simulate:hvt-approval';  // Admin-only: simulate HVT sending approval back (ERev-BR-10)
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   Engineer: [
@@ -30,23 +34,23 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'save:draft',
     'save:definitive',
     'copy:estimation',
+    'edit:custom-jus',
+    'view:estimation-review',
+    'export:estimation-review',
+    'view:final-review',
+    'export:final-review',
   ],
   PMO: [
     'view:pre-estimation',
-    'edit:estimation',
-    'save:draft',
-    'save:definitive',
-    'copy:estimation',
-    'edit:custom-jus',
     'view:estimation-review',
-    'approve:estimation',
-    'reject:estimation',
-    'send:cpo',
+    'export:estimation-review',
+    'send:hvt',
     'view:allocation',
     'edit:allocation',
     'view:k-euro-rates',
     'view:final-review',
     'export:final-review',
+    'send:stage3',
     'view:management',
   ],
   Admin: [
@@ -57,33 +61,37 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'copy:estimation',
     'edit:custom-jus',
     'view:estimation-review',
-    'approve:estimation',
-    'reject:estimation',
-    'send:cpo',
+    'export:estimation-review',
+    'send:hvt',
     'view:allocation',
     'edit:allocation',
     'view:k-euro-rates',
     'view:final-review',
     'export:final-review',
+    'send:stage3',
     'view:management',
     'view:admin',
+    'upload:workload-standards',
+    'simulate:hvt-approval',
   ],
   RCRC: [
     'view:pre-estimation',
     'view:estimation-review',
-    'view:final-review',
-    'view:management',
-  ],
-  CPO: [
-    'view:pre-estimation',
-    'view:estimation-review',
-    'approve:estimation',
-    'reject:estimation',
+    'export:estimation-review',
     'view:allocation',
+    'edit:allocation',
     'view:k-euro-rates',
     'view:final-review',
     'export:final-review',
-    'view:management',
+    'upload:workload-standards',
+  ],
+  CPO: [
+    'view:estimation-review',
+    'export:estimation-review',
+    // ERev-BR-10: CPO cannot approve directly — approval comes from HVT only
+    'reject:estimation',
+    'view:final-review',
+    'export:final-review',
   ],
 };
 

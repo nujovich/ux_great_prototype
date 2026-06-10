@@ -4,6 +4,7 @@ import { Modal } from '../shared/Modal';
 import { Button } from '../shared/Button';
 import { useDataStore } from '../../store/dataStore';
 import { useUIStore } from '../../store/uiStore';
+import { useT } from '../../i18n/useT';
 
 interface Props {
   sourceLine: ProjectLine;
@@ -14,6 +15,7 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
   const lines = useDataStore((s) => s.lines);
   const copyEstimation = useDataStore((s) => s.copyEstimation);
   const pushToast = useUIStore((s) => s.pushToast);
+  const t = useT();
   const [selected, setSelected] = useState<string[]>([]);
 
   const candidates = useMemo(
@@ -23,7 +25,7 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
           l.id !== sourceLine.id &&
           l.metier === sourceLine.metier &&
           l.cycleId === sourceLine.cycleId &&
-          (l.status === 'empty' || l.status === 'draft'),
+          (l.status === 'To do' || l.status === 'Draft'),
       ),
     [lines, sourceLine],
   );
@@ -34,7 +36,7 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
 
   function handleConfirm() {
     copyEstimation(sourceLine.id, selected);
-    pushToast(`Estimación copiada a ${selected.length} línea(s)`, 'success');
+    pushToast(t('copy.toastCopied', { n: selected.length }), 'success');
     onClose();
   }
 
@@ -42,24 +44,23 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
     <Modal
       open
       onClose={onClose}
-      title={`Copiar estimación de ${sourceLine.id}`}
+      title={t('copy.title', { id: sourceLine.id })}
       size="lg"
       footer={
         <>
-          <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+          <Button variant="secondary" onClick={onClose}>{t('copy.cancel')}</Button>
           <Button variant="primary" onClick={handleConfirm} disabled={selected.length === 0}>
-            Copiar a {selected.length} línea(s)
+            {t('copy.confirm', { n: selected.length })}
           </Button>
         </>
       }
     >
       <p className="mb-3 text-sm text-slate-600">
-        Solo se muestran líneas compatibles (mismo métier <strong>{sourceLine.metier}</strong>,
-        mismo cycle, status sin estimación definitiva).
+        {t('copy.subtitle', { metier: sourceLine.metier })}
       </p>
       {candidates.length === 0 ? (
         <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-          No hay líneas compatibles para copiar.
+          {t('copy.noCompatible')}
         </div>
       ) : (
         <div className="max-h-72 overflow-auto rounded-md border border-slate-200">
@@ -67,9 +68,9 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
             <thead className="bg-slate-50 text-xs text-slate-500">
               <tr>
                 <th className="w-8 px-3 py-2" />
-                <th className="px-3 py-2 text-left font-medium">ID</th>
-                <th className="px-3 py-2 text-left font-medium">Proyecto / Línea</th>
-                <th className="px-3 py-2 text-left font-medium">Status</th>
+                <th className="px-3 py-2 text-left font-medium">{t('copy.colId')}</th>
+                <th className="px-3 py-2 text-left font-medium">{t('copy.colProjectLine')}</th>
+                <th className="px-3 py-2 text-left font-medium">{t('copy.colStatus')}</th>
               </tr>
             </thead>
             <tbody>
