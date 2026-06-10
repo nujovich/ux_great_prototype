@@ -65,7 +65,7 @@ function ReviewContent() {
   function submitReject() {
     if (!rejectTarget || !rejectComment.trim()) return;
     rejectLine(rejectTarget.id, rejectComment.trim());
-    pushToast(`${rejectTarget.id} rechazada y devuelta al engineer`, 'info');
+    pushToast(`${rejectTarget.id} devuelta para modificación al engineer`, 'info');
     setRejectTarget(null);
     setRejectComment('');
   }

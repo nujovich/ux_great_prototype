@@ -32,6 +32,9 @@ describe('canTransition', () => {
   it('Modification Requested → Draft is allowed', () => {
     expect(canTransition('Modification Requested', 'Draft')).toBe(true);
   });
+  it('Modification Requested → Estimated is allowed', () => {
+    expect(canTransition('Modification Requested', 'Estimated')).toBe(true);
+  });
   it('Approved → anything is blocked (BR-04)', () => {
     expect(canTransition('Approved', 'Draft')).toBe(false);
     expect(canTransition('Approved', 'Estimated')).toBe(false);

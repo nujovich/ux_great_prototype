@@ -55,7 +55,7 @@ export interface paths {
         put?: never;
         /**
          * Add a custom job unit to a project line estimation (BR-20)
-         * @description Engineer/PMO/Admin only (BR-20). Creates a custom JU attached to the
+         * @description Engineer/Admin only (BR-20). Creates a custom JU attached to the
          *     line's estimation. Custom JUs are not part of the workload standard.
          */
         post: operations["createCustomJU"];
