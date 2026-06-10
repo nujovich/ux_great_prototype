@@ -765,7 +765,7 @@ function CustomJUSection({
       </div>
       {customJUs.length === 0 ? (
         <div className="rounded-md border border-dashed border-slate-200 p-3 text-center text-[10px] text-slate-400">
-          {canEditCustomJU ? 'No custom JUs.' : 'Only Admin, PMO and Engineer can add Custom JUs.'}
+          {canEditCustomJU ? 'No custom JUs.' : 'Only Admin and Engineer can add Custom JUs.'}
         </div>
       ) : (
         <div className="space-y-1.5">
