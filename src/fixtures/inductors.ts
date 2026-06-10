@@ -1,7 +1,14 @@
 import type { PrototypeInductor, Metier, JU, Cran } from '../types';
 
-const ju = (id: string, name: string, occurrence: number, metier: Metier = 'H-DESIGN'): JU => ({
+const ju = (
+  id: string,
+  name: string,
+  occurrence: number,
+  metier: Metier = 'H-DESIGN',
+  fixed = 0,
+): JU => ({
   id, name, long_name: name,
+  variable: occurrence, fixed,
   unit_type: 'man_day', occurrence,
   occurrence_locked: false, fmm: '', smm: '', dmm: '',
   generic_profile: '', custom: false, metier,
@@ -176,6 +183,17 @@ export const INDUCTORS: PrototypeInductor[] = [
       cr('cr-12-2', 'Extended', [
         ju('ju-12-2-1', 'DOC-E01 Architecture & design', 1.3),
         ju('ju-12-2-2', 'DOC-E02 Runbook & ops guide', 1.5),
+      ]),
+    ],
+  },
+  // Single-cran inductor (HIW-174 §7): exercises the "fixed label" case where only
+  // one cran exists and the cran selector is hidden / label is shown statically.
+  {
+    id: 'ind-14', name: 'Security audit', category: 'General',
+    crans: [
+      cr('cr-14-1', 'Standard', [
+        ju('ju-14-1-1', 'SEC-S01 Threat modelling', 1.5),
+        ju('ju-14-1-2', 'SEC-S02 Pen-test & report', 2.0),
       ]),
     ],
   },
