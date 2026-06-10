@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "great-sdd-kit": "git+https://github.com/nujovich/great-sdd-kit.git#v1.1.0",
+    "great-sdd-kit": "github:nujovich/great-sdd-kit#v2.0.0",
     "lucide-react": "^1.16.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
