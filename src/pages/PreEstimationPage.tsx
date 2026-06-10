@@ -12,8 +12,8 @@ import { EmptyState } from '../components/shared/EmptyState';
 import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { checkCompatibility } from '../lib/compatibility';
+import { groupByCompatibility } from '../lib/grouping';
 import { useT } from '../i18n/useT';
-import type { Metier } from '../types';
 
 export function PreEstimationPage() {
   return (
@@ -57,16 +57,10 @@ function PreEstimationContent() {
 
   const currentLine = lines.find((l) => l.id === estimationPanelLineId) ?? null;
 
-  const compatibleGroups = useMemo(() => {
-    if (!compatibleMode) return null;
-    const groups = new Map<Metier, typeof visibleLines>();
-    for (const line of visibleLines) {
-      const group = groups.get(line.metier) ?? [];
-      group.push(line);
-      groups.set(line.metier, group);
-    }
-    return [...groups.entries()].map(([metier, groupLines]) => ({ metier, lines: groupLines }));
-  }, [visibleLines, compatibleMode]);
+  const compatibleGroups = useMemo(
+    () => (compatibleMode ? groupByCompatibility(visibleLines) : null),
+    [visibleLines, compatibleMode],
+  );
 
   function handleBulkEstimate() {
     if (selectedLineIds.length > 0) {
@@ -120,17 +114,17 @@ function PreEstimationContent() {
         />
       ) : compatibleGroups ? (
         <div className="space-y-6">
-          {compatibleGroups.map(({ metier, lines: groupLines }) => (
-            <div key={metier}>
+          {compatibleGroups.map((group) => (
+            <div key={group.key}>
               <div className="mb-2 flex items-center gap-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  {metier}
+                  {group.key}
                 </span>
-                <span className="text-xs text-slate-400">({t('preEst.lines', { n: groupLines.length })})</span>
+                <span className="text-xs text-slate-400">({t('preEst.lines', { n: group.lines.length })})</span>
                 <div className="flex-1 border-t border-slate-200" />
               </div>
               <ProjectLineGrid
-                lines={groupLines}
+                lines={group.lines}
                 selectedIds={selectedLineIds}
                 onToggleSelect={toggleSelect}
                 onRowClick={(id) => openEstimationPanel(id)}
