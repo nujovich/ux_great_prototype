@@ -26,7 +26,9 @@ const COLUMNS: GridColumn[] = [
   { key: 'market', labelKey: 'gridCol.market', group: 'extra' },
   { key: 'allianceCode', labelKey: 'gridCol.allianceCode', group: 'extra' },
   { key: 'vehicleCode', labelKey: 'gridCol.vehicleCode', group: 'extra' },
-  { key: 'energy', labelKey: 'gridCol.energy', group: 'extra' },
+  // "Energy" displays the same energy/fuel type used by the compatibility grouping,
+  // so the grid column and the Compatible-mode group header never disagree.
+  { key: 'energyFuelType', labelKey: 'gridCol.energy', group: 'extra' },
   { key: 'spDate', labelKey: 'gridCol.spDate', group: 'extra' },
   { key: 'pcDate', labelKey: 'gridCol.pcDate', group: 'extra' },
   { key: 'coDate', labelKey: 'gridCol.coDate', group: 'extra' },

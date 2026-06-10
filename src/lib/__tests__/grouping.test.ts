@@ -8,7 +8,7 @@ function makeLine(overrides: Partial<ProjectLine>): ProjectLine {
     lineName: 'Test Line',
     projectName: 'Test Project',
     metier: 'H-DESIGN',
-    status: 'to_do',
+    status: 'To do',
     assignedEngineerId: null,
     estimatedDays: null,
     estimatedKEuro: null,

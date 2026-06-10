@@ -13,7 +13,7 @@ describe('grid columns (HIW-174 §4)', () => {
     expect(allCols.length).toBeGreaterThan(keyCols.length);
     for (const k of keyCols) expect(allCols).toContain(k);
     // PRD extras present only in show-all
-    for (const k of ['requestType', 'market', 'allianceCode', 'vehicleCode', 'spDate', 'pcDate', 'coDate', 'sopDate', 'engineering', 'estimateType', 'projectRanking', 'energy']) {
+    for (const k of ['requestType', 'market', 'allianceCode', 'vehicleCode', 'spDate', 'pcDate', 'coDate', 'sopDate', 'engineering', 'estimateType', 'projectRanking', 'energyFuelType']) {
       expect(allCols).toContain(k);
     }
   });

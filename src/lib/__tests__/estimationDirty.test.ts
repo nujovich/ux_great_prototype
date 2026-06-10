@@ -20,4 +20,12 @@ describe('isEstimationDirty (HIW-174 §4)', () => {
     const cur: DirtyState = { ...empty, inductorSelections: [{ inductorId: 'i1', selectedCranId: 'c1', inductorOccurrence: 1, juOccurrences: [] }] };
     expect(isEstimationDirty(empty, cur)).toBe(true);
   });
+  it('is false when a previously-saved (non-empty) baseline equals the current state', () => {
+    const saved: DirtyState = {
+      inductorSelections: [{ inductorId: 'i1', selectedCranId: 'c1', inductorOccurrence: 2, juOccurrences: [{ juId: 'j1', occurrence: 2, locked: false }] }],
+      customJUs: [{ id: 'c1', description: 'x', days: 3 }],
+      globalOccurrences: 4,
+    };
+    expect(isEstimationDirty(saved, { ...saved })).toBe(false);
+  });
 });
