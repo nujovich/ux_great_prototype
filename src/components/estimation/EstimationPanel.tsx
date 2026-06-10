@@ -413,7 +413,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
                   lineId={line.id}
                   initial={protoEst}
                   onSave={(est) => setPrototypeEstimation(line.id, est)}
-                  onClose={onClose}
+                  onClose={requestClose}
                   readOnly={locked}
                 />
               )}
