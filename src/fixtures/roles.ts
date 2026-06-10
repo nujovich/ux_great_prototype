@@ -42,7 +42,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
   PMO: [
     'view:pre-estimation',
-    'edit:custom-jus',
     'view:estimation-review',
     'export:estimation-review',
     'send:hvt',
