@@ -303,4 +303,11 @@ export const en: Translations = {
     cancel: 'Cancel',
     apply: 'Apply ({n} inductors)',
   },
+  unsaved: {
+    title: 'Unsaved changes',
+    body: 'You have unsaved changes. Leave without saving?',
+    cancel: 'Cancel',
+    discard: 'Discard',
+    switchLabel: 'Line',
+  },
 };

@@ -148,7 +148,12 @@ function PreEstimationContent() {
       )}
 
       {currentLine && (
-        <EstimationPanel line={currentLine} onClose={() => openEstimationPanel(null)} />
+        <EstimationPanel
+          line={currentLine}
+          onClose={() => openEstimationPanel(null)}
+          navLines={visibleLines}
+          onSwitchLine={(id) => openEstimationPanel(id)}
+        />
       )}
     </div>
   );

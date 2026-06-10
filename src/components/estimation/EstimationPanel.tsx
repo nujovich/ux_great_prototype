@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search } from 'lucide-react';
 import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran } from '../../types';
+import { isEstimationDirty } from '../../lib/estimationDirty';
 import { INDUCTORS } from '../../fixtures/inductors';
 import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
 import { validateBeforeSave } from '../../lib/validation';
@@ -19,9 +20,11 @@ import { useT } from '../../i18n/useT';
 interface Props {
   line: ProjectLine | null;
   onClose: () => void;
+  navLines?: ProjectLine[];
+  onSwitchLine?: (id: string) => void;
 }
 
-export function EstimationPanel({ line, onClose }: Props) {
+export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props) {
   const can = useRoleStore((s) => s.can);
   const currentRole = useRoleStore((s) => s.currentRole);
   const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
@@ -45,6 +48,7 @@ export function EstimationPanel({ line, onClose }: Props) {
   const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(
     line?.status === 'Draft' || line?.status === 'Estimated' || line?.status === 'Modification Requested',
   );
+  const [pendingAction, setPendingAction] = useState<{ type: 'close' } | { type: 'switch'; id: string } | null>(null);
 
   useEffect(() => {
     if (!line) return;
@@ -237,6 +241,35 @@ export function EstimationPanel({ line, onClose }: Props) {
   }
 
   const t = useT();
+
+  const dirty = useMemo(
+    () => isEstimationDirty(
+      existing
+        ? { inductorSelections: existing.inductorSelections, customJUs: existing.customJUs, globalOccurrences: existing.globalOccurrences }
+        : undefined,
+      { inductorSelections: selections, customJUs, globalOccurrences },
+    ),
+    [existing, selections, customJUs, globalOccurrences],
+  );
+
+  const requestClose = useCallback(() => {
+    if (dirty) setPendingAction({ type: 'close' });
+    else onClose();
+  }, [dirty, onClose]);
+
+  const requestSwitch = useCallback((id: string) => {
+    if (id === line?.id) return;
+    if (dirty) setPendingAction({ type: 'switch', id });
+    else onSwitchLine?.(id);
+  }, [dirty, line, onSwitchLine]);
+
+  const confirmLeave = useCallback(() => {
+    const a = pendingAction;
+    setPendingAction(null);
+    if (a?.type === 'close') onClose();
+    else if (a?.type === 'switch') onSwitchLine?.(a.id);
+  }, [pendingAction, onClose, onSwitchLine]);
+
   const hasMinimumForDraft = globalOccurrences > 0;
   const hasMinimumForDefinitive =
     globalOccurrences > 0 &&
@@ -247,7 +280,7 @@ export function EstimationPanel({ line, onClose }: Props) {
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/40" onClick={onClose} />
+      <div className="fixed inset-0 z-40 bg-black/40" onClick={requestClose} />
 
       {/* Centered modal */}
       <div className="fixed inset-0 z-40 flex items-center justify-center p-6">
@@ -268,9 +301,21 @@ export function EstimationPanel({ line, onClose }: Props) {
                 {line.id} · {line.projectName} · {line.metier}
               </div>
             </div>
-            <button onClick={onClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
-              <X size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              {navLines && navLines.length > 1 && (
+                <select
+                  value={line?.id ?? ''}
+                  onChange={(e) => requestSwitch(e.target.value)}
+                  className="rounded-md border border-slate-300 px-2 py-1 text-xs"
+                  aria-label={t('unsaved.switchLabel')}
+                >
+                  {navLines.map((l) => (<option key={l.id} value={l.id}>{l.lineName}</option>))}
+                </select>
+              )}
+              <button onClick={requestClose} className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Rejection banner */}
@@ -445,7 +490,7 @@ export function EstimationPanel({ line, onClose }: Props) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              <Button size="md" variant="ghost" onClick={onClose}>{t('panel.close')}</Button>
+              <Button size="md" variant="ghost" onClick={requestClose}>{t('panel.close')}</Button>
               {canEdit && (
                 <>
                   <Button size="md" variant="secondary" onClick={handleSaveDraft} disabled={!hasMinimumForDraft}>
@@ -496,6 +541,21 @@ export function EstimationPanel({ line, onClose }: Props) {
           onClose={() => setShowManage(false)}
         />
       )}
+
+      {/* Unsaved-changes guard dialog */}
+      <Modal
+        open={pendingAction !== null}
+        onClose={() => setPendingAction(null)}
+        title={t('unsaved.title')}
+        footer={
+          <>
+            <Button variant="secondary" size="sm" onClick={() => setPendingAction(null)}>{t('unsaved.cancel')}</Button>
+            <Button variant="primary" size="sm" onClick={confirmLeave}>{t('unsaved.discard')}</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600">{t('unsaved.body')}</p>
+      </Modal>
     </>
   );
 }

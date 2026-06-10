@@ -303,4 +303,11 @@ export const es: Translations = {
     cancel: 'Cancelar',
     apply: 'Aplicar ({n} inductores)',
   },
+  unsaved: {
+    title: 'Cambios sin guardar',
+    body: 'Tienes cambios sin guardar. ¿Salir sin guardar?',
+    cancel: 'Cancelar',
+    discard: 'Descartar',
+    switchLabel: 'Línea',
+  },
 };

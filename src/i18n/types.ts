@@ -318,4 +318,11 @@ export interface Translations {
     cancel: string;
     apply: string;
   };
+  unsaved: {
+    title: string;
+    body: string;
+    cancel: string;
+    discard: string;
+    switchLabel: string;
+  };
 }
