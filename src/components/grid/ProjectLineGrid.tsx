@@ -47,7 +47,7 @@ export function ProjectLineGrid({
                 className={clsx(
                   'cursor-pointer border-t border-slate-100 hover:bg-slate-50',
                   selected && 'bg-brand-50/50',
-                  line.status === 'Rejected' && 'bg-red-50/30',
+                  line.status === 'Modification Requested' && 'bg-red-50/30',
                 )}
                 onClick={() => onRowClick(line.id)}
               >
@@ -65,7 +65,7 @@ export function ProjectLineGrid({
                 <td className="px-2 py-1">
                   <div className="font-medium text-slate-900">{line.lineName}</div>
                   <div className="text-[9px] text-slate-400">{line.projectName}</div>
-                  {line.status === 'Rejected' && line.rejectionComment && (
+                  {line.status === 'Modification Requested' && line.rejectionComment && (
                     <div className="mt-0.5 flex items-start gap-1 text-[10px] text-red-700">
                       <MessageSquareWarning size={10} className="mt-0.5 shrink-0" />
                       <span className="line-clamp-1">{line.rejectionComment}</span>

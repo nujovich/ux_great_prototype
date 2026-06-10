@@ -85,7 +85,7 @@ components:
 
     Status:
       type: string
-      enum: ["To do", Draft, Estimated, Sent, Rejected, Approved]
+      enum: ["To do", Draft, Estimated, Sent, "Modification Requested", Approved]
 
     CostType:
       type: string
@@ -1131,7 +1131,7 @@ paths:
       operationId: createCustomJU
       summary: Add a custom job unit to a project line estimation (BR-20)
       description: |
-        Engineer/PMO/Admin only (BR-20). Creates a custom JU attached to the
+        Engineer/Admin only (BR-20). Creates a custom JU attached to the
         line's estimation. Custom JUs are not part of the workload standard.
       tags: [Estimation]
       requestBody:

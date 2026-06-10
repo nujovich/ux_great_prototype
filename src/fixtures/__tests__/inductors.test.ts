@@ -16,3 +16,23 @@ describe('INDUCTORS fixture', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+describe('inductor fixtures (HIW-174 §7/§8 foundation)', () => {
+  it('every JU carries numeric variable and fixed coefficients', () => {
+    const jus = INDUCTORS.flatMap((i) => i.crans.flatMap((c) => c.jus));
+    expect(jus.length).toBeGreaterThan(0);
+    for (const ju of jus) {
+      expect(typeof ju.variable).toBe('number');
+      expect(typeof ju.fixed).toBe('number');
+    }
+  });
+
+  it('provides at least one single-cran inductor (fixed-label case)', () => {
+    const singleCran = INDUCTORS.filter((i) => i.crans.length === 1);
+    expect(singleCran.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('keeps the zero-cran inductor for the no-workload-standard case', () => {
+    expect(INDUCTORS.some((i) => i.crans.length === 0)).toBe(true);
+  });
+});

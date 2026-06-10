@@ -3,9 +3,9 @@ import type { LineStatus } from '../types';
 export const STATUS_TRANSITIONS: Record<LineStatus, LineStatus[]> = {
   'To do':     ['Draft'],
   'Draft':     ['Draft', 'Estimated'],
-  'Estimated': ['Sent', 'Rejected'],
-  'Sent':      ['Approved', 'Rejected'],
-  'Rejected':  ['Draft', 'Estimated'],
+  'Estimated': ['Sent', 'Modification Requested'],
+  'Sent':      ['Approved', 'Modification Requested'],
+  'Modification Requested':  ['Draft', 'Estimated'],
   'Approved':  [],
 };
 
@@ -19,7 +19,7 @@ export const STATUS_I18N_KEYS: Record<LineStatus, string> = {
   'Draft':     'draft',
   'Estimated': 'estimated',
   'Sent':      'sent',
-  'Rejected':  'rejected',
+  'Modification Requested':  'modification_requested',
   'Approved':  'approved',
 };
 

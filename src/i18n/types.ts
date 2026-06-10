@@ -16,7 +16,7 @@ export interface Translations {
     draft: string;
     estimated: string;
     sent: string;
-    rejected: string;
+    modification_requested: string;
     approved: string;
   };
   roleDesc: {

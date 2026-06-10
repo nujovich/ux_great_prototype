@@ -48,7 +48,7 @@ function ReviewContent() {
   const groups = useMemo(() => ({
     estimated: visibleLines.filter((l) => l.status === 'Estimated'),
     sent:      visibleLines.filter((l) => l.status === 'Sent'),
-    rejected:  visibleLines.filter((l) => l.status === 'Rejected'),
+    rejected:  visibleLines.filter((l) => l.status === 'Modification Requested'),
     approved:  visibleLines.filter((l) => l.status === 'Approved'),
   }), [visibleLines]);
 
@@ -65,7 +65,7 @@ function ReviewContent() {
   function submitReject() {
     if (!rejectTarget || !rejectComment.trim()) return;
     rejectLine(rejectTarget.id, rejectComment.trim());
-    pushToast(`${rejectTarget.id} rechazada y devuelta al engineer`, 'info');
+    pushToast(`${rejectTarget.id} devuelta para modificación al engineer`, 'info');
     setRejectTarget(null);
     setRejectComment('');
   }

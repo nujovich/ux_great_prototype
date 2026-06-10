@@ -17,26 +17,29 @@ describe('canTransition', () => {
   it('Estimated → Sent is allowed', () => {
     expect(canTransition('Estimated', 'Sent')).toBe(true);
   });
-  it('Estimated → Rejected is allowed', () => {
-    expect(canTransition('Estimated', 'Rejected')).toBe(true);
+  it('Estimated → Modification Requested is allowed', () => {
+    expect(canTransition('Estimated', 'Modification Requested')).toBe(true);
   });
   it('Sent → Approved is allowed', () => {
     expect(canTransition('Sent', 'Approved')).toBe(true);
   });
-  it('Sent → Rejected is allowed', () => {
-    expect(canTransition('Sent', 'Rejected')).toBe(true);
+  it('Sent → Modification Requested is allowed', () => {
+    expect(canTransition('Sent', 'Modification Requested')).toBe(true);
   });
   it('Sent → Draft is blocked (BR-16)', () => {
     expect(canTransition('Sent', 'Draft')).toBe(false);
   });
-  it('Rejected → Draft is allowed', () => {
-    expect(canTransition('Rejected', 'Draft')).toBe(true);
+  it('Modification Requested → Draft is allowed', () => {
+    expect(canTransition('Modification Requested', 'Draft')).toBe(true);
+  });
+  it('Modification Requested → Estimated is allowed', () => {
+    expect(canTransition('Modification Requested', 'Estimated')).toBe(true);
   });
   it('Approved → anything is blocked (BR-04)', () => {
     expect(canTransition('Approved', 'Draft')).toBe(false);
     expect(canTransition('Approved', 'Estimated')).toBe(false);
     expect(canTransition('Approved', 'Sent')).toBe(false);
-    expect(canTransition('Approved', 'Rejected')).toBe(false);
+    expect(canTransition('Approved', 'Modification Requested')).toBe(false);
   });
 });
 

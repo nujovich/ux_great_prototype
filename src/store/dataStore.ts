@@ -53,11 +53,11 @@ export const useDataStore = create<DataState>((set, get) => ({
   rejectLine: (id, comment) =>
     set((s) => {
       const line = s.lines.find((l) => l.id === id);
-      if (!line || !canTransition(line.status, 'Rejected')) return s;
+      if (!line || !canTransition(line.status, 'Modification Requested')) return s;
       return {
         lines: s.lines.map((l) =>
           l.id === id
-            ? { ...l, status: 'Rejected' as LineStatus, rejectionComment: comment, lastUpdatedAt: new Date().toISOString(), lastUpdatedBy: 'CPO' }
+            ? { ...l, status: 'Modification Requested' as LineStatus, rejectionComment: comment, lastUpdatedAt: new Date().toISOString(), lastUpdatedBy: 'CPO' }
             : l,
         ),
       };
