@@ -37,6 +37,30 @@ export interface Translations {
     metier: string;
     all: string;
   };
+  gridCol: {
+    status: string;
+    plNumber: string;
+    plName: string;
+    client: string;
+    metier: string;
+    organType: string;
+    injectionSystem: string;
+    assignee: string;
+    days: string;
+    requestType: string;
+    projectRanking: string;
+    market: string;
+    allianceCode: string;
+    vehicleCode: string;
+    energy: string;
+    spDate: string;
+    pcDate: string;
+    coDate: string;
+    sopDate: string;
+    engineering: string;
+    estimateType: string;
+  };
+  showAllColumns: string;
   bulk: {
     selected: string;
     incompatible: string;

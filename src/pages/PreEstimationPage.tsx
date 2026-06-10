@@ -38,6 +38,7 @@ function PreEstimationContent() {
   const t = useT();
   const [filters, setFilters] = useState<GridFilters>({ status: 'all', metier: 'all', search: '' });
   const [compatibleMode, setCompatibleMode] = useState(false);
+  const [showAllColumns, setShowAllColumns] = useState(false);
 
   const visibleLines = useMemo(() => {
     let list = lines;
@@ -95,14 +96,23 @@ function PreEstimationContent() {
             {can('view:own-lines-only') ? t('preEst.descOwn') : t('preEst.descAll')}
           </p>
         </div>
-        <Button
-          variant={compatibleMode ? 'primary' : 'secondary'}
-          size="sm"
-          onClick={() => setCompatibleMode((v) => !v)}
-        >
-          <LayoutGrid size={14} />
-          {t('preEst.compatibleMode')}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant={showAllColumns ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setShowAllColumns((v) => !v)}
+          >
+            {t('showAllColumns')}
+          </Button>
+          <Button
+            variant={compatibleMode ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setCompatibleMode((v) => !v)}
+          >
+            <LayoutGrid size={14} />
+            {t('preEst.compatibleMode')}
+          </Button>
+        </div>
       </div>
 
       <GridFiltersBar value={filters} onChange={setFilters} />
@@ -139,6 +149,7 @@ function PreEstimationContent() {
                 onRowClick={(id) => openEstimationPanel(id)}
                 showSelection={showSelection}
                 showKEuro={showKEuro}
+                showAllColumns={showAllColumns}
               />
             </div>
           ))}
@@ -151,6 +162,7 @@ function PreEstimationContent() {
           onRowClick={(id) => openEstimationPanel(id)}
           showSelection={showSelection}
           showKEuro={showKEuro}
+          showAllColumns={showAllColumns}
         />
       )}
 

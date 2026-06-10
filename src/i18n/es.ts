@@ -37,6 +37,15 @@ export const es: Translations = {
     metier: 'Métier',
     all: 'Todos',
   },
+  gridCol: {
+    status: 'Estado', plNumber: 'N° PL', plName: 'Nombre PL', client: 'Cliente',
+    metier: 'Métier', organType: 'Tipo de Órgano', injectionSystem: 'Sistema de Inyección',
+    assignee: 'Asignado', days: 'Días', requestType: 'Tipo de Solicitud',
+    projectRanking: 'Ranking de Proyecto', market: 'Mercado', allianceCode: 'Código Alianza',
+    vehicleCode: 'Código Vehículo', energy: 'Energía', spDate: 'SP', pcDate: 'PC',
+    coDate: 'CO', sopDate: 'SOP', engineering: 'Ingeniería', estimateType: 'Tipo de Estimación',
+  },
+  showAllColumns: 'Mostrar todas las columnas',
   bulk: {
     selected: '{n} línea(s) seleccionada(s)',
     incompatible: 'Selección incompatible.',
