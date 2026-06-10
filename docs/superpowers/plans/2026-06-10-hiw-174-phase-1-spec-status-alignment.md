@@ -17,6 +17,8 @@
 - SDD changes are **breaking** per the kit's own `VERSIONING.md` → **v2.0.0**, applied on top of `master`.
 - Project-line column data enrichment (SP/PC/CO/SOP, client, market, …) is **deferred to the Phase 2 (grid) plan**.
 
+> **Base correction (2026-06-10, post-discovery):** `master` is at version **1.1.0** (= the version the frontend pins) and does **NOT** contain the conformance layer — that layer lives only on the unmerged, py3.8-broken `feat/conformance-layer` branch. We therefore base HIW-174 on `master` (green baseline, 293 tests). **There are no conformance fixtures to regenerate on this base**, so Task 4 is a plain full-suite verification and Task 5 drops the fixture-restamp step. The conformance layer's py3.8 incompatibility is a separate pre-existing issue for the kit owner, out of scope here.
+
 **Métier mapping (generic → H-\*)** used in Tasks 2:
 
 | Generic (current) | H-* (target) |
@@ -235,32 +237,24 @@ git -C /home/nujovich/great-sdd-kit commit -m "feat(specs)!: exclude H-TESTING f
 
 ---
 
-### Task 4: Regenerate conformance fixtures + full green suite
+### Task 4: Full-suite verification (no conformance layer on master)
 
-**Files:**
-- Modify (generated): `great_sdd/conformance/fixtures/*.json`, `great_sdd/conformance/fixtures/_inventory.json`
+> Base correction: `master` has **no** `great_sdd/conformance/` package, so there are no fixtures to regenerate. This task is a plain green-suite gate after Tasks 1-3.
 
-- [ ] **Step 1: Regenerate the deterministic fixtures**
-
-Run: `cd /home/nujovich/great-sdd-kit && python -m great_sdd.conformance.generate`
-Expected: fixtures rewritten. `git -C /home/nujovich/great-sdd-kit status --short` shows modified JSON under `great_sdd/conformance/fixtures/` (status values now `modification_requested`, métier values now `H-*`, PMO custom-JU expectations now `false`). `sdd_version` still shows the current version — it is corrected in Task 5 Step 3.
-
-- [ ] **Step 2: Verify no drift remains**
-
-Run: `cd /home/nujovich/great-sdd-kit && python -m great_sdd.conformance.generate --check`
-Expected: exit 0 (no diff vs the just-written fixtures).
-
-- [ ] **Step 3: Run the full pytest suite + coverage gate**
+- [ ] **Step 1: Run the full pytest suite**
 
 Run: `cd /home/nujovich/great-sdd-kit && python -m pytest tests/ -q`
-Expected: PASS (all tests, including `tests/test_conformance.py`).
+Expected: PASS — same count as the baseline recorded in Task 1 Step 2 (293 on master), with the renamed-status / H-* / BR-20 assertions updated by Tasks 1-3.
 
-- [ ] **Step 4: Commit the regenerated fixtures**
+- [ ] **Step 2: Sanity-check no stale references remain**
 
+Run:
 ```bash
-git -C /home/nujovich/great-sdd-kit add great_sdd/conformance/fixtures/
-git -C /home/nujovich/great-sdd-kit commit -m "chore(conformance): regenerate fixtures for HIW-174 spec changes"
+cd /home/nujovich/great-sdd-kit && grep -rn 'LineStatus.REJECTED\|"rejected"\|'\''rejected'\''\|"Backend"\|"Frontend"\|"DevOps"\|"Mobile"' great_sdd/ tests/ --include=*.py
 ```
+Expected: no hits that are status values or métier/`WORKLOAD_STANDARDS` keys (only the intentionally-preserved CPO-action strings noted in Task 1, if any). Investigate and fix any genuine leftover.
+
+- [ ] **Step 3: No commit** — this task only verifies; Tasks 1-3 already committed their changes.
 
 ---
 
@@ -288,26 +282,12 @@ Prepend a `## 2.0.0` section to `CHANGELOG.md` describing the breaking changes:
 
 - [ ] **Step 2: Run the version bump (commits + tags v2.0.0)**
 
+The version files on `master` read `1.1.0` (the commit subject `1.1.0 -> 1.2.0` did not update them — a pre-existing repo inconsistency; `bump_version.py` reads the actual `__version__`).
+
 Run: `cd /home/nujovich/great-sdd-kit && python3 scripts/bump_version.py major`
-Expected: prints `Bumping major: 1.3.0 → 2.0.0`, updates `__init__.py`/`pyproject.toml`/`package.json`, commits `chore: bump version 1.3.0 → 2.0.0`, creates tag `v2.0.0`.
+Expected: prints `Bumping major: 1.1.0 → 2.0.0`, updates `__init__.py`/`pyproject.toml`/`package.json`, commits `chore: bump version 1.1.0 → 2.0.0`, creates tag `v2.0.0`. (No conformance fixtures exist on this base, so nothing to restamp.)
 
-- [ ] **Step 3: Re-stamp fixtures with the new version and re-point the (local, unpushed) tag**
-
-The bump set `__version__` to `2.0.0` only now, so the fixtures still carry the old `sdd_version`. Regenerate so they read `2.0.0`, then move the not-yet-pushed tag onto the corrected commit:
-
-```bash
-cd /home/nujovich/great-sdd-kit
-python -m great_sdd.conformance.generate          # restamp sdd_version → 2.0.0
-python -m great_sdd.conformance.generate --check    # exit 0
-python -m pytest tests/ -q                           # all green
-git add great_sdd/conformance/fixtures/
-git commit -m "chore(conformance): stamp fixtures sdd_version 2.0.0"
-git tag -f v2.0.0                                    # move local tag to this commit
-```
-
-Expected: `git -C /home/nujovich/great-sdd-kit show v2.0.0 --stat` lists the fixture-stamp commit.
-
-- [ ] **Step 4: Push the branch and tag, open the PR to master**
+- [ ] **Step 3: Push the branch and tag, open the PR to master**
 
 ```bash
 cd /home/nujovich/great-sdd-kit
