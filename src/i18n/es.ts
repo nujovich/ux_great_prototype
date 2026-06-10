@@ -36,6 +36,7 @@ export const es: Translations = {
     status: 'Status',
     metier: 'Métier',
     all: 'Todos',
+    assignee: 'Asignado',
   },
   gridCol: {
     status: 'Estado', plNumber: 'N° PL', plName: 'Nombre PL', client: 'Cliente',

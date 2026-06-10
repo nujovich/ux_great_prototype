@@ -36,6 +36,7 @@ export interface Translations {
     status: string;
     metier: string;
     all: string;
+    assignee: string;
   };
   gridCol: {
     status: string;

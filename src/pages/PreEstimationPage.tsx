@@ -3,7 +3,8 @@ import { LayoutGrid } from 'lucide-react';
 import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
 import { useUIStore } from '../store/uiStore';
-import { GridFiltersBar, type GridFilters } from '../components/grid/GridFilters';
+import { GridFiltersBar } from '../components/grid/GridFilters';
+import { applyGridFilters, shouldShowOwnerFilters, type GridFilters } from '../lib/gridFilter';
 import { ProjectLineGrid } from '../components/grid/ProjectLineGrid';
 import { BulkActionsBar } from '../components/grid/BulkActionsBar';
 import { EstimationPanel } from '../components/estimation/EstimationPanel';
@@ -36,28 +37,14 @@ function PreEstimationContent() {
   } = useUIStore();
 
   const t = useT();
-  const [filters, setFilters] = useState<GridFilters>({ status: 'all', metier: 'all', search: '' });
+  const [filters, setFilters] = useState<GridFilters>({ status: 'all', metier: 'all', assignee: 'all', search: '' });
   const [compatibleMode, setCompatibleMode] = useState(false);
   const [showAllColumns, setShowAllColumns] = useState(false);
 
-  const visibleLines = useMemo(() => {
-    let list = lines;
-    if (can('view:own-lines-only') && activeEngineerId) {
-      list = list.filter((l) => l.assignedEngineerId === activeEngineerId);
-    }
-    if (filters.status !== 'all') list = list.filter((l) => l.status === filters.status);
-    if (filters.metier !== 'all') list = list.filter((l) => l.metier === filters.metier);
-    if (filters.search.trim()) {
-      const q = filters.search.toLowerCase();
-      list = list.filter(
-        (l) =>
-          l.lineName.toLowerCase().includes(q) ||
-          l.projectName.toLowerCase().includes(q) ||
-          l.id.toLowerCase().includes(q),
-      );
-    }
-    return list;
-  }, [lines, filters, can, activeEngineerId]);
+  const visibleLines = useMemo(
+    () => applyGridFilters(lines, filters, { ownOnly: can('view:own-lines-only'), activeEngineerId }),
+    [lines, filters, can, activeEngineerId],
+  );
 
   const selectedLines = useMemo(
     () => lines.filter((l) => selectedLineIds.includes(l.id)),
@@ -115,7 +102,7 @@ function PreEstimationContent() {
         </div>
       </div>
 
-      <GridFiltersBar value={filters} onChange={setFilters} />
+      <GridFiltersBar value={filters} onChange={setFilters} showOwnerFilters={shouldShowOwnerFilters(can('view:own-lines-only'))} />
 
       {showSelection && (
         <BulkActionsBar

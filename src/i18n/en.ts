@@ -36,6 +36,7 @@ export const en: Translations = {
     status: 'Status',
     metier: 'Metier',
     all: 'All',
+    assignee: 'Assignee',
   },
   gridCol: {
     status: 'Status', plNumber: 'PL Number', plName: 'PL Name', client: 'Client',
