@@ -5,6 +5,11 @@ import { statusI18nKey } from '../../lib/stateMachine';
 const STATUSES: LineStatus[] = ['To do', 'Draft', 'Estimated', 'Sent', 'Modification Requested', 'Approved'];
 const METIERS: Metier[] = ['H-DESIGN', 'H-SOFTWARE', 'H-TUNING', 'H-PROJECT', 'H-CUSTOMER', 'H-TESTING', 'H-NP'];
 
+// Non-estimable métiers that must not appear in the Pre-Estimation grid filter
+// (mirrors SDD EXCLUDED_METIERS_FROM_FILTER — HIW-174 §4)
+const EXCLUDED_METIERS: Metier[] = ['H-NP', 'H-TESTING', 'H-PROJECT'];
+export const FILTER_METIERS: Metier[] = METIERS.filter((m) => !EXCLUDED_METIERS.includes(m));
+
 export interface GridFilters {
   status: LineStatus | 'all';
   metier: Metier | 'all';
@@ -50,7 +55,7 @@ export function GridFiltersBar({ value, onChange }: Props) {
           className="mt-1 rounded-md border border-slate-300 px-2 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
         >
           <option value="all">{t('filters.all')}</option>
-          {METIERS.map((m) => (
+          {FILTER_METIERS.map((m) => (
             <option key={m} value={m}>{m}</option>
           ))}
         </select>
