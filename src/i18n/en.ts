@@ -281,6 +281,7 @@ export const en: Translations = {
     colOcc: 'Occ.',
     colVar: 'Var.',
     colFixed: 'Fixed',
+    colUnit: 'Unit',
     colDays: 'Days',
     selectCranWarning: '⚠ Select a cran to load Job Units',
     noWorkloadStandard: 'No workload standard found for this combination',

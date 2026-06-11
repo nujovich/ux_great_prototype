@@ -296,6 +296,7 @@ export interface Translations {
     colOcc: string;
     colVar: string;
     colFixed: string;
+    colUnit: string;
     colDays: string;
     selectCranWarning: string;
     noWorkloadStandard: string;

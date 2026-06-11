@@ -5,7 +5,20 @@ import { isEstimationDirty } from '../../lib/estimationDirty';
 import { INDUCTORS } from '../../fixtures/inductors';
 import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
 import { validateBeforeSave } from '../../lib/validation';
-import { formatDays, formatKEuro } from '../../lib/format';
+import { formatDays, formatKEuro, formatBenchHours, formatKm } from '../../lib/format';
+import { juTotal } from '../../lib/juTotal';
+
+const UNIT_LABEL: Record<string, string> = {
+  man_day: 'MD', bench_hours: 'BH', kilometres: 'km', kiloeuros: 'k€',
+};
+
+function formatJuTotal(unit: string | undefined, value: number): string {
+  switch (unit) {
+    case 'bench_hours': return formatBenchHours(value);
+    case 'kilometres': return formatKm(value);
+    default: return formatDays(value);
+  }
+}
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { useRoleStore } from '../../store/roleStore';
@@ -600,9 +613,10 @@ function InductorTreeView({
           : [];
 
         const indDays = cranJUs.reduce((acc, ju) => {
+          if ((ju.unit_type ?? 'man_day') !== 'man_day') return acc;
           const jo = sel.juOccurrences.find((o) => o.juId === ju.id);
-          const baseOcc = jo?.occurrence ?? ju.occurrence;
-          return acc + baseOcc;
+          const occ = jo?.occurrence ?? ju.occurrence;
+          return acc + juTotal(ju, occ);
         }, 0);
 
         return (
@@ -662,7 +676,7 @@ function InductorTreeView({
               const jo = sel.juOccurrences.find((o) => o.juId === ju.id) ?? {
                 juId: ju.id, occurrence: sel.inductorOccurrence, locked: false,
               };
-              const juDays = jo.occurrence;
+              const total = juTotal(ju, jo.occurrence);
               return (
                 <div
                   key={ju.id}
@@ -670,19 +684,20 @@ function InductorTreeView({
                 >
                   <span className="w-16 font-mono text-[10px] text-slate-400">{ju.name}</span>
                   <span className="flex-1 text-xs text-slate-700">{ju.long_name ?? ju.name}</span>
+                  <span className="w-10 text-right text-[10px] text-slate-400" title="Variable">{(ju.variable ?? 0).toFixed(1)}</span>
+                  <span className="w-10 text-right text-[10px] text-slate-400" title="Fixed">{(ju.fixed ?? 0).toFixed(1)}</span>
+                  <span className="w-8 text-center text-[9px] uppercase text-slate-400" title={ju.unit_type}>{UNIT_LABEL[ju.unit_type ?? 'man_day']}</span>
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     value={jo.occurrence}
-                    onChange={(e) => onUpdateJUOccurrence(sel.inductorId, ju.id, Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) => onUpdateJUOccurrence(sel.inductorId, ju.id, Math.max(0, Number(e.target.value) || 0))}
                     disabled={!canEdit}
                     className={`w-12 rounded border px-1.5 py-0.5 text-right text-xs focus:outline-none disabled:opacity-60 ${
-                      jo.locked
-                        ? 'border-amber-400 bg-amber-50 focus:border-amber-500'
-                        : 'border-blue-200 bg-blue-50 focus:border-brand-400'
+                      jo.locked ? 'border-amber-400 bg-amber-50 focus:border-amber-500' : 'border-blue-200 bg-blue-50 focus:border-brand-400'
                     }`}
                   />
-                  <span className="w-12 text-right text-[10px] font-semibold text-brand-700 font-mono">{formatDays(juDays)}</span>
+                  <span className="w-14 text-right text-[10px] font-semibold text-brand-700 font-mono">{formatJuTotal(ju.unit_type, total)}</span>
                   {canEdit && (
                     <button
                       onClick={() => onToggleJULock(sel.inductorId, ju.id)}
@@ -744,6 +759,9 @@ function FlatJUView({
             <th className="px-3 py-2 text-left font-medium">{t('panel.colShort')}</th>
             <th className="px-3 py-2 text-left font-medium">{t('panel.colJobUnit')}</th>
             <th className="px-3 py-2 text-left font-medium">{t('panel.colInductorCran')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('panel.colVar')}</th>
+            <th className="px-3 py-2 text-right font-medium">{t('panel.colFixed')}</th>
+            <th className="px-3 py-2 text-center font-medium">{t('panel.colUnit')}</th>
             <th className="px-3 py-2 text-right font-medium">{t('panel.colOcc')}</th>
             <th className="px-3 py-2 text-right font-medium">{t('panel.colDays')}</th>
             {canEdit && <th className="w-8" />}
@@ -753,7 +771,6 @@ function FlatJUView({
           {rows.map(({ ju, sel, jo }) => {
             const ind = INDUCTORS.find((i) => i.id === sel.inductorId);
             const cran: Cran | undefined = INDUCTORS.find((i) => i.id === sel.inductorId)?.crans.find((c) => c.id === sel.selectedCranId);
-            const juDays = jo.occurrence;
             return (
               <tr
                 key={ju.id}
@@ -764,12 +781,15 @@ function FlatJUView({
                 <td className="px-3 py-1.5 text-[10px] text-slate-400">
                   {ind?.name} / {cran?.name}
                 </td>
+                <td className="px-3 py-1.5 text-right text-[10px] text-slate-400">{(ju.variable ?? 0).toFixed(1)}</td>
+                <td className="px-3 py-1.5 text-right text-[10px] text-slate-400">{(ju.fixed ?? 0).toFixed(1)}</td>
+                <td className="px-3 py-1.5 text-center text-[9px] uppercase text-slate-400">{UNIT_LABEL[ju.unit_type ?? 'man_day']}</td>
                 <td className="px-3 py-1.5 text-right">
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     value={jo.occurrence}
-                    onChange={(e) => onUpdateOccurrence(sel.inductorId, ju.id, Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) => onUpdateOccurrence(sel.inductorId, ju.id, Math.max(0, Number(e.target.value) || 0))}
                     disabled={!canEdit}
                     className={`w-12 rounded border px-1.5 py-0.5 text-right text-xs focus:outline-none disabled:opacity-60 ${
                       jo.locked
@@ -778,7 +798,7 @@ function FlatJUView({
                     }`}
                   />
                 </td>
-                <td className="px-3 py-1.5 text-right font-semibold text-brand-700">{formatDays(juDays)}</td>
+                <td className="px-3 py-1.5 text-right font-semibold text-brand-700">{formatJuTotal(ju.unit_type, juTotal(ju, jo.occurrence))}</td>
                 {canEdit && (
                   <td className="px-2">
                     <button

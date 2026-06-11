@@ -281,6 +281,7 @@ export const es: Translations = {
     colOcc: 'Ocurr.',
     colVar: 'Var.',
     colFixed: 'Fixed',
+    colUnit: 'Unidad',
     colDays: 'Días',
     selectCranWarning: '⚠ Seleccioná un cran para cargar las Job Units',
     noWorkloadStandard: 'Sin estándar de carga para esta combinación',
