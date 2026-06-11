@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calcEstimationTotals, calcTotalDays } from '../calc';
+import { calcEstimationTotals, calcTotalDays, annualBreakdown } from '../calc';
 import type { InductorSelection, PrototypeInductor, CustomJU, JU } from '../../types';
 
 const ju = (id: string, variable: number, fixed: number, unit_type: JU['unit_type']): JU => ({
@@ -89,5 +89,40 @@ describe('calcEstimationTotals (HIW-174 §8/§9)', () => {
     const inds = [inductorWith([ju('j1', 3, 0, 'man_day')])];
     const sel = selOf([{ juId: 'j1', occurrence: 2, locked: false }]);
     expect(calcTotalDays([sel], inds, [], 1)).toBeCloseTo(6);
+  });
+});
+
+describe('annualBreakdown (HIW-174 §9 pre-save summary)', () => {
+  const totals = { manDays: 12, fte: 0, benchHours: 24, km: 6, keuro: 0 };
+
+  it('distributes uniformly over durationMonths from SP and aggregates by calendar year', () => {
+    // 24 months from 2026-01: 12 months in 2026, 12 in 2027 → half each
+    const rows = annualBreakdown(totals, '2026-01-01', 24);
+    expect(rows.map((r) => r.year)).toEqual([2026, 2027]);
+    expect(rows[0].manDays).toBeCloseTo(6);
+    expect(rows[1].manDays).toBeCloseTo(6);
+    expect(rows[0].benchHours).toBeCloseTo(12);
+    expect(rows[0].km).toBeCloseTo(3);
+    // fte is man-days(year)/209 rounded to 2 decimals: 6/209 ≈ 0.0287 → 0.03
+    expect(rows[0].fte).toBeCloseTo(0.03, 2);
+  });
+
+  it('puts everything in the SP year when durationMonths is missing', () => {
+    const rows = annualBreakdown(totals, '2026-05-01', undefined);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].year).toBe(2026);
+    expect(rows[0].manDays).toBeCloseTo(12);
+  });
+
+  it('spans the correct years when SP starts mid-year', () => {
+    // start 2026-07, 12 months → 6 months in 2026, 6 in 2027
+    const rows = annualBreakdown(totals, '2026-07-01', 12);
+    expect(rows.map((r) => r.year)).toEqual([2026, 2027]);
+    expect(rows[0].manDays).toBeCloseTo(6);
+    expect(rows[1].manDays).toBeCloseTo(6);
+  });
+
+  it('returns an empty array when spDate is missing', () => {
+    expect(annualBreakdown(totals, undefined, 12)).toEqual([]);
   });
 });

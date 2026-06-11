@@ -70,6 +70,57 @@ export function calcEstimationTotals(
   return { manDays, fte, benchHours, km, keuro: 0 };
 }
 
+export interface AnnualBreakdownRow {
+  year: number;
+  manDays: number;
+  fte: number;
+  benchHours: number;
+  km: number;
+}
+
+/**
+ * Distributes the estimation totals uniformly across `durationMonths` starting at `spDate`
+ * and aggregates by calendar year (§9.4). FTE per year = man-days(year) / 209.
+ * Missing `durationMonths` (or ≤0) puts everything in the SP year; missing `spDate`
+ * returns no rows (the summary then shows only the grand totals).
+ */
+export function annualBreakdown(
+  totals: EstimationTotals,
+  spDate: string | undefined,
+  durationMonths: number | undefined,
+): AnnualBreakdownRow[] {
+  if (!spDate) return [];
+  const startYear = Number(spDate.slice(0, 4));
+  const startMonth = Number(spDate.slice(5, 7)); // 1-12
+  if (!Number.isFinite(startYear) || !Number.isFinite(startMonth)) return [];
+
+  const months = durationMonths && durationMonths > 0 ? Math.floor(durationMonths) : 1;
+  const perMonthMd = totals.manDays / months;
+  const perMonthBh = totals.benchHours / months;
+  const perMonthKm = totals.km / months;
+
+  const byYear = new Map<number, { manDays: number; benchHours: number; km: number }>();
+  for (let i = 0; i < months; i++) {
+    const monthIndex = startMonth - 1 + i; // 0-based from Jan of startYear
+    const year = startYear + Math.floor(monthIndex / 12);
+    const acc = byYear.get(year) ?? { manDays: 0, benchHours: 0, km: 0 };
+    acc.manDays += perMonthMd;
+    acc.benchHours += perMonthBh;
+    acc.km += perMonthKm;
+    byYear.set(year, acc);
+  }
+
+  return [...byYear.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([year, v]) => ({
+      year,
+      manDays: Math.round(v.manDays * 100) / 100,
+      fte: Math.round((v.manDays / MAN_DAY_FTE_DIVISOR) * 100) / 100,
+      benchHours: Math.round(v.benchHours * 100) / 100,
+      km: Math.round(v.km * 100) / 100,
+    }));
+}
+
 /** Man-days bucket only — kept for backward compatibility with existing callers
  * and the persisted `Estimation.totalDays`. */
 export function calcTotalDays(
