@@ -329,6 +329,6 @@ export const es: Translations = {
   },
   related: {
     title: 'Líneas relacionadas ({n})',
-    hvtChanged: '⚠ Atributos HVT cambiaron en {id}: {fields}',
+    hvtChanged: 'Atributos HVT cambiaron en {id}: {fields}',
   },
 };

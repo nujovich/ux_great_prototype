@@ -111,6 +111,7 @@ export interface ProjectLine extends Omit<ProjectLineListItem, 'status'> {
   market?: string;
   allianceCode?: string;
   vehicleCode?: string;
+  standardEmissions?: string;
   energy?: string;
   estimateType?: string;
   engineering?: string;

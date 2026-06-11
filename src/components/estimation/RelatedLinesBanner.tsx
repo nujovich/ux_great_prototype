@@ -9,14 +9,20 @@ interface Props {
   allLines: ProjectLine[];
 }
 
+const HVT_FIELD_LABELS: Record<string, string> = {
+  organType: 'Organ Type', energyFuelType: 'Energy / Fuel Type', projectRanking: 'Project Ranking',
+  injectionSystem: 'Injection System', spDate: 'SP Date', allianceCode: 'Alliance Code',
+  vehicleCode: 'Vehicle Code', standardEmissions: 'Standard Emissions', client: 'Client', market: 'Market',
+};
+
 /** Shows lines related to the current one (§5b) and warns when a related line's
  *  HVT attributes have drifted from the estimator's last-acknowledged snapshot. */
 export function RelatedLinesBanner({ line, allLines }: Props) {
   const t = useT();
   const relatedIds = getRelatedLineIds(line.id, LINE_RELATIONSHIPS);
-  if (relatedIds.length === 0) return null;
-
   const related = allLines.filter((l) => relatedIds.includes(l.id));
+  if (related.length === 0) return null;
+
   const changes = related
     .map((l) => {
       const snap = ORIGINAL_HVT_SNAPSHOTS[l.id];
@@ -35,9 +41,9 @@ export function RelatedLinesBanner({ line, allLines }: Props) {
         ))}
       </ul>
       {changes.map((c) => (
-        <div key={c.lineId} className="mt-2 flex items-start gap-1.5 rounded bg-amber-100 px-2 py-1.5 text-amber-800">
+        <div key={c.lineId} role="alert" className="mt-2 flex items-start gap-1.5 rounded bg-amber-100 px-2 py-1.5 text-amber-800">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-          <span>{t('related.hvtChanged', { id: c.lineId, fields: Object.keys(c.fields).join(', ') })}</span>
+          <span>{t('related.hvtChanged', { id: c.lineId, fields: Object.keys(c.fields).map((k) => HVT_FIELD_LABELS[k] ?? k).join(', ') })}</span>
         </div>
       ))}
     </div>
