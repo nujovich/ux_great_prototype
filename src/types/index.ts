@@ -214,3 +214,29 @@ export interface PrototypeInductor extends Inductor {
   category: string;
 }
 
+// ── Parent-Child Line Relationships (HIW-174 §5b) ─────────
+export interface LineRelationship {
+  parentLineId: string;
+  childLineId: string;
+  relationshipType: 'parent_child' | 'sibling';
+}
+
+/** Snapshot of the HVT-monitored attributes of a line as last seen by the estimator. */
+export interface HvtSnapshot {
+  organType?: string;
+  energyFuelType?: string;
+  projectRanking?: string;
+  injectionSystem?: string | null;
+  spDate?: string;
+  allianceCode?: string;
+  vehicleCode?: string;
+  standardEmissions?: string;
+  client?: string;
+  market?: string;
+}
+
+export interface HvtChange {
+  lineId: string;
+  fields: Record<string, { old: unknown; new: unknown }>;
+}
+
