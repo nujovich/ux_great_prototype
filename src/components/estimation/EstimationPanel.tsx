@@ -593,6 +593,9 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
           totals={totals}
           spDate={line.spDate}
           durationMonths={line.durationMonths}
+          lines={bulkLines && bulkLines.length > 1
+            ? bulkLines.map((l) => ({ id: l.id, lineName: l.lineName, spDate: l.spDate, durationMonths: l.durationMonths }))
+            : undefined}
         />
       )}
 
