@@ -342,4 +342,8 @@ export interface Translations {
     discard: string;
     switchLabel: string;
   };
+  related: {
+    title: string;
+    hvtChanged: string;
+  };
 }

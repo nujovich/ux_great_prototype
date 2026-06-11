@@ -327,4 +327,8 @@ export const es: Translations = {
     discard: 'Descartar',
     switchLabel: 'Línea',
   },
+  related: {
+    title: 'Líneas relacionadas ({n})',
+    hvtChanged: '⚠ Atributos HVT cambiaron en {id}: {fields}',
+  },
 };

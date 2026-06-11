@@ -18,6 +18,7 @@ import { ManageInductorsModal } from './ManageInductorsModal';
 import { PreSaveSummaryModal } from './PreSaveSummaryModal';
 import { CommentSection } from './CommentSection';
 import { PrototypeEstimationForm } from './PrototypeEstimationForm';
+import { RelatedLinesBanner } from './RelatedLinesBanner';
 import { useT } from '../../i18n/useT';
 import { canSaveDraft } from '../../lib/saveGate';
 
@@ -48,6 +49,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   const currentRole = useRoleStore((s) => s.currentRole);
   const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
   const existing = useDataStore((s) => (line ? s.estimations[line.id] : undefined));
+  const allLines = useDataStore((s) => s.lines);
   const setEstimation = useDataStore((s) => s.setEstimation);
   const setLineStatus = useDataStore((s) => s.setLineStatus);
   const addComment = useDataStore((s) => s.addComment);
@@ -430,6 +432,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
           <div className="flex min-h-0 flex-1">
             {/* Left: inductor tree or flat JU table */}
             <div className="flex-1 overflow-y-auto border-r border-slate-100 px-6 py-4">
+              {line && <RelatedLinesBanner line={line} allLines={allLines} />}
               {viewMode === 'inductors' ? (
                 <InductorTreeView
                   selections={filteredSelections}
