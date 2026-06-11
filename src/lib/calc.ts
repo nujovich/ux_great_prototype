@@ -11,85 +11,92 @@
  */
 import type { InductorSelection, PrototypeInductor, CustomJU, Metier } from '../types';
 
-const MAN_DAY_FTE_DIVISOR = 209;  // §9.2: Working days per year
+const MAN_DAY_FTE_DIVISOR = 209; // §9.2: working days per year
+
+export interface EstimationTotals {
+  manDays: number;
+  fte: number;
+  benchHours: number;
+  km: number;
+  keuro: number;
+}
 
 /**
- * Calcula el total de días-hombre de la estimación.
- * Formula: Total = (Variable × Occurrence) + Fixed  (§9.1)
- * Inductores sin cran se saltan silenciosamente (BR-12).
+ * Computes estimation totals per the PRD formula `Total = (Variable × Occurrence) + Fixed`
+ * for each Job Unit, bucketed by `unit_type`:
+ *   man_day → man-days (→ FTE = man-days / 209), bench_hours → BH, kilometres → KM.
+ * Cran-less inductors are skipped (BR-12). The global occurrence multiplies every bucket;
+ * a global of 0 yields all-zero output (BR-13). K€ is not computed in Pre-Estimation
+ * (SDD §11) — `keuro` is a stub 0. Custom JUs contribute their `days` to man-days.
  */
+export function calcEstimationTotals(
+  selections: InductorSelection[],
+  inductors: PrototypeInductor[],
+  customJUs: CustomJU[],
+  globalOccurrences: number,
+): EstimationTotals {
+  const g = globalOccurrences <= 0 ? 0 : globalOccurrences;
+  let manDays = 0;
+  let benchHours = 0;
+  let km = 0;
+
+  for (const sel of selections) {
+    if (!sel.selectedCranId) continue; // BR-12
+    const cranJUs = inductors
+      .find((i) => i.id === sel.inductorId)
+      ?.crans.find((c) => c.id === sel.selectedCranId)
+      ?.jus ?? [];
+    for (const ju of cranJUs) {
+      const override = sel.juOccurrences.find((o) => o.juId === ju.id);
+      const occurrence = override?.occurrence ?? ju.occurrence;
+      const total = (ju.variable ?? 0) * occurrence + (ju.fixed ?? 0);
+      switch (ju.unit_type) {
+        case 'bench_hours': benchHours += total; break;
+        case 'kilometres': km += total; break;
+        default: manDays += total; break; // man_day (kiloeuros ignored: K€ stub)
+      }
+    }
+  }
+
+  for (const c of customJUs) manDays += c.days; // legacy custom model (3A)
+
+  manDays *= g;
+  benchHours *= g;
+  km *= g;
+
+  const fte = manDays > 0 ? Math.round((manDays / MAN_DAY_FTE_DIVISOR) * 100) / 100 : 0;
+  return { manDays, fte, benchHours, km, keuro: 0 };
+}
+
+/** Man-days bucket only — kept for backward compatibility with existing callers
+ * and the persisted `Estimation.totalDays`. */
 export function calcTotalDays(
   selections: InductorSelection[],
   inductors: PrototypeInductor[],
   customJUs: CustomJU[],
   globalOccurrences: number,
 ): number {
-  const inductorDays = selections.reduce((acc, sel) => {
-    if (!sel.selectedCranId) return acc;  // BR-12
-
-    const cranJUs = inductors
-      .find((i) => i.id === sel.inductorId)
-      ?.crans.find((c) => c.id === sel.selectedCranId)
-      ?.jus ?? [];
-    const selDays = cranJUs.reduce((sum, ju) => {
-      // Day value = the JU's own occurrence. Non-locked JUs mirror the inductor
-      // occurrence (set in updateInductorOccurrence); locked JUs keep their value.
-      const juOcc = sel.juOccurrences.find((o) => o.juId === ju.id);
-      const baseOcc = juOcc?.occurrence ?? ju.occurrence;
-      return sum + baseOcc;
-    }, 0);
-    return acc + selDays;
-  }, 0);
-
-  // Custom JUs (BR-11: permitidos incluso sin workload standard)
-  const customDays = customJUs.reduce((acc, j) => acc + j.days, 0);
-
-  // BR-13: zero occurrence is allowed and contributes zero to the output
-  return (inductorDays + customDays) * (globalOccurrences <= 0 ? 0 : globalOccurrences);
+  return calcEstimationTotals(selections, inductors, customJUs, globalOccurrences).manDays;
 }
 
-/**
- * Calcula FTE = Total MD / 209  (§9.2)
- */
-export function calcFTE(totalDays: number): number {
-  return totalDays > 0
-    ? Math.round((totalDays / MAN_DAY_FTE_DIVISOR) * 100) / 100
-    : 0;
+/** FTE = man-days / 209 (§9.2). */
+export function calcFTE(manDays: number): number {
+  return manDays > 0 ? Math.round((manDays / MAN_DAY_FTE_DIVISOR) * 100) / 100 : 0;
 }
 
-/**
- * K€ NO se calcula en Pre-Estimation (§11).
- * Se calcula en Allocation: K€ = FTE × Rate(societe-site, year).
- * Esta función es un stub temporal.
- */
+/** K€ is NOT computed in Pre-Estimation (SDD §11); stub kept for the UI. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function calcKEuro(_days: number, _metier: Metier): number {
   return 0;
 }
 
-/**
- * Distribución mensual uniforme simulada.
- * La distribución real usa SP date (§9.4), pero esta función
- * mantiene compatibilidad con la UI actual.
- */
+/** Uniform 12-month distribution of man-days. Retained for any current callers;
+ * the right-side chart that consumed it is removed in Phase 3B. */
 export function yearlyBreakdown(totalDays: number): number[] {
-  if (totalDays <= 0) return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-  // Distribución uniforme: totalDays / 12 por mes
+  if (totalDays <= 0) return Array(12).fill(0);
   const monthly = Math.round((totalDays / 12) * 100) / 100;
-  const months: number[] = [];
-  let sum = 0;
-
-  for (let i = 0; i < 12; i++) {
-    months.push(monthly);
-    sum += monthly;
-  }
-
-  // Ajustar el último mes para que sume exactamente totalDays
-  const diff = Math.round((totalDays - sum) * 100) / 100;
-  if (diff !== 0) {
-    months[11] = Math.round((months[11] + diff) * 100) / 100;
-  }
-
+  const months = Array(12).fill(monthly);
+  const diff = Math.round((totalDays - monthly * 12) * 100) / 100;
+  if (diff !== 0) months[11] = Math.round((months[11] + diff) * 100) / 100;
   return months;
 }
