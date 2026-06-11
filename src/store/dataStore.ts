@@ -4,6 +4,7 @@ import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
 import { CYCLES } from '../fixtures/cycles';
 import { canTransition } from '../lib/stateMachine';
+import { buildBulkEstimations } from '../lib/bulkSave';
 
 interface DataState {
   lines: ProjectLine[];
@@ -15,6 +16,7 @@ interface DataState {
   rejectLine: (id: string, comment: string) => void;
   setEstimation: (lineId: string, est: Estimation) => void;
   copyEstimation: (sourceId: string, targetIds: string[]) => void;
+  bulkSetEstimation: (lineIds: string[], base: Omit<Estimation, 'lineId'>) => void;
   addComment: (comment: Omit<EstimationComment, 'id' | 'createdAt'>) => void;
   createCycle: (name: string, startDate: string, endDate: string) => void;
   prototypeEstimations: Record<string, PrototypeEstimation>;
@@ -64,6 +66,23 @@ export const useDataStore = create<DataState>((set, get) => ({
     }),
   setEstimation: (lineId, est) =>
     set((s) => ({ estimations: { ...s.estimations, [lineId]: est } })),
+  bulkSetEstimation: (lineIds, base) =>
+    set((s) => {
+      const built = buildBulkEstimations(lineIds, base);
+      const estimations = { ...s.estimations, ...built };
+      const lines = s.lines.map((l) =>
+        built[l.id]
+          ? {
+              ...l,
+              status: 'Draft' as LineStatus,
+              estimatedDays: base.totalDays,
+              estimatedKEuro: base.totalKEuro,
+              lastUpdatedAt: new Date().toISOString(),
+            }
+          : l,
+      );
+      return { estimations, lines };
+    }),
   copyEstimation: (sourceId, targetIds) => {
     const src = get().estimations[sourceId];
     const srcLine = get().lines.find((l) => l.id === sourceId);
