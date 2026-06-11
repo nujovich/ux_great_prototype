@@ -263,9 +263,12 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
 
   const dirty = useMemo(
     () => isEstimationDirty(
+      // Baseline = the saved estimation, or — for an unestimated line — the same
+      // preloaded selections the open effect seeds, so a freshly-opened, untouched
+      // panel is never considered dirty (preload would otherwise differ from PRISTINE).
       existing
         ? { inductorSelections: existing.inductorSelections, customJUs: existing.customJUs, globalOccurrences: existing.globalOccurrences }
-        : undefined,
+        : { inductorSelections: preloadSelections(INDUCTORS), customJUs: [], globalOccurrences: 1 },
       { inductorSelections: selections, customJUs, globalOccurrences },
     ),
     [existing, selections, customJUs, globalOccurrences],
@@ -857,11 +860,11 @@ function CustomJUSection({
               <input value={ju.name} placeholder={t('panel.customName')} disabled={!canEditCustomJU}
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, name: e.target.value } : x)))}
                 className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-50" />
-              <input type="number" step={0.5} value={ju.variable} disabled={!canEditCustomJU} title={t('panel.colVar')}
-                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, variable: Number(e.target.value) } : x)))}
+              <input type="number" min={0} step={0.5} value={ju.variable} disabled={!canEditCustomJU} title={t('panel.colVar')}
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, variable: Math.max(0, Number(e.target.value) || 0) } : x)))}
                 className="w-14 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50" />
-              <input type="number" step={0.5} value={ju.fixed} disabled={!canEditCustomJU} title={t('panel.colFixed')}
-                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, fixed: Number(e.target.value) } : x)))}
+              <input type="number" min={0} step={0.5} value={ju.fixed} disabled={!canEditCustomJU} title={t('panel.colFixed')}
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, fixed: Math.max(0, Number(e.target.value) || 0) } : x)))}
                 className="w-14 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50" />
               <input type="number" min={0} value={ju.occurrence} disabled={!canEditCustomJU} title={t('panel.colOcc')}
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, occurrence: Math.max(0, Number(e.target.value) || 0) } : x)))}

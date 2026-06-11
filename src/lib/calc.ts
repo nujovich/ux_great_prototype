@@ -6,10 +6,11 @@
  * Formula: Total = (Variable × Occurrence) + Fixed
  * FTE = Total MD / 209
  *
- * Mantiene la interfaz pública que la UI consume (calcTotalDays, calcKEuro)
- * pero con implementación alineada al SDD Kit.
+ * Mantiene la interfaz pública que la UI consume (calcEstimationTotals, calcTotalDays)
+ * pero con implementación alineada al SDD Kit. K€ NO se calcula en Pre-Estimation
+ * (SDD §11): EstimationTotals.keuro es 0 y se computa en Allocation.
  */
-import type { InductorSelection, PrototypeInductor, CustomJU, Metier } from '../types';
+import type { InductorSelection, PrototypeInductor, CustomJU } from '../types';
 
 const MAN_DAY_FTE_DIVISOR = 209; // §9.2: working days per year
 
@@ -78,11 +79,5 @@ export function calcTotalDays(
   globalOccurrences: number,
 ): number {
   return calcEstimationTotals(selections, inductors, customJUs, globalOccurrences).manDays;
-}
-
-/** K€ is NOT computed in Pre-Estimation (SDD §11); stub kept for the UI. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function calcKEuro(_days: number, _metier: Metier): number {
-  return 0;
 }
 
