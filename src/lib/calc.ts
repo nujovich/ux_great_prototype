@@ -53,7 +53,8 @@ export function calcEstimationTotals(
       switch (ju.unit_type) {
         case 'bench_hours': benchHours += total; break;
         case 'kilometres': km += total; break;
-        default: manDays += total; break; // man_day (kiloeuros ignored: K€ stub)
+        case 'kiloeuros': break; // ignored in Pre-Estimation (K€ computed in Allocation, §11)
+        default: manDays += total; break; // man_day
       }
     }
   }

@@ -69,6 +69,16 @@ describe('calcEstimationTotals (HIW-174 §8/§9)', () => {
     expect(calcEstimationTotals([withSel], inds, [], 1).manDays).toBeCloseTo(2); // (2×1)+0
   });
 
+  it('ignores kiloeuros JUs in Pre-Estimation (K€ computed in Allocation, §11)', () => {
+    const inds = [inductorWith([ju('ke', 100, 5, 'kiloeuros')])];
+    const sel = selOf([{ juId: 'ke', occurrence: 3, locked: false }]);
+    const t = calcEstimationTotals([sel], inds, [], 1);
+    expect(t.manDays).toBe(0);
+    expect(t.benchHours).toBe(0);
+    expect(t.km).toBe(0);
+    expect(t.keuro).toBe(0);
+  });
+
   it('custom JUs contribute their days to man-days (legacy model preserved in 3A)', () => {
     const customJUs: CustomJU[] = [{ id: 'c1', description: 'x', days: 4 }];
     expect(calcEstimationTotals([], [], customJUs, 2).manDays).toBeCloseTo(8);
