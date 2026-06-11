@@ -6,7 +6,7 @@ import { INDUCTORS } from '../../fixtures/inductors';
 import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
 import { validateBeforeSave } from '../../lib/validation';
 import { formatDays, formatKEuro, formatBenchHours, formatKm } from '../../lib/format';
-import { juTotal } from '../../lib/juTotal';
+import { juTotal, shouldShowCranDropdown } from '../../lib/juTotal';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { useRoleStore } from '../../store/roleStore';
@@ -163,6 +163,12 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
         };
       }),
     );
+  }, []);
+
+  const clearCran = useCallback((inductorId: string) => {
+    setSelections((prev) => prev.map((sel) =>
+      sel.inductorId === inductorId ? { ...sel, selectedCranId: null, juOccurrences: [] } : sel,
+    ));
   }, []);
 
   const toggleExpanded = useCallback((inductorId: string) => {
@@ -389,6 +395,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
                   onUpdateJUOccurrence={updateJUOccurrence}
                   onToggleJULock={toggleJULock}
                   onRemoveInductor={removeInductor}
+                  onClearCran={clearCran}
                 />
               ) : (
                 <FlatJUView
@@ -586,12 +593,13 @@ interface TreeProps {
   onUpdateJUOccurrence: (inductorId: string, juId: string, occ: number) => void;
   onToggleJULock: (inductorId: string, juId: string) => void;
   onRemoveInductor: (inductorId: string) => void;
+  onClearCran: (inductorId: string) => void;
 }
 
 function InductorTreeView({
   selections, expanded, canEdit,
   onToggleExpanded, onSelectCran, onUpdateInductorOccurrence,
-  onUpdateJUOccurrence, onToggleJULock, onRemoveInductor,
+  onUpdateJUOccurrence, onToggleJULock, onRemoveInductor, onClearCran,
 }: TreeProps) {
   const t = useT();
   if (selections.length === 0) {
@@ -634,17 +642,33 @@ function InductorTreeView({
                 <span className="ml-2 text-[10px] text-slate-400">{ind.category}</span>
               </div>
               <span className="text-[10px] text-slate-400">{t('panel.cranLabel')}</span>
-              <select
-                value={sel.selectedCranId ?? ''}
-                onChange={(e) => e.target.value && onSelectCran(sel.inductorId, e.target.value)}
-                disabled={!canEdit}
-                className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs focus:border-brand-400 focus:outline-none disabled:bg-slate-50"
-              >
-                <option value="">{t('panel.selectCran')}</option>
-                {availableCrans.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              {!shouldShowCranDropdown(availableCrans.length) ? (
+                <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
+                  {availableCrans[0]?.name ?? '—'}
+                </span>
+              ) : (
+                <>
+                  <select
+                    value={sel.selectedCranId ?? ''}
+                    onChange={(e) => e.target.value && onSelectCran(sel.inductorId, e.target.value)}
+                    disabled={!canEdit}
+                    className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs focus:border-brand-400 focus:outline-none disabled:bg-slate-50"
+                  >
+                    {!sel.selectedCranId && <option value="">{t('panel.selectCran')}</option>}
+                    {availableCrans.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  {canEdit && sel.selectedCranId && (
+                    <button
+                      onClick={() => onClearCran(sel.inductorId)}
+                      className="text-[10px] text-slate-400 hover:text-slate-600 underline"
+                    >
+                      {t('panel.clearCran')}
+                    </button>
+                  )}
+                </>
+              )}
               <span className="text-[10px] text-slate-400">{t('panel.occLabel')}</span>
               <input
                 type="number"

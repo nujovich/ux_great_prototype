@@ -302,6 +302,7 @@ export interface Translations {
     noWorkloadStandard: string;
     toastDraftSaved: string;
     toastPromoted: string;
+    clearCran: string;
   };
   copy: {
     title: string;

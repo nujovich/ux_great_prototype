@@ -287,6 +287,7 @@ export const es: Translations = {
     noWorkloadStandard: 'Sin estándar de carga para esta combinación',
     toastDraftSaved: 'Borrador guardado para {id}',
     toastPromoted: '{id} promovida a estimación definitiva',
+    clearCran: 'Limpiar',
   },
   copy: {
     title: 'Copiar estimación de {id}',

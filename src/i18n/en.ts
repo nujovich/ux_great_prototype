@@ -287,6 +287,7 @@ export const en: Translations = {
     noWorkloadStandard: 'No workload standard found for this combination',
     toastDraftSaved: 'Draft saved for {id}',
     toastPromoted: '{id} promoted to definitive estimation',
+    clearCran: 'Clear',
   },
   copy: {
     title: 'Copy estimation from {id}',
