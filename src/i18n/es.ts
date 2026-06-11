@@ -309,6 +309,9 @@ export const es: Translations = {
     cancel: 'Cancelar',
     confirm: 'Copiar a {n} línea(s)',
     toastCopied: 'Estimación copiada a {n} línea(s)',
+    tabCurrent: 'Ciclo actual',
+    tabLegacy: 'Ciclo legado',
+    toastLegacyCopied: 'Estimación legada "{label}" copiada como Borrador',
   },
   manageInductors: {
     title: 'Carga de Inductores',

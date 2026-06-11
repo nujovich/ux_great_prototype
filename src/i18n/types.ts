@@ -324,6 +324,9 @@ export interface Translations {
     cancel: string;
     confirm: string;
     toastCopied: string;
+    tabCurrent: string;
+    tabLegacy: string;
+    toastLegacyCopied: string;
   };
   manageInductors: {
     title: string;

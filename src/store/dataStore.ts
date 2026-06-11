@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ProjectLine, LineStatus, Allocation, AllocationRow, Estimation, EstimationComment, PrototypeEstimation, Cycle } from '../types';
+import type { ProjectLine, LineStatus, Allocation, AllocationRow, Estimation, EstimationComment, PrototypeEstimation, Cycle, InductorSelection, CustomJU } from '../types';
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
 import { CYCLES } from '../fixtures/cycles';
@@ -26,6 +26,7 @@ interface DataState {
   bulkAssignSociete: (lineIds: string[], societe: string) => void;
   saveDirtyAllocations: (lineId: string, splits: AllocationRow[]) => void;
   simulateHvtApproval: (lineIds: string[]) => void;
+  copyFromLegacy: (targetLineId: string, inductorSelections: InductorSelection[], customJUs: CustomJU[]) => void;
 }
 
 export const useDataStore = create<DataState>((set, get) => ({
@@ -174,4 +175,23 @@ export const useDataStore = create<DataState>((set, get) => ({
           : l,
       ),
     })),
+  copyFromLegacy: (targetLineId, inductorSelections, customJUs) =>
+    set((s) => {
+      const est: Estimation = {
+        lineId: targetLineId,
+        inductorSelections,
+        customJUs,
+        globalOccurrences: 1,
+        yearlyBreakdown: [],
+        totalDays: 0,
+        totalKEuro: 0,
+        status: 'Draft',
+      };
+      return {
+        estimations: { ...s.estimations, [targetLineId]: est },
+        lines: s.lines.map((l) =>
+          l.id === targetLineId ? { ...l, status: 'Draft' as LineStatus, lastUpdatedAt: new Date().toISOString() } : l,
+        ),
+      };
+    }),
 }));
