@@ -26,7 +26,7 @@ export function copyCandidates(
   return lines.filter((l) => {
     if (l.id === source.id) return false;
     if (!COPYABLE_STATUSES.has(l.status)) return false;
-    if (opts.ownOnly && l.assignedEngineerId !== opts.activeEngineerId) return false;
+    if (opts.ownOnly && opts.activeEngineerId && l.assignedEngineerId !== opts.activeEngineerId) return false;
     return checkCompatibility([source, l]).compatible;
   });
 }

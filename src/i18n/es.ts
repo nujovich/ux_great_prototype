@@ -301,7 +301,7 @@ export const es: Translations = {
   },
   copy: {
     title: 'Copiar estimación de {id}',
-    subtitle: 'Se muestran líneas compatibles con {id} (mismo Tipo de Órgano, Energía, Ranking e Sistema de Inyección).',
+    subtitle: 'Se muestran líneas compatibles con {id} (mismo Tipo de Órgano, Energía, Ranking y Sistema de Inyección).',
     noCompatible: 'No hay líneas compatibles para copiar.',
     colId: 'ID',
     colProjectLine: 'Proyecto / Línea',

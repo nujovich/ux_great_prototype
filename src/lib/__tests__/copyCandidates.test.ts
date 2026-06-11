@@ -38,4 +38,10 @@ describe('copyCandidates (HIW-174 §10)', () => {
     const out = copyCandidates([nullInj], source, { ownOnly: false, activeEngineerId: null });
     expect(out).toEqual([]);
   });
+  it('when ownOnly but activeEngineerId is null, applies no assignee filter (null-safe)', () => {
+    const mine = mk('PL-A', { assignedEngineerId: 'eng-1' });
+    const other = mk('PL-D', { assignedEngineerId: 'eng-9' });
+    const out = copyCandidates([mine, other], source, { ownOnly: true, activeEngineerId: null });
+    expect(out.map((l) => l.id).sort()).toEqual(['PL-A', 'PL-D']);
+  });
 });
