@@ -293,6 +293,10 @@ export const es: Translations = {
     totalKm: 'Total KMs',
     keuroHint: 'Se calcula en Allocation',
     customName: 'Nombre',
+    summaryTitle: 'Resumen previo al guardado',
+    summaryNoKeuro: 'El K€ se calcula en Allocation.',
+    summaryYear: 'Año',
+    summaryClose: 'Cerrar',
   },
   copy: {
     title: 'Copiar estimación de {id}',

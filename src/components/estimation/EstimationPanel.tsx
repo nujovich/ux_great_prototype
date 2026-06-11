@@ -15,6 +15,7 @@ import { useDataStore } from '../../store/dataStore';
 import { useUIStore } from '../../store/uiStore';
 import { CopyEstimationModal } from './CopyEstimationModal';
 import { ManageInductorsModal } from './ManageInductorsModal';
+import { PreSaveSummaryModal } from './PreSaveSummaryModal';
 import { CommentSection } from './CommentSection';
 import { PrototypeEstimationForm } from './PrototypeEstimationForm';
 import { useT } from '../../i18n/useT';
@@ -61,6 +62,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [confirmPromote, setConfirmPromote] = useState(false);
   const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(false);
+  const [showSummary, setShowSummary] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ type: 'close' } | { type: 'switch'; id: string } | null>(null);
 
   useEffect(() => {
@@ -74,6 +76,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
       setViewMode('inductors');
       setExpanded(new Set());
       setHasDraftedThisSession(false);
+      setShowSummary(false);
     });
   }, [line, existing]);
 
@@ -243,7 +246,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
     persist('Draft');
     setHasDraftedThisSession(true);
     pushToast(t('panel.toastDraftSaved', { id: line!.id }), 'success');
-    onClose();
+    setShowSummary(true);
   }
 
   function handlePromote() {
@@ -527,8 +530,9 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
           {t('panel.confirmBody', { id: line.id })}
         </p>
         <ul className="mt-3 space-y-1 text-sm text-slate-600">
-          <li>• {t('panel.confirmDays', { n: formatDays(totalDays) })}</li>
-          <li>• {t('panel.confirmKeuro', { n: formatKEuro(totals.keuro) })}</li>
+          <li>• {t('panel.totalEtp')}: {formatFTE(totals.fte)}</li>
+          <li>• {t('panel.totalBh')}: {formatBenchHours(totals.benchHours)}</li>
+          <li>• {t('panel.totalKm')}: {formatKm(totals.km)}</li>
         </ul>
       </Modal>
 
@@ -538,6 +542,17 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
           activeInductorIds={selections.map((s) => s.inductorId)}
           onApply={(ids: string[]) => { addInductors(ids); setShowManage(false); }}
           onClose={() => setShowManage(false)}
+        />
+      )}
+
+      {line && (
+        <PreSaveSummaryModal
+          open={showSummary}
+          onClose={() => setShowSummary(false)}
+          lineName={line.lineName}
+          totals={totals}
+          spDate={line.spDate}
+          durationMonths={line.durationMonths}
         />
       )}
 

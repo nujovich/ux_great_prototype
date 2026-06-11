@@ -308,6 +308,10 @@ export interface Translations {
     totalKm: string;
     keuroHint: string;
     customName: string;
+    summaryTitle: string;
+    summaryNoKeuro: string;
+    summaryYear: string;
+    summaryClose: string;
   };
   copy: {
     title: string;
