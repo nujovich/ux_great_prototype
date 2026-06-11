@@ -289,7 +289,9 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
     else if (a?.type === 'switch') onSwitchLine?.(a.id);
   }, [pendingAction, onClose, onSwitchLine]);
 
-  const hasMinimumForDraft = globalOccurrences > 0;
+  const hasAnyCustomJU = customJUs.some((c) => c.name.trim().length > 0);
+  const hasAnySelection = selections.some((s) => s.selectedCranId);
+  const hasMinimumForDraft = hasAnySelection || hasAnyCustomJU;
   const hasMinimumForDefinitive =
     globalOccurrences > 0 &&
     selections.some((s) => s.selectedCranId !== null && s.juOccurrences.length > 0);
