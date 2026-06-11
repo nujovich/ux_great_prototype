@@ -7,6 +7,16 @@ import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
 import { validateBeforeSave } from '../../lib/validation';
 import { formatDays, formatKEuro, formatBenchHours, formatKm } from '../../lib/format';
 import { juTotal } from '../../lib/juTotal';
+import { Button } from '../shared/Button';
+import { Modal } from '../shared/Modal';
+import { useRoleStore } from '../../store/roleStore';
+import { useDataStore } from '../../store/dataStore';
+import { useUIStore } from '../../store/uiStore';
+import { CopyEstimationModal } from './CopyEstimationModal';
+import { ManageInductorsModal } from './ManageInductorsModal';
+import { CommentSection } from './CommentSection';
+import { PrototypeEstimationForm } from './PrototypeEstimationForm';
+import { useT } from '../../i18n/useT';
 
 const UNIT_LABEL: Record<string, string> = {
   man_day: 'MD', bench_hours: 'BH', kilometres: 'km', kiloeuros: 'k€',
@@ -19,16 +29,6 @@ function formatJuTotal(unit: string | undefined, value: number): string {
     default: return formatDays(value);
   }
 }
-import { Button } from '../shared/Button';
-import { Modal } from '../shared/Modal';
-import { useRoleStore } from '../../store/roleStore';
-import { useDataStore } from '../../store/dataStore';
-import { useUIStore } from '../../store/uiStore';
-import { CopyEstimationModal } from './CopyEstimationModal';
-import { ManageInductorsModal } from './ManageInductorsModal';
-import { CommentSection } from './CommentSection';
-import { PrototypeEstimationForm } from './PrototypeEstimationForm';
-import { useT } from '../../i18n/useT';
 
 interface Props {
   line: ProjectLine | null;
