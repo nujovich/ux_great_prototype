@@ -484,7 +484,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
                   initial={protoEst}
                   onSave={(est) => setPrototypeEstimation(line.id, est)}
                   onClose={requestClose}
-                  readOnly={locked}
+                  readOnly={locked || !can('edit:estimation')}
                 />
               )}
             </div>
