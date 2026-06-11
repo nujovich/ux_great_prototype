@@ -273,7 +273,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
         status: 'Draft',
         draftedAt: new Date().toISOString(),
       };
-      bulkSetEstimation(bulkLines.map((l) => l.id), base);
+      bulkSetEstimation(bulkLines.filter((l) => l.id !== line!.id).map((l) => l.id), base);
     }
     setHasDraftedThisSession(true);
     pushToast(t('panel.toastDraftSaved', { id: line!.id }), 'success');
