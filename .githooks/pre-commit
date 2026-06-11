@@ -1,0 +1,10 @@
+#!/bin/sh
+# Block commit if TypeScript errors exist
+echo "Running TypeScript check..."
+npx tsc -b --noEmit
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "❌ Commit blocked: fix TypeScript errors above before committing."
+  exit 1
+fi
+echo "✓ TypeScript OK"

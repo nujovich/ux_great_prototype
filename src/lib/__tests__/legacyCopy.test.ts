@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { mergeLegacyEstimation, type LegacyJU } from '../legacyCopy';
-import type { PrototypeInductor } from '../../types';
+import type { JU, PrototypeInductor } from '../../types';
 
-const ju = (id: string, variable: number, fixed: number, occurrence: number, unit = 'man_day') =>
+const ju = (id: string, variable: number, fixed: number, occurrence: number, unit: JU['unit_type'] = 'man_day'): JU =>
   ({ id, name: id, long_name: id, variable, fixed, unit_type: unit, occurrence, occurrence_locked: false, custom: false, metier: 'H-DESIGN' });
 
 // Current workload: inductor I1 with JUs j1 (changed coeffs), j2 (unchanged), j4 (new JU); inductor I2 (new inductor)
