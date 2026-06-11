@@ -5,6 +5,8 @@ import { Button } from '../shared/Button';
 import { useDataStore } from '../../store/dataStore';
 import { useUIStore } from '../../store/uiStore';
 import { useT } from '../../i18n/useT';
+import { copyCandidates } from '../../lib/copyCandidates';
+import { useRoleStore } from '../../store/roleStore';
 
 interface Props {
   sourceLine: ProjectLine;
@@ -16,18 +18,13 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
   const copyEstimation = useDataStore((s) => s.copyEstimation);
   const pushToast = useUIStore((s) => s.pushToast);
   const t = useT();
+  const can = useRoleStore((s) => s.can);
+  const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
   const [selected, setSelected] = useState<string[]>([]);
 
   const candidates = useMemo(
-    () =>
-      lines.filter(
-        (l) =>
-          l.id !== sourceLine.id &&
-          l.metier === sourceLine.metier &&
-          l.cycleId === sourceLine.cycleId &&
-          (l.status === 'To do' || l.status === 'Draft'),
-      ),
-    [lines, sourceLine],
+    () => copyCandidates(lines, sourceLine, { ownOnly: can('view:own-lines-only'), activeEngineerId }),
+    [lines, sourceLine, can, activeEngineerId],
   );
 
   function toggle(id: string) {
@@ -56,7 +53,7 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
       }
     >
       <p className="mb-3 text-sm text-slate-600">
-        {t('copy.subtitle', { metier: sourceLine.metier })}
+        {t('copy.subtitle', { id: sourceLine.id })}
       </p>
       {candidates.length === 0 ? (
         <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
