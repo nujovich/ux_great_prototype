@@ -28,10 +28,10 @@ export const WORKLOAD_STANDARDS: WorkloadStandard[] = [
 ];
 
 export const PROTOTYPE_CATEGORIES: PrototypeCategory[] = [
-  { id: 'cat-1', name: 'Greenfield', description: 'New product from scratch' },
-  { id: 'cat-2', name: 'Refactor', description: 'Rewrite of existing module' },
-  { id: 'cat-3', name: 'Integration', description: 'Connection with external systems' },
-  { id: 'cat-4', name: 'Maintenance', description: 'Bugfixes and minor improvements' },
+  { id: 'cat-1', name: 'proto1', description: 'New product from scratch' },
+  { id: 'cat-2', name: 'proto2', description: 'Rewrite of existing module' },
+  { id: 'cat-3', name: 'proto3', description: 'Connection with external systems' },
+  { id: 'cat-4', name: 'proto4', description: 'Bugfixes and minor improvements' },
 ];
 
 export const ALLOCATION_RULES: AllocationRule[] = [
