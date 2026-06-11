@@ -102,6 +102,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
 
   const locked = !line || line.status === 'Estimated' || line.status === 'Sent' || line.status === 'Approved';
   const canEdit = can('edit:estimation') && !locked;
+  const canCopy = can('copy:estimation');
   const canEditCustomJU = can('edit:custom-jus') && !locked;
 
   const totals = useMemo(
@@ -528,7 +529,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
           {/* Footer */}
           <div className="flex flex-shrink-0 items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3">
             <div>
-              {existing && canEdit && (
+              {existing && canCopy && (
                 <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
                   <Copy size={14} /> {t('panel.copyToLines')}
                 </Button>
