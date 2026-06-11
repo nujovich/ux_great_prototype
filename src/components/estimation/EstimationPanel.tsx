@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search } from 'lucide-react';
-import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran } from '../../types';
+import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search, Layers } from 'lucide-react';
+import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran, Estimation } from '../../types';
 import { isEstimationDirty } from '../../lib/estimationDirty';
 import { INDUCTORS } from '../../fixtures/inductors';
 import { calcEstimationTotals } from '../../lib/calc';
@@ -38,9 +38,12 @@ interface Props {
   onClose: () => void;
   navLines?: ProjectLine[];
   onSwitchLine?: (id: string) => void;
+  /** When estimating multiple compatible lines at once, all selected lines.
+   *  When present and length > 1, Save-as-Draft applies the config to every line. */
+  bulkLines?: ProjectLine[];
 }
 
-export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props) {
+export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLines }: Props) {
   const can = useRoleStore((s) => s.can);
   const currentRole = useRoleStore((s) => s.currentRole);
   const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
@@ -50,6 +53,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
   const addComment = useDataStore((s) => s.addComment);
   const protoEst = useDataStore((s) => (line ? s.prototypeEstimations[line.id] : undefined));
   const setPrototypeEstimation = useDataStore((s) => s.setPrototypeEstimation);
+  const bulkSetEstimation = useDataStore((s) => s.bulkSetEstimation);
   const pushToast = useUIStore((s) => s.pushToast);
 
   const [selections, setSelections] = useState<InductorSelection[]>([]);
@@ -258,6 +262,19 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
       return;
     }
     persist('Draft');
+    if (bulkLines && bulkLines.length > 1) {
+      const base: Omit<Estimation, 'lineId'> = {
+        inductorSelections: selections,
+        customJUs,
+        globalOccurrences,
+        yearlyBreakdown: [],
+        totalDays,
+        totalKEuro: totals.keuro,
+        status: 'Draft',
+        draftedAt: new Date().toISOString(),
+      };
+      bulkSetEstimation(bulkLines.map((l) => l.id), base);
+    }
     setHasDraftedThisSession(true);
     pushToast(t('panel.toastDraftSaved', { id: line!.id }), 'success');
     setShowSummary(true);
@@ -339,6 +356,15 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
               <div className="mt-0.5 text-xs text-slate-500">
                 {line.id} · {line.projectName} · {line.metier}
               </div>
+              {bulkLines && bulkLines.length > 1 && (
+                <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-brand-700">
+                  <Layers size={12} />
+                  <span className="font-medium">{t('bulk.applyingTo', { n: bulkLines.length })}:</span>
+                  {bulkLines.map((l) => (
+                    <span key={l.id} className="rounded bg-brand-50 px-1.5 py-0.5">{l.lineName}</span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
               {navLines && navLines.length > 1 && (

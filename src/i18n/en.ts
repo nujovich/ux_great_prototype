@@ -54,6 +54,7 @@ export const en: Translations = {
     estimateBulk: 'Bulk estimate',
     assign: 'Assign',
     clear: 'Clear',
+    applyingTo: 'Applying to {n} lines',
   },
   home: {
     subtitle: 'Clickable prototype of the 6 main views of the GREAT system. Use the role selector in the top bar to see how views and permissions change. Data is in memory and resets on reload.',

@@ -52,6 +52,11 @@ function PreEstimationContent() {
   );
   const compatibility = useMemo(() => checkCompatibility(selectedLines), [selectedLines]);
 
+  const bulkLines = useMemo(
+    () => (selectedLines.length > 1 && compatibility.compatible ? selectedLines : undefined),
+    [selectedLines, compatibility],
+  );
+
   const showSelection = role !== 'RCRC';
   const showKEuro = can('view:k-euro-rates') || role === 'Engineer';
 
@@ -157,6 +162,7 @@ function PreEstimationContent() {
               : [currentLine, ...visibleLines]
           }
           onSwitchLine={(id) => openEstimationPanel(id)}
+          bulkLines={bulkLines}
         />
       )}
     </div>

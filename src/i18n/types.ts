@@ -69,6 +69,7 @@ export interface Translations {
     estimateBulk: string;
     assign: string;
     clear: string;
+    applyingTo: string;
   };
   home: {
     subtitle: string;

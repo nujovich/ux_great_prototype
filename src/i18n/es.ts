@@ -54,6 +54,7 @@ export const es: Translations = {
     estimateBulk: 'Estimar en bulk',
     assign: 'Asignar',
     clear: 'Limpiar',
+    applyingTo: 'Aplicando a {n} líneas',
   },
   home: {
     subtitle: 'Prototipo clickeable de las 6 vistas principales del sistema GREAT. Usá el selector de rol en la barra superior para ver cómo cambian las vistas y los permisos. Los datos viven en memoria y se resetean al recargar.',
