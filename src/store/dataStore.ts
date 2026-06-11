@@ -5,6 +5,8 @@ import { ALLOCATIONS } from '../fixtures/allocations';
 import { CYCLES } from '../fixtures/cycles';
 import { canTransition } from '../lib/stateMachine';
 import { buildBulkEstimations } from '../lib/bulkSave';
+import { calcEstimationTotals } from '../lib/calc';
+import { INDUCTORS } from '../fixtures/inductors';
 
 interface DataState {
   lines: ProjectLine[];
@@ -177,20 +179,23 @@ export const useDataStore = create<DataState>((set, get) => ({
     })),
   copyFromLegacy: (targetLineId, inductorSelections, customJUs) =>
     set((s) => {
+      const totals = calcEstimationTotals(inductorSelections, INDUCTORS, customJUs, 1);
       const est: Estimation = {
         lineId: targetLineId,
         inductorSelections,
         customJUs,
         globalOccurrences: 1,
         yearlyBreakdown: [],
-        totalDays: 0,
-        totalKEuro: 0,
+        totalDays: totals.manDays,
+        totalKEuro: totals.keuro,
         status: 'Draft',
       };
       return {
         estimations: { ...s.estimations, [targetLineId]: est },
         lines: s.lines.map((l) =>
-          l.id === targetLineId ? { ...l, status: 'Draft' as LineStatus, lastUpdatedAt: new Date().toISOString() } : l,
+          l.id === targetLineId
+            ? { ...l, status: 'Draft' as LineStatus, estimatedDays: totals.manDays, estimatedKEuro: totals.keuro, lastUpdatedAt: new Date().toISOString() }
+            : l,
         ),
       };
     }),

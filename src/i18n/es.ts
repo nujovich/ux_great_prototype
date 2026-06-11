@@ -308,10 +308,12 @@ export const es: Translations = {
     colStatus: 'Status',
     cancel: 'Cancelar',
     confirm: 'Copiar a {n} línea(s)',
+    confirmLegacy: 'Aplicar estimación legada',
     toastCopied: 'Estimación copiada a {n} línea(s)',
     tabCurrent: 'Ciclo actual',
     tabLegacy: 'Ciclo legado',
     toastLegacyCopied: 'Estimación legada "{label}" copiada como Borrador',
+    noLegacy: 'No hay estimaciones legadas disponibles.',
   },
   manageInductors: {
     title: 'Carga de Inductores',

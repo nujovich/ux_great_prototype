@@ -323,10 +323,12 @@ export interface Translations {
     colStatus: string;
     cancel: string;
     confirm: string;
+    confirmLegacy: string;
     toastCopied: string;
     tabCurrent: string;
     tabLegacy: string;
     toastLegacyCopied: string;
+    noLegacy: string;
   };
   manageInductors: {
     title: string;

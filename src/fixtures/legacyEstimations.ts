@@ -8,6 +8,9 @@
  *   - ju-1-2-2  (ind-1 / cr-1-2) → Rule 2: coeffs changed (historical variable=2.0 vs current 1.5)
  *   - ju-2-1-1  (ind-2 / cr-2-1) → contributes a second inductor bucket; Rule 1 match
  *   - ju-LEGACY-GHOST-01          → Rule 3: orphan absent from INDUCTORS → Custom JU
+ *   Rule 4 (new JU under a touched inductor, added at occurrence 0) is exercised implicitly:
+ *   any JU present in cran cr-1-2 of ind-1 that does NOT appear in the legacy list (e.g.
+ *   a third JU added to that cran after the historical cycle) receives occurrence 0 per Rule 4.
  */
 import type { LegacyJU } from '../lib/legacyCopy';
 
