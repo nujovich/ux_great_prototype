@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search } from 'lucide-react';
 import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran } from '../../types';
 import { isEstimationDirty } from '../../lib/estimationDirty';
@@ -64,19 +64,33 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
   const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(false);
   const [showSummary, setShowSummary] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ type: 'close' } | { type: 'switch'; id: string } | null>(null);
+  // Tracks the line currently loaded so we can tell a genuine line switch (reset the
+  // session) apart from an `existing` change caused by our own Save-as-Draft (re-seed only).
+  const loadedLineId = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!line) return;
+    if (!line) {
+      loadedLineId.current = null; // panel closed → next open re-arms the session resets
+      return;
+    }
+    const isLineSwitch = loadedLineId.current !== line.id;
     // Batch state updates to avoid cascading renders
     Promise.resolve().then(() => {
+      // Re-seed editable state from the persisted estimation (also runs after our own
+      // save, where it is a no-op since current === saved — keeps the dirty memo correct).
       setSelections(existing?.inductorSelections ?? preloadSelections(INDUCTORS));
       setCustomJUs(existing?.customJUs ?? []);
       setGlobalOccurrences(existing?.globalOccurrences ?? 1);
-      setSearch('');
-      setViewMode('inductors');
-      setExpanded(new Set());
-      setHasDraftedThisSession(false);
-      setShowSummary(false);
+      // Session-scoped UI state resets ONLY on a genuine line switch — NOT when `existing`
+      // changes because we just saved a draft (that must keep the gate + summary open, BR-15).
+      if (isLineSwitch) {
+        setSearch('');
+        setViewMode('inductors');
+        setExpanded(new Set());
+        setHasDraftedThisSession(false);
+        setShowSummary(false);
+        loadedLineId.current = line.id;
+      }
     });
   }, [line, existing]);
 
