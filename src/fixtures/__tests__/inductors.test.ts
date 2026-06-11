@@ -35,4 +35,20 @@ describe('inductor fixtures (HIW-174 §7/§8 foundation)', () => {
   it('keeps the zero-cran inductor for the no-workload-standard case', () => {
     expect(INDUCTORS.some((i) => i.crans.length === 0)).toBe(true);
   });
+
+  it('every JU has occurrence defaulting to 1 (count) and a numeric variable coefficient', () => {
+    const jus = INDUCTORS.flatMap((i) => i.crans.flatMap((c) => c.jus));
+    for (const ju of jus) {
+      expect(ju.occurrence).toBe(1);
+      expect(typeof ju.variable).toBe('number');
+      expect(ju.variable).toBeGreaterThan(0);
+    }
+  });
+
+  it('covers bench_hours and kilometres unit types (not only man_day)', () => {
+    const units = new Set(INDUCTORS.flatMap((i) => i.crans.flatMap((c) => c.jus)).map((j) => j.unit_type));
+    expect(units.has('man_day')).toBe(true);
+    expect(units.has('bench_hours')).toBe(true);
+    expect(units.has('kilometres')).toBe(true);
+  });
 });

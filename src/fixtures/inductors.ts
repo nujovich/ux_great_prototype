@@ -3,13 +3,14 @@ import type { PrototypeInductor, Metier, JU, Cran } from '../types';
 const ju = (
   id: string,
   name: string,
-  occurrence: number,
+  variable: number,
   metier: Metier = 'H-DESIGN',
   fixed = 0,
+  unit_type: JU['unit_type'] = 'man_day',
 ): JU => ({
   id, name, long_name: name,
-  variable: occurrence, fixed,
-  unit_type: 'man_day', occurrence,
+  variable, fixed, unit_type,
+  occurrence: 1,
   occurrence_locked: false, fmm: '', smm: '', dmm: '',
   generic_profile: '', custom: false, metier,
 });
@@ -138,12 +139,12 @@ export const INDUCTORS: PrototypeInductor[] = [
     id: 'ind-9', name: 'E2E test cases', category: 'QA',
     crans: [
       cr('cr-9-1', 'Selenium', [
-        ju('ju-9-1-1', 'QA-SE01 Selenium framework setup', 1.0, 'H-TESTING'),
-        ju('ju-9-1-2', 'QA-SE02 Test case implementation', 0.5, 'H-TESTING'),
+        ju('ju-9-1-1', 'QA-SE01 Selenium framework setup', 1.0, 'H-TESTING', 0, 'bench_hours'),
+        ju('ju-9-1-2', 'QA-SE02 Test case implementation', 0.5, 'H-TESTING', 0, 'bench_hours'),
       ]),
       cr('cr-9-2', 'Playwright', [
-        ju('ju-9-2-1', 'QA-PW01 Playwright framework setup', 0.5, 'H-TESTING'),
-        ju('ju-9-2-2', 'QA-PW02 Test case implementation', 0.4, 'H-TESTING'),
+        ju('ju-9-2-1', 'QA-PW01 Playwright framework setup', 0.5, 'H-TESTING', 0, 'bench_hours'),
+        ju('ju-9-2-2', 'QA-PW02 Test case implementation', 0.4, 'H-TESTING', 0, 'bench_hours'),
       ]),
     ],
   },
@@ -156,7 +157,7 @@ export const INDUCTORS: PrototypeInductor[] = [
       ]),
       cr('cr-10-2', 'React Native', [
         ju('ju-10-2-1', 'MOB-R01 Screen layout & nav', 2.0, 'H-CUSTOMER'),
-        ju('ju-10-2-2', 'MOB-R02 Native module bridge', 2.0, 'H-CUSTOMER'),
+        ju('ju-10-2-2', 'MOB-R02 Native module bridge', 2.0, 'H-CUSTOMER', 0, 'kilometres'),
       ]),
     ],
   },
