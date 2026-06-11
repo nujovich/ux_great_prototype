@@ -47,10 +47,13 @@ function AdminContent() {
         <h1 className="text-xl font-bold text-slate-900">{t('admin.title')}</h1>
         <p className="text-sm text-slate-600">{t('admin.subtitle')}</p>
       </div>
-      <div className="flex flex-wrap gap-1 border-b border-slate-200">
+      <div role="tablist" className="flex flex-wrap gap-1 border-b border-slate-200">
         {tabs.map((tb) => (
           <button
             key={tb.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === tb.key}
             onClick={() => setTab(tb.key)}
             className={clsx(
               'rounded-t-md border-b-2 px-3 py-2 text-sm font-medium transition-colors',
