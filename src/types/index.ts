@@ -152,8 +152,10 @@ export interface InductorSelection {
 
 export interface CustomJU {
   id: string;
-  description: string;
-  days: number;
+  name: string;
+  variable: number;
+  fixed: number;
+  occurrence: number;
 }
 
 

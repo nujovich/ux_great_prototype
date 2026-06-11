@@ -292,6 +292,7 @@ export const es: Translations = {
     totalBh: 'Total Bench Hours',
     totalKm: 'Total KMs',
     keuroHint: 'Se calcula en Allocation',
+    customName: 'Nombre',
   },
   copy: {
     title: 'Copiar estimación de {id}',

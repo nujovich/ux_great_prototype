@@ -829,6 +829,7 @@ function CustomJUSection({
   canEditCustomJU: boolean;
   onChange: React.Dispatch<React.SetStateAction<CustomJU[]>>;
 }) {
+  const t = useT();
   return (
     <div className="mt-6 border-t border-slate-100 pt-4">
       <div className="mb-2 flex items-center justify-between">
@@ -837,7 +838,7 @@ function CustomJUSection({
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => onChange((j) => [...j, { id: `ju-${Date.now()}`, description: '', days: 1 }])}
+            onClick={() => onChange((j) => [...j, { id: `ju-${Date.now()}`, name: '', variable: 1, fixed: 0, occurrence: 1 }])}
           >
             + Add JU
           </Button>
@@ -851,26 +852,21 @@ function CustomJUSection({
         <div className="space-y-1.5">
           {customJUs.map((ju, idx) => (
             <div key={ju.id} className="flex items-center gap-2">
-              <input
-                value={ju.description}
-                placeholder="Descripción"
-                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, description: e.target.value } : x)))}
-                disabled={!canEditCustomJU}
-                className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-50"
-              />
-              <input
-                type="number"
-                min={0}
-                step={0.5}
-                value={ju.days}
-                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, days: Number(e.target.value) } : x)))}
-                disabled={!canEditCustomJU}
-                className="w-16 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50"
-              />
+              <input value={ju.name} placeholder={t('panel.customName')} disabled={!canEditCustomJU}
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, name: e.target.value } : x)))}
+                className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-50" />
+              <input type="number" step={0.5} value={ju.variable} disabled={!canEditCustomJU} title={t('panel.colVar')}
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, variable: Number(e.target.value) } : x)))}
+                className="w-14 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50" />
+              <input type="number" step={0.5} value={ju.fixed} disabled={!canEditCustomJU} title={t('panel.colFixed')}
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, fixed: Number(e.target.value) } : x)))}
+                className="w-14 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50" />
+              <input type="number" min={0} value={ju.occurrence} disabled={!canEditCustomJU} title={t('panel.colOcc')}
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, occurrence: Math.max(0, Number(e.target.value) || 0) } : x)))}
+                className="w-14 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50" />
+              <span className="w-14 text-right text-[10px] font-mono text-brand-700">{formatDays(juTotal({ variable: ju.variable, fixed: ju.fixed } as JU, ju.occurrence))}</span>
               {canEditCustomJU && (
-                <button onClick={() => onChange((j) => j.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500">
-                  <Trash2 size={13} />
-                </button>
+                <button onClick={() => onChange((j) => j.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500"><Trash2 size={13} /></button>
               )}
             </div>
           ))}

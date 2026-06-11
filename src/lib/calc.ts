@@ -59,7 +59,7 @@ export function calcEstimationTotals(
     }
   }
 
-  for (const c of customJUs) manDays += c.days; // legacy custom model (3A)
+  for (const c of customJUs) manDays += (c.variable ?? 0) * c.occurrence + (c.fixed ?? 0);
 
   manDays *= g;
   benchHours *= g;

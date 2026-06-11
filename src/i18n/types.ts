@@ -307,6 +307,7 @@ export interface Translations {
     totalBh: string;
     totalKm: string;
     keuroHint: string;
+    customName: string;
   };
   copy: {
     title: string;

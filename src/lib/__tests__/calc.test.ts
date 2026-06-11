@@ -79,9 +79,10 @@ describe('calcEstimationTotals (HIW-174 §8/§9)', () => {
     expect(t.keuro).toBe(0);
   });
 
-  it('custom JUs contribute their days to man-days (legacy model preserved in 3A)', () => {
-    const customJUs: CustomJU[] = [{ id: 'c1', description: 'x', days: 4 }];
-    expect(calcEstimationTotals([], [], customJUs, 2).manDays).toBeCloseTo(8);
+  it('custom JUs contribute (variable × occurrence) + fixed to man-days', () => {
+    const customJUs: CustomJU[] = [{ id: 'c1', name: 'x', variable: 2, fixed: 1, occurrence: 3 }];
+    // (2 × 3) + 1 = 7, × global 2 = 14
+    expect(calcEstimationTotals([], [], customJUs, 2).manDays).toBeCloseTo(14);
   });
 
   it('calcTotalDays returns the man-days bucket (backward-compatible)', () => {
