@@ -7,6 +7,7 @@ import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
 import { validateBeforeSave } from '../../lib/validation';
 import { formatDays, formatKEuro, formatBenchHours, formatKm } from '../../lib/format';
 import { juTotal, shouldShowCranDropdown } from '../../lib/juTotal';
+import { preloadSelections } from '../../lib/preload';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { useRoleStore } from '../../store/roleStore';
@@ -67,7 +68,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
     if (!line) return;
     // Batch state updates to avoid cascading renders
     Promise.resolve().then(() => {
-      setSelections(existing?.inductorSelections ?? []);
+      setSelections(existing?.inductorSelections ?? preloadSelections(INDUCTORS));
       setCustomJUs(existing?.customJUs ?? []);
       setGlobalOccurrences(existing?.globalOccurrences ?? 1);
       setSearch('');
