@@ -18,6 +18,7 @@ import { ManageInductorsModal } from './ManageInductorsModal';
 import { CommentSection } from './CommentSection';
 import { PrototypeEstimationForm } from './PrototypeEstimationForm';
 import { useT } from '../../i18n/useT';
+import { canSaveDraft } from '../../lib/saveGate';
 
 const UNIT_LABEL: Record<string, string> = {
   man_day: 'MD', bench_hours: 'BH', kilometres: 'km', kiloeuros: 'k€',
@@ -59,9 +60,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
   const [showManage, setShowManage] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
   const [confirmPromote, setConfirmPromote] = useState(false);
-  const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(
-    line?.status === 'Draft' || line?.status === 'Estimated' || line?.status === 'Modification Requested',
-  );
+  const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(false);
   const [pendingAction, setPendingAction] = useState<{ type: 'close' } | { type: 'switch'; id: string } | null>(null);
 
   useEffect(() => {
@@ -74,6 +73,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
       setSearch('');
       setViewMode('inductors');
       setExpanded(new Set());
+      setHasDraftedThisSession(false);
     });
   }, [line, existing]);
 
@@ -292,9 +292,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
     else if (a?.type === 'switch') onSwitchLine?.(a.id);
   }, [pendingAction, onClose, onSwitchLine]);
 
-  const hasAnyCustomJU = customJUs.some((c) => c.name.trim().length > 0);
-  const hasAnySelection = selections.some((s) => s.selectedCranId);
-  const hasMinimumForDraft = hasAnySelection || hasAnyCustomJU;
+  const hasMinimumForDraft = canSaveDraft(selections, customJUs);
   const hasMinimumForDefinitive =
     globalOccurrences > 0 &&
     selections.some((s) => s.selectedCranId !== null && s.juOccurrences.length > 0);
