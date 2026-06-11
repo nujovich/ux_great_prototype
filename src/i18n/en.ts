@@ -288,6 +288,10 @@ export const en: Translations = {
     toastDraftSaved: 'Draft saved for {id}',
     toastPromoted: '{id} promoted to definitive estimation',
     clearCran: 'Clear',
+    totalEtp: 'Total ETPs',
+    totalBh: 'Total Bench Hours',
+    totalKm: 'Total KMs',
+    keuroHint: 'Calculated in Allocation',
   },
   copy: {
     title: 'Copy estimation from {id}',

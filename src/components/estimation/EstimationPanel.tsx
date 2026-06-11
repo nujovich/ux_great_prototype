@@ -3,9 +3,9 @@ import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search } from 'lucide
 import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran } from '../../types';
 import { isEstimationDirty } from '../../lib/estimationDirty';
 import { INDUCTORS } from '../../fixtures/inductors';
-import { calcTotalDays, calcKEuro, yearlyBreakdown } from '../../lib/calc';
+import { calcEstimationTotals } from '../../lib/calc';
 import { validateBeforeSave } from '../../lib/validation';
-import { formatDays, formatKEuro, formatBenchHours, formatKm } from '../../lib/format';
+import { formatDays, formatKEuro, formatFTE, formatBenchHours, formatKm } from '../../lib/format';
 import { juTotal, shouldShowCranDropdown } from '../../lib/juTotal';
 import { preloadSelections } from '../../lib/preload';
 import { Button } from '../shared/Button';
@@ -81,12 +81,11 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
   const canEdit = can('edit:estimation') && !locked;
   const canEditCustomJU = can('edit:custom-jus') && !locked;
 
-  const totalDays = useMemo(
-    () => calcTotalDays(selections, INDUCTORS, customJUs, globalOccurrences),
+  const totals = useMemo(
+    () => calcEstimationTotals(selections, INDUCTORS, customJUs, globalOccurrences),
     [selections, customJUs, globalOccurrences],
   );
-  const totalKEuro = useMemo(() => (line ? calcKEuro(totalDays, line.metier) : 0), [totalDays, line]);
-  const breakdown = useMemo(() => yearlyBreakdown(totalDays), [totalDays]);
+  const totalDays = totals.manDays; // persisted in the Estimation record on save
 
   const addInductors = useCallback((ids: string[]) => {
     setSelections((prev) => {
@@ -224,15 +223,15 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
       inductorSelections: selections,
       customJUs,
       globalOccurrences,
-      yearlyBreakdown: breakdown,
+      yearlyBreakdown: [],
       totalDays,
-      totalKEuro,
+      totalKEuro: totals.keuro,
       status,
       ...(status === 'Draft'
         ? { draftedAt: new Date().toISOString() }
         : { estimatedAt: new Date().toISOString() }),
     });
-    setLineStatus(line!.id, status, { estimatedDays: totalDays, estimatedKEuro: totalKEuro });
+    setLineStatus(line!.id, status, { estimatedDays: totalDays, estimatedKEuro: totals.keuro });
   }
 
   function handleSaveDraft() {
@@ -457,46 +456,22 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
                 <p className="mt-1 text-[10px] text-slate-400">{t('panel.globalOccurrenceHint')}</p>
               </div>
 
-              <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[10px] text-slate-500">{t('panel.totalDays')}</div>
-                <div className="text-xl font-bold text-slate-900">{formatDays(totalDays)}</div>
+              <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="text-[10px] text-slate-500">{t('panel.totalEtp')}</div>
+                <div className="text-xl font-bold text-slate-900">{formatFTE(totals.fte)}</div>
               </div>
-              <div className="mb-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[10px] text-slate-500">{t('panel.totalKeuro')}</div>
-                <div className="text-xl font-bold text-slate-900">{formatKEuro(totalKEuro)}</div>
+              <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="text-[10px] text-slate-500">{t('panel.totalBh')}</div>
+                <div className="text-lg font-bold text-slate-900">{formatBenchHours(totals.benchHours)}</div>
               </div>
-
+              <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="text-[10px] text-slate-500">{t('panel.totalKm')}</div>
+                <div className="text-lg font-bold text-slate-900">{formatKm(totals.km)}</div>
+              </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="mb-1.5 text-[10px] font-semibold uppercase text-slate-500">{t('panel.yearlyDist')}</div>
-                <div className="flex items-end gap-0.5" style={{ height: 48 }}>
-                  {breakdown.map((m, i) => {
-                    const max = Math.max(...breakdown, 0.01);
-                    const h = (m / max) * 44;
-                    return (
-                      <div key={i} className="flex flex-1 flex-col items-center">
-                        <div
-                          className="w-full rounded-t bg-brand-500"
-                          style={{ height: `${Math.max(h, 2)}px` }}
-                          title={`Mes ${i + 1}: ${m.toFixed(1)}d`}
-                        />
-                        <div className="mt-0.5 text-[8px] text-slate-400">
-                          {['E','F','M','A','M','J','J','A','S','O','N','D'][i]}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="mt-3 space-y-1">
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                  <div className="h-2.5 w-2.5 rounded-sm border border-blue-300 bg-blue-100" />
-                  {t('panel.legendInherits')}
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                  <div className="h-2.5 w-2.5 rounded-sm border border-amber-400 bg-amber-100" />
-                  {t('panel.legendLocked')}
-                </div>
+                <div className="text-[10px] text-slate-500">{t('panel.totalKeuro')}</div>
+                <div className="text-lg font-bold text-slate-900">{formatKEuro(totals.keuro)}</div>
+                <p className="mt-1 text-[9px] text-slate-400">{t('panel.keuroHint')}</p>
               </div>
             </div>
           </div>
@@ -550,7 +525,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine }: Props
         </p>
         <ul className="mt-3 space-y-1 text-sm text-slate-600">
           <li>• {t('panel.confirmDays', { n: formatDays(totalDays) })}</li>
-          <li>• {t('panel.confirmKeuro', { n: formatKEuro(totalKEuro) })}</li>
+          <li>• {t('panel.confirmKeuro', { n: formatKEuro(totals.keuro) })}</li>
         </ul>
       </Modal>
 

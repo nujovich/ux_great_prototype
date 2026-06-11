@@ -303,6 +303,10 @@ export interface Translations {
     toastDraftSaved: string;
     toastPromoted: string;
     clearCran: string;
+    totalEtp: string;
+    totalBh: string;
+    totalKm: string;
+    keuroHint: string;
   };
   copy: {
     title: string;

@@ -6,7 +6,7 @@
  * Formula: Total = (Variable × Occurrence) + Fixed
  * FTE = Total MD / 209
  *
- * Mantiene la interfaz pública que la UI consume (calcTotalDays, calcKEuro, yearlyBreakdown)
+ * Mantiene la interfaz pública que la UI consume (calcTotalDays, calcKEuro)
  * pero con implementación alineada al SDD Kit.
  */
 import type { InductorSelection, PrototypeInductor, CustomJU, Metier } from '../types';
@@ -80,24 +80,9 @@ export function calcTotalDays(
   return calcEstimationTotals(selections, inductors, customJUs, globalOccurrences).manDays;
 }
 
-/** FTE = man-days / 209 (§9.2). */
-export function calcFTE(manDays: number): number {
-  return manDays > 0 ? Math.round((manDays / MAN_DAY_FTE_DIVISOR) * 100) / 100 : 0;
-}
-
 /** K€ is NOT computed in Pre-Estimation (SDD §11); stub kept for the UI. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function calcKEuro(_days: number, _metier: Metier): number {
   return 0;
 }
 
-/** Uniform 12-month distribution of man-days. Retained for any current callers;
- * the right-side chart that consumed it is removed in Phase 3B. */
-export function yearlyBreakdown(totalDays: number): number[] {
-  if (totalDays <= 0) return Array(12).fill(0);
-  const monthly = Math.round((totalDays / 12) * 100) / 100;
-  const months = Array(12).fill(monthly);
-  const diff = Math.round((totalDays - monthly * 12) * 100) / 100;
-  if (diff !== 0) months[11] = Math.round((months[11] + diff) * 100) / 100;
-  return months;
-}
