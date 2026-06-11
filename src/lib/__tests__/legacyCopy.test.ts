@@ -45,4 +45,14 @@ describe('mergeLegacyEstimation (HIW-174 §12.2)', () => {
   it('selects the cran referenced by the historical JUs', () => {
     expect(sel.selectedCranId).toBe('cr1');
   });
+
+  it('rule 2 — current variable 0 yields occurrence 0 (no divide-by-zero)', () => {
+    const cur: PrototypeInductor[] = [
+      { id: 'I9', name: 'I9', category: 'C', crans: [{ id: 'cr9', name: 'cr9', jus: [ju('jz', 0, 0, 0)] }] },
+    ];
+    const hist: LegacyJU[] = [{ juId: 'jz', inductorId: 'I9', cranId: 'cr9', variable: 2, fixed: 0, occurrence: 5 }];
+    const result = mergeLegacyEstimation(hist, cur);
+    const s = result.inductorSelections.find((x) => x.inductorId === 'I9');
+    expect(s?.juOccurrences.find((o) => o.juId === 'jz')?.occurrence).toBe(0);
+  });
 });
