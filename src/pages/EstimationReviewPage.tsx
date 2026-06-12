@@ -72,6 +72,7 @@ function ReviewContent() {
     'To do', 'Draft', 'Estimated', 'Sent', 'Approved', 'Modification Requested',
   ];
   const availableEngineers = useMemo(
+    // ENGINEERS is a static fixture (never changes at runtime)
     () => ENGINEERS.filter((e) => allRows.some((r) => r.assignedEngineerId === e.id)),
     [allRows],
   );
@@ -98,6 +99,12 @@ function ReviewContent() {
   // ── Row selection ─────────────────────────────────────────
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  // Derive visible selection: only selected IDs that exist in current filtered view
+  const visibleSelectedIds = useMemo(
+    () => selectedIds.filter((id) => filteredRows.some((r) => r.id === id)),
+    [selectedIds, filteredRows],
+  );
+
   function toggleSelect(id: string) {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -116,11 +123,11 @@ function ReviewContent() {
 
   // ── CSV export ────────────────────────────────────────────
   function handleExportSelected() {
-    if (selectedIds.length === 0) {
+    if (visibleSelectedIds.length === 0) {
       pushToast(t('estReview.exportNoneSelected'), 'info');
       return;
     }
-    const csv = generateCsv(filteredRows, selectedIds, cycleYears);
+    const csv = generateCsv(filteredRows, visibleSelectedIds, cycleYears);
     downloadCsv(csv, 'estimation-review-selected.csv');
   }
 
@@ -196,9 +203,9 @@ function ReviewContent() {
 
       {/* Toolbar: selection + export */}
       <div className="flex items-center justify-between">
-        {selectedIds.length > 0 && (
+        {visibleSelectedIds.length > 0 && (
           <span className="text-xs text-slate-500">
-            {t('estReview.selectedCount', { n: selectedIds.length })}
+            {t('estReview.selectedCount', { n: visibleSelectedIds.length })}
           </span>
         )}
         <div className="ml-auto flex gap-2">
