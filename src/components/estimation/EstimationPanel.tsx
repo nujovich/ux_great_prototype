@@ -23,6 +23,7 @@ import { PrototypeEstimationForm } from './PrototypeEstimationForm';
 import { RelatedLinesBanner } from './RelatedLinesBanner';
 import { useT } from '../../i18n/useT';
 import { canSaveDraft } from '../../lib/saveGate';
+import { buildProtoEstimation } from '../../lib/protoPersist';
 
 const UNIT_LABEL: Record<string, string> = {
   man_day: 'MD', bench_hours: 'BH', kilometres: 'km', kiloeuros: 'k€',
@@ -75,6 +76,8 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   // Tracks the line currently loaded so we can tell a genuine line switch (reset the
   // session) apart from an `existing` change caused by our own Save-as-Draft (re-seed only).
   const loadedLineId = useRef<string | null>(null);
+  const [protoQuantities, setProtoQuantities] = useState<Record<string, number>>({});
+  const [protoComment, setProtoComment] = useState('');
 
   useEffect(() => {
     if (!line) {
@@ -89,6 +92,8 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
       setSelections(existing?.inductorSelections ?? preloadSelections(INDUCTORS));
       setCustomJUs(existing?.customJUs ?? []);
       setGlobalOccurrences(existing?.globalOccurrences ?? 1);
+      setProtoQuantities(protoEst?.quantities ?? {});
+      setProtoComment(protoEst?.comment ?? '');
       // Session-scoped UI state resets ONLY on a genuine line switch — NOT when `existing`
       // changes because we just saved a draft (that must keep the gate + summary open, BR-15).
       if (isLineSwitch) {
@@ -97,10 +102,12 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
         setExpanded(new Set());
         setHasDraftedThisSession(false);
         setShowSummary(false);
+        setProtoQuantities(protoEst?.quantities ?? {});
+        setProtoComment(protoEst?.comment ?? '');
         loadedLineId.current = line.id;
       }
     });
-  }, [line, existing]);
+  }, [line, existing, protoEst]);
 
   const locked = !line || line.status === 'Estimated' || line.status === 'Sent' || line.status === 'Approved';
   const canEdit = can('edit:estimation') && !locked;
@@ -243,6 +250,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
         : { estimatedAt: new Date().toISOString() }),
     });
     setLineStatus(line!.id, status, { estimatedDays: totalDays, estimatedKEuro: totals.keuro });
+    setPrototypeEstimation(line!.id, buildProtoEstimation(line!.id, protoQuantities, protoComment));
   }
 
   function handleSaveDraft() {
@@ -467,10 +475,10 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
 
               {line && (
                 <PrototypeEstimationForm
-                  lineId={line.id}
-                  initial={protoEst}
-                  onSave={(est) => setPrototypeEstimation(line.id, est)}
-                  onClose={requestClose}
+                  quantities={protoQuantities}
+                  comment={protoComment}
+                  onQuantityChange={(catId, val) => setProtoQuantities((q) => ({ ...q, [catId]: val }))}
+                  onCommentChange={setProtoComment}
                   readOnly={locked || !can('edit:estimation')}
                 />
               )}
