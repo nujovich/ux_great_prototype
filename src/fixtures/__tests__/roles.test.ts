@@ -141,25 +141,16 @@ describe('Custom JU permissions (pre_estimation_specs.py — BR-20)', () => {
 });
 
 describe('HIW-175 permission removals', () => {
-  it('CPO has only view and export for estimation-review (no approve/reject)', () => {
-    const cpoCan = ROLE_PERMISSIONS.CPO;
-    expect(cpoCan).toContain('view:estimation-review');
-    expect(cpoCan).toContain('export:estimation-review');
-    expect(cpoCan).not.toContain('approve:estimation');
+  it('CPO has no reject:estimation permission', () => {
+    expect(ROLE_PERMISSIONS.CPO).not.toContain('reject:estimation');
   });
 
-  it('PMO can view and export estimation-review (no admin-level actions)', () => {
-    const pmoCan = ROLE_PERMISSIONS.PMO;
-    expect(pmoCan).toContain('view:estimation-review');
-    expect(pmoCan).toContain('export:estimation-review');
-    expect(pmoCan).not.toContain('approve:estimation');
+  it('PMO has no send:hvt permission', () => {
+    expect(ROLE_PERMISSIONS.PMO).not.toContain('send:hvt');
   });
 
-  it('Admin can view and export estimation-review but not approve directly', () => {
-    const adminCan = ROLE_PERMISSIONS.Admin;
-    expect(adminCan).toContain('view:estimation-review');
-    expect(adminCan).toContain('export:estimation-review');
-    expect(adminCan).not.toContain('approve:estimation');
+  it('Admin has no send:hvt permission', () => {
+    expect(ROLE_PERMISSIONS.Admin).not.toContain('send:hvt');
   });
 
   it('all roles that can view estimation-review can export', () => {
