@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCranSelection } from '../cranReset';
+import { buildCranSelection } from '../cranSelection';
 import type { PrototypeInductor } from '../../types';
 
 const inductor = (cranIds: { id: string; juIds: string[] }[]): PrototypeInductor => ({

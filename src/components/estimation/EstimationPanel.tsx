@@ -9,7 +9,7 @@ import { formatDays, formatKEuro, formatFTE, formatBenchHours, formatKm } from '
 import { juTotal, shouldShowCranDropdown } from '../../lib/juTotal';
 import { preloadSelections } from '../../lib/preload';
 import { propagateInductorOccurrence } from '../../lib/propagate';
-import { buildCranSelection } from '../../lib/cranReset';
+import { buildCranSelection } from '../../lib/cranSelection';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { useRoleStore } from '../../store/roleStore';

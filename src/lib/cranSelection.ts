@@ -8,10 +8,9 @@ import type { InductorSelection, PrototypeInductor } from '../types';
 export function buildCranSelection(
   inductor: PrototypeInductor,
   cranId: string,
-): InductorSelection {
+): Omit<InductorSelection, 'inductorId'> {
   const cranJUs = inductor.crans.find((c) => c.id === cranId)?.jus ?? [];
   return {
-    inductorId: inductor.id,
     selectedCranId: cranId,
     inductorOccurrence: 1,
     juOccurrences: cranJUs.map((ju) => ({
