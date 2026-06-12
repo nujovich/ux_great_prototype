@@ -630,6 +630,8 @@ function InductorTreeView({
   onUpdateJUOccurrence, onToggleJULock, onRemoveInductor, onClearCran,
 }: TreeProps) {
   const t = useT();
+  const [draftIndOcc, setDraftIndOcc] = useState<Record<string, string>>({});
+  const [draftJUOcc, setDraftJUOcc] = useState<Record<string, string>>({});
   if (selections.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
@@ -701,8 +703,17 @@ function InductorTreeView({
               <input
                 type="number"
                 min={1}
-                value={sel.inductorOccurrence}
-                onChange={(e) => onUpdateInductorOccurrence(sel.inductorId, Math.max(1, Number(e.target.value) || 1))}
+                value={draftIndOcc[sel.inductorId] ?? String(sel.inductorOccurrence)}
+                onChange={(e) =>
+                  setDraftIndOcc((d) => ({ ...d, [sel.inductorId]: e.target.value }))
+                }
+                onBlur={() => {
+                  const raw = draftIndOcc[sel.inductorId];
+                  if (raw !== undefined) {
+                    onUpdateInductorOccurrence(sel.inductorId, Math.max(1, Number(raw) || 1));
+                    setDraftIndOcc((d) => { const n = { ...d }; delete n[sel.inductorId]; return n; });
+                  }
+                }}
                 disabled={!canEdit}
                 className="w-12 rounded border border-slate-300 px-1.5 py-0.5 text-right text-xs disabled:bg-slate-50 focus:border-brand-400 focus:outline-none"
               />
@@ -742,8 +753,19 @@ function InductorTreeView({
                   <input
                     type="number"
                     min={0}
-                    value={jo.occurrence}
-                    onChange={(e) => onUpdateJUOccurrence(sel.inductorId, ju.id, Math.max(0, Number(e.target.value) || 0))}
+                    value={draftJUOcc[`${sel.inductorId}:${ju.id}`] ?? String(jo.occurrence)}
+                    onChange={(e) => {
+                      const key = `${sel.inductorId}:${ju.id}`;
+                      setDraftJUOcc((d) => ({ ...d, [key]: e.target.value }));
+                    }}
+                    onBlur={() => {
+                      const key = `${sel.inductorId}:${ju.id}`;
+                      const raw = draftJUOcc[key];
+                      if (raw !== undefined) {
+                        onUpdateJUOccurrence(sel.inductorId, ju.id, Math.max(0, Number(raw) || 0));
+                        setDraftJUOcc((d) => { const n = { ...d }; delete n[key]; return n; });
+                      }
+                    }}
                     disabled={!canEdit}
                     className={`w-12 rounded border px-1.5 py-0.5 text-right text-xs focus:outline-none disabled:opacity-60 ${
                       jo.locked ? 'border-amber-400 bg-amber-50 focus:border-amber-500' : 'border-blue-200 bg-blue-50 focus:border-brand-400'
