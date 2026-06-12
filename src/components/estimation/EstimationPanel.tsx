@@ -146,6 +146,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   }, []);
 
   const updateInductorOccurrence = useCallback((inductorId: string, occ: number) => {
+    // HIW-14 §2 — propagation logic in src/lib/propagate.ts
     setSelections((prev) =>
       prev.map((sel) =>
         sel.inductorId !== inductorId ? sel : propagateInductorOccurrence(sel, occ),

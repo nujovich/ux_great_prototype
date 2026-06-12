@@ -46,4 +46,13 @@ describe('propagateInductorOccurrence (HIW-14 §2)', () => {
     expect(result).not.toBe(original);
     expect(original.inductorOccurrence).toBe(1);
   });
+
+  it('updates inductorOccurrence even when all JUs are locked', () => {
+    const result = propagateInductorOccurrence(
+      sel([{ juId: 'j1', occurrence: 5, locked: true }]),
+      99,
+    );
+    expect(result.inductorOccurrence).toBe(99);
+    expect(result.juOccurrences[0].occurrence).toBe(5);
+  });
 });
