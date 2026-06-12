@@ -13,8 +13,6 @@ export type Permission =
   | 'view:estimation-review'
   | 'export:estimation-review'
   | 'approve:estimation'
-  | 'reject:estimation'
-  | 'send:hvt'
   | 'view:allocation'
   | 'edit:allocation'
   | 'view:k-euro-rates'
@@ -44,7 +42,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'view:pre-estimation',
     'view:estimation-review',
     'export:estimation-review',
-    'send:hvt',
     'view:allocation',
     'edit:allocation',
     'view:k-euro-rates',
@@ -62,7 +59,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'edit:custom-jus',
     'view:estimation-review',
     'export:estimation-review',
-    'send:hvt',
     'view:allocation',
     'edit:allocation',
     'view:k-euro-rates',
@@ -88,8 +84,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   CPO: [
     'view:estimation-review',
     'export:estimation-review',
-    // ERev-BR-10: CPO cannot approve directly — approval comes from HVT only
-    'reject:estimation',
+    // ERev-BR-10: CPO cannot approve or reject directly — approval/rejection comes from HVT only
     'view:final-review',
     'export:final-review',
   ],

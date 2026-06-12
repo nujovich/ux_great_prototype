@@ -28,16 +28,14 @@ describe('Pre-Estimation permissions (pre_estimation_specs.py)', () => {
   it('CPO cannot view pre-estimation (spec: can_view=False)', () => {
     expect(can('CPO', 'view:pre-estimation')).toBe(false);
   });
-  it('Admin cannot reject estimations (spec: can_reject=False)', () => {
-    expect(can('Admin', 'reject:estimation')).toBe(false);
+  it('Admin cannot approve estimations (spec: can_approve=False)', () => {
     expect(can('Admin', 'approve:estimation')).toBe(false);
   });
-  it('PMO cannot reject estimations (spec: can_reject=False)', () => {
-    expect(can('PMO', 'reject:estimation')).toBe(false);
+  it('PMO cannot approve estimations (spec: can_approve=False)', () => {
     expect(can('PMO', 'approve:estimation')).toBe(false);
   });
-  it('CPO can reject estimations', () => {
-    expect(can('CPO', 'reject:estimation')).toBe(true);
+  it('CPO cannot approve estimations directly — approval comes via HVT only (ERev-BR-10)', () => {
+    expect(can('CPO', 'approve:estimation')).toBe(false);
   });
 
   it('CPO cannot approve directly — approval comes via HVT only (ERev-BR-10)', () => {
@@ -55,8 +53,9 @@ describe('Estimation Review permissions (estimation_review_specs.py)', () => {
   it('Engineer can view EstimationReview (own rows — scoped via view:own-lines-only)', () => {
     expect(can('Engineer', 'view:estimation-review')).toBe(true);
   });
-  it('PMO can send to HVT', () => {
-    expect(can('PMO', 'send:hvt')).toBe(true);
+  it('PMO can view EstimationReview and export', () => {
+    expect(can('PMO', 'view:estimation-review')).toBe(true);
+    expect(can('PMO', 'export:estimation-review')).toBe(true);
   });
   it('All roles can export EstimationReview CSV', () => {
     expect(can('Admin', 'export:estimation-review')).toBe(true);
@@ -138,5 +137,35 @@ describe('Custom JU permissions (pre_estimation_specs.py — BR-20)', () => {
     expect(can('PMO', 'edit:custom-jus')).toBe(false);
     expect(can('RCRC', 'edit:custom-jus')).toBe(false);
     expect(can('CPO', 'edit:custom-jus')).toBe(false);
+  });
+});
+
+describe('HIW-175 permission removals', () => {
+  it('CPO has only view and export for estimation-review (no approve/reject)', () => {
+    const cpoCan = ROLE_PERMISSIONS.CPO;
+    expect(cpoCan).toContain('view:estimation-review');
+    expect(cpoCan).toContain('export:estimation-review');
+    expect(cpoCan).not.toContain('approve:estimation');
+  });
+
+  it('PMO can view and export estimation-review (no admin-level actions)', () => {
+    const pmoCan = ROLE_PERMISSIONS.PMO;
+    expect(pmoCan).toContain('view:estimation-review');
+    expect(pmoCan).toContain('export:estimation-review');
+    expect(pmoCan).not.toContain('approve:estimation');
+  });
+
+  it('Admin can view and export estimation-review but not approve directly', () => {
+    const adminCan = ROLE_PERMISSIONS.Admin;
+    expect(adminCan).toContain('view:estimation-review');
+    expect(adminCan).toContain('export:estimation-review');
+    expect(adminCan).not.toContain('approve:estimation');
+  });
+
+  it('all roles that can view estimation-review can export', () => {
+    const reviewRoles = ['Engineer', 'PMO', 'Admin', 'RCRC', 'CPO'] as const;
+    for (const role of reviewRoles) {
+      expect(ROLE_PERMISSIONS[role]).toContain('export:estimation-review');
+    }
   });
 });
