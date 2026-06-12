@@ -92,8 +92,6 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
       setSelections(existing?.inductorSelections ?? preloadSelections(INDUCTORS));
       setCustomJUs(existing?.customJUs ?? []);
       setGlobalOccurrences(existing?.globalOccurrences ?? 1);
-      setProtoQuantities(protoEst?.quantities ?? {});
-      setProtoComment(protoEst?.comment ?? '');
       // Session-scoped UI state resets ONLY on a genuine line switch — NOT when `existing`
       // changes because we just saved a draft (that must keep the gate + summary open, BR-15).
       if (isLineSwitch) {

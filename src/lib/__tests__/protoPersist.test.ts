@@ -20,4 +20,11 @@ describe('buildProtoEstimation (HIW-14 §8)', () => {
     expect(result.quantities).toEqual({});
     expect(result.comment).toBe('');
   });
+
+  it('does not share reference with the input quantities map', () => {
+    const input = { 'proto-cat-1': 2 };
+    const result = buildProtoEstimation('PL-001', input, '');
+    input['proto-cat-1'] = 99;
+    expect(result.quantities['proto-cat-1']).toBe(2);
+  });
 });
