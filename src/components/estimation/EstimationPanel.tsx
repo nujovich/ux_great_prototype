@@ -9,6 +9,7 @@ import { formatDays, formatKEuro, formatFTE, formatBenchHours, formatKm } from '
 import { juTotal, shouldShowCranDropdown } from '../../lib/juTotal';
 import { preloadSelections } from '../../lib/preload';
 import { propagateInductorOccurrence } from '../../lib/propagate';
+import { buildCranSelection } from '../../lib/cranReset';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { useRoleStore } from '../../store/roleStore';
@@ -128,20 +129,13 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   }, []);
 
   const selectCran = useCallback((inductorId: string, cranId: string) => {
-    const cranJUs = INDUCTORS.find((i) => i.id === inductorId)?.crans.find((c) => c.id === cranId)?.jus ?? [];
+    const inductor = INDUCTORS.find((i) => i.id === inductorId);
+    if (!inductor) return;
+    const newSel = buildCranSelection(inductor, cranId);
     setSelections((prev) =>
-      prev.map((sel) => {
-        if (sel.inductorId !== inductorId) return sel;
-        return {
-          ...sel,
-          selectedCranId: cranId,
-          juOccurrences: cranJUs.map((ju) => ({
-            juId: ju.id,
-            occurrence: ju.occurrence,
-            locked: false,
-          })),
-        };
-      }),
+      prev.map((sel) =>
+        sel.inductorId !== inductorId ? sel : { ...sel, ...newSel },
+      ),
     );
   }, []);
 
