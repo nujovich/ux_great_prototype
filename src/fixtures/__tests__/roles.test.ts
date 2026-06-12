@@ -38,10 +38,6 @@ describe('Pre-Estimation permissions (pre_estimation_specs.py)', () => {
     expect(can('CPO', 'approve:estimation')).toBe(false);
   });
 
-  it('CPO cannot approve directly — approval comes via HVT only (ERev-BR-10)', () => {
-    expect(can('CPO', 'approve:estimation')).toBe(false);
-  });
-
   it('only Admin can simulate HVT approval in prototype (ERev-BR-10)', () => {
     expect(can('Admin', 'simulate:hvt-approval')).toBe(true);
     expect(can('PMO', 'simulate:hvt-approval')).toBe(false);

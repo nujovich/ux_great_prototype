@@ -57,11 +57,6 @@ function ReviewContent() {
         description={t('estReview.pendingDesc')}
         lines={groups.estimated}
         emptyText={t('estReview.noPending')}
-        renderActions={() => (
-          <div className="flex gap-2">
-            {/* HIW-175: send:hvt and reject:estimation permissions removed */}
-          </div>
-        )}
       />
 
       <Section
