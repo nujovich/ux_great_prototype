@@ -8,6 +8,7 @@ import { validateBeforeSave } from '../../lib/validation';
 import { formatDays, formatKEuro, formatFTE, formatBenchHours, formatKm } from '../../lib/format';
 import { juTotal, shouldShowCranDropdown } from '../../lib/juTotal';
 import { preloadSelections } from '../../lib/preload';
+import { propagateInductorOccurrence } from '../../lib/propagate';
 import { Button } from '../shared/Button';
 import { Modal } from '../shared/Modal';
 import { useRoleStore } from '../../store/roleStore';
@@ -146,18 +147,9 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
 
   const updateInductorOccurrence = useCallback((inductorId: string, occ: number) => {
     setSelections((prev) =>
-      prev.map((sel) => {
-        if (sel.inductorId !== inductorId) return sel;
-        // Non-locked JUs mirror the inductor occurrence; locked JUs keep their
-        // manually-set value (BR-09: occurrence_locked defaults to false).
-        return {
-          ...sel,
-          inductorOccurrence: occ,
-          juOccurrences: sel.juOccurrences.map((jo) =>
-            jo.locked ? jo : { ...jo, occurrence: occ },
-          ),
-        };
-      }),
+      prev.map((sel) =>
+        sel.inductorId !== inductorId ? sel : propagateInductorOccurrence(sel, occ),
+      ),
     );
   }, []);
 
