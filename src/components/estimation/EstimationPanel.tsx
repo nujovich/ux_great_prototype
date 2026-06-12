@@ -632,6 +632,15 @@ function InductorTreeView({
   const t = useT();
   const [draftIndOcc, setDraftIndOcc] = useState<Record<string, string>>({});
   const [draftJUOcc, setDraftJUOcc] = useState<Record<string, string>>({});
+
+  const handleSelectCran = useCallback((inductorId: string, cranId: string) => {
+    setDraftJUOcc((d) => {
+      const prefix = `${inductorId}:`;
+      return Object.fromEntries(Object.entries(d).filter(([k]) => !k.startsWith(prefix)));
+    });
+    onSelectCran(inductorId, cranId);
+  }, [onSelectCran]);
+
   if (selections.length === 0) {
     return (
       <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-xs text-slate-400">
@@ -680,7 +689,7 @@ function InductorTreeView({
                 <>
                   <select
                     value={sel.selectedCranId ?? ''}
-                    onChange={(e) => e.target.value && onSelectCran(sel.inductorId, e.target.value)}
+                    onChange={(e) => e.target.value && handleSelectCran(sel.inductorId, e.target.value)}
                     disabled={!canEdit}
                     className="rounded border border-slate-300 bg-white px-1.5 py-0.5 text-xs focus:border-brand-400 focus:outline-none disabled:bg-slate-50"
                   >
