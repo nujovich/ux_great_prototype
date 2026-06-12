@@ -41,8 +41,8 @@ describe('deriveGridRow', () => {
 
   it('computes totalFte from custom JUs when no inductor selections', () => {
     const row = deriveGridRow(mockLine, mockEstimation, [], cycleYears);
-    // 20 manDays / 209 ≈ 0.10
-    expect(row.totalFte).toBeCloseTo(0.10, 1);
+    // customJU: variable=20 × occurrence=1 + fixed=0 = 20 manDays; FTE = 20 / 209 ≈ 0.096
+    expect(row.totalFte).toBeCloseTo(0.096, 2);
   });
 
   it('sets totalBh and totalKm to 0 when no bench/km JUs', () => {
@@ -63,5 +63,13 @@ describe('deriveGridRow', () => {
     expect(row.totalBh).toBe(0);
     expect(row.totalKm).toBe(0);
     expect(row.yearlyKEuro).toEqual({});
+  });
+
+  it('yearly FTE/BH/KM are zeroed (prototype limitation — no annual breakdown by type)', () => {
+    const row = deriveGridRow(mockLine, mockEstimation, [], cycleYears);
+    expect(row.yearlyFte['2026']).toBe(0);
+    expect(row.yearlyFte['2027']).toBe(0);
+    expect(row.yearlyBh['2026']).toBe(0);
+    expect(row.yearlyKm['2026']).toBe(0);
   });
 });

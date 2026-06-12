@@ -25,7 +25,6 @@ export function deriveGridRow(
   let totalFte = 0;
   let totalBh = 0;
   let totalKm = 0;
-  let yearlyKEuro: Record<string, number> = {};
   const yearlyFte: Record<string, number> = Object.fromEntries(cycleYears.map((y) => [y, 0]));
   const yearlyBh: Record<string, number> = Object.fromEntries(cycleYears.map((y) => [y, 0]));
   const yearlyKm: Record<string, number> = Object.fromEntries(cycleYears.map((y) => [y, 0]));
@@ -40,10 +39,11 @@ export function deriveGridRow(
     totalFte = totals.fte;
     totalBh = totals.benchHours;
     totalKm = totals.km;
-    yearlyKEuro = Object.fromEntries(
-      cycleYears.map((y, i) => [y, estimation.yearlyBreakdown[i] ?? 0]),
-    );
   }
+
+  const yearlyKEuro: Record<string, number> = estimation
+    ? Object.fromEntries(cycleYears.map((y, i) => [y, estimation.yearlyBreakdown[i] ?? 0]))
+    : {};
 
   return {
     ...line,
