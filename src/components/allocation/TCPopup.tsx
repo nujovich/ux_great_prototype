@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { AllocationRow } from '../../types';
 import { distributeTcKeByYear } from '../../lib/allocationCalc';
 import { Modal } from '../shared/Modal';
@@ -16,14 +16,16 @@ export function TCPopup({ open, row, onConfirm, onCancel }: TCPopupProps) {
   const [yearlyKe, setYearlyKe] = useState<Record<string, number>>(
     () => Object.fromEntries(years.map(y => [y, 0]))
   );
+  // Track the last open+rowId pair that triggered a reset, to perform the reset during render
+  // (React-recommended pattern for derived state from props — avoids setState-in-effect).
+  const [lastResetKey, setLastResetKey] = useState<string | null>(null);
+  const resetKey = open ? `open:${row.id}` : null;
 
-  useEffect(() => {
-    if (open) {
-      setTotalKe(0);
-      setYearlyKe(Object.fromEntries(years.map(y => [y, 0])));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, row.id]);
+  if (open && resetKey !== lastResetKey) {
+    setLastResetKey(resetKey);
+    setTotalKe(0);
+    setYearlyKe(Object.fromEntries(years.map(y => [y, 0])));
+  }
 
   const handleTotalChange = (value: number) => {
     setTotalKe(value);

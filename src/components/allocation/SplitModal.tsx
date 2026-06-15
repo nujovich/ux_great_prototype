@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { AllocationRow } from '../../types';
 import { splitFteProportional } from '../../lib/allocationCalc';
 import { Modal } from '../shared/Modal';
@@ -16,18 +16,23 @@ interface SplitModalProps {
   onClose: () => void;
 }
 
+const DEFAULT_SLOTS: SplitSlot[] = [
+  { societe: '', percentage: 50 },
+  { societe: '', percentage: 50 },
+];
+
 export function SplitModal({ open, row, societeOptions, onConfirm, onClose }: SplitModalProps) {
   const years = Object.keys(row.fteByYear).sort();
-  const [slots, setSlots] = useState<SplitSlot[]>([
-    { societe: '', percentage: 50 },
-    { societe: '', percentage: 50 },
-  ]);
+  const [slots, setSlots] = useState<SplitSlot[]>(DEFAULT_SLOTS);
+  // Track the last open+rowId pair that triggered a reset, to perform the reset during render
+  // (React-recommended pattern for derived state from props — avoids setState-in-effect).
+  const [lastResetKey, setLastResetKey] = useState<string | null>(null);
+  const resetKey = open ? `open:${row.id}` : null;
 
-  useEffect(() => {
-    if (open) {
-      setSlots([{ societe: '', percentage: 50 }, { societe: '', percentage: 50 }]);
-    }
-  }, [open, row.id]);
+  if (open && resetKey !== lastResetKey) {
+    setLastResetKey(resetKey);
+    setSlots(DEFAULT_SLOTS);
+  }
 
   const updateSlot = (idx: number, patch: Partial<SplitSlot>) =>
     setSlots(prev => prev.map((s, i) => i === idx ? { ...s, ...patch } : s));
