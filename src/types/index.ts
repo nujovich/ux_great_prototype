@@ -191,17 +191,48 @@ export interface AllocationSplit {
 
 export interface AllocationRow extends AllocationSplit {
   id: string;
-  fte: number;
+  // PL-level context (read-only in grid)
+  plNumber: string;
+  plName: string;
+  metier: string;
+  ownerN2: string;
+  // JU-level identifiers (read-only)
+  juCode: string;
+  juDescription: string;
+  fmmDescription: string;
+  organType: string;
+  energy: string;
+  allianceCode: string;
+  vehicleCode: string;
+  standardEmissions: string;
+  market: string;
+  // FTE/K€ (read-only, from approved estimation)
+  totalFte: number;
+  fteByYear: Record<string, number>;
+  keByYear: Record<string, number>;
+  // Editable fields
   societe: string | null;
   costType: CostType;
-  diversity: string | null;
+  // Computed / state
+  fte: number;
   keuro: number;
   isDirty: boolean;
+  isSplitChild?: boolean;
+  splitParentId?: string;
 }
 
 export interface Allocation {
   lineId: string;
   splits: AllocationRow[];
+}
+
+export interface AllocationFilterState {
+  plSearch: string;
+  metier: string;
+  ownerN2: string;
+  societe: string;       // '' = All, '__unassigned__' = no societe assigned
+  costType: string;
+  unresolvedOnly: boolean;
 }
 
 export interface PrototypeEstimation {

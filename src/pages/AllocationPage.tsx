@@ -11,7 +11,7 @@ import { Modal } from '../components/shared/Modal';
 import { formatKEuro } from '../lib/format';
 import { validateAllocationSave, calcRowKeuro, calcRowFte, rowNeedsWarning } from '../lib/allocationCalc';
 import { K_EURO_RATES } from '../fixtures/cycles';
-import { SOCIETES, DIVERSITY_OPTIONS } from '../fixtures/societes';
+import { SOCIETES } from '../fixtures/societes';
 import { useT } from '../i18n/useT';
 import type { AllocationRow, Metier } from '../types';
 
@@ -234,7 +234,6 @@ function AllocationContent() {
                       <th className="px-3 py-1.5 text-right font-medium">{t('alloc.colFte')}</th>
                       <th className="px-3 py-1.5 text-left font-medium">{t('alloc.colSociete')}</th>
                       <th className="px-3 py-1.5 text-left font-medium">{t('alloc.colCostType')}</th>
-                      <th className="px-3 py-1.5 text-left font-medium">{t('alloc.colDiversity')}</th>
                       {can('view:k-euro-rates') && <th className="px-3 py-1.5 text-right font-medium">{t('alloc.colKeuro')}</th>}
                     </tr>
                   </thead>
@@ -300,22 +299,6 @@ function AllocationContent() {
                               </select>
                             ) : (
                               <span>{row.costType}</span>
-                            )}
-                          </td>
-                          <td className="px-3 py-2">
-                            {can('edit:allocation') ? (
-                              <select
-                                value={row.diversity ?? ''}
-                                onChange={(e) =>
-                                  updateRow(line.id, row.id, { diversity: e.target.value || null })
-                                }
-                                className="rounded border border-slate-300 px-2 py-1 text-sm"
-                              >
-                                <option value="">— select —</option>
-                                {DIVERSITY_OPTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
-                              </select>
-                            ) : (
-                              <span>{row.diversity ?? <span className="text-slate-400">—</span>}</span>
                             )}
                           </td>
                           {can('view:k-euro-rates') && (

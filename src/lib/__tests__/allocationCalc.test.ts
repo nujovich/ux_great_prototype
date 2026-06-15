@@ -4,7 +4,14 @@ import {
   validateAllocationSave,
   rowNeedsWarning,
 } from '../allocationCalc';
+import {
+  distributeTcKeByYear,
+  splitFteProportional,
+  applyAllocationFilters,
+  sortAllocationRows,
+} from '../allocationCalc';
 import type { AllocationRow } from '../../types';
+import type { AllocationFilterState } from '../../types';
 
 function row(overrides: Partial<AllocationRow> = {}): AllocationRow {
   return {
@@ -15,9 +22,24 @@ function row(overrides: Partial<AllocationRow> = {}): AllocationRow {
     fte: 1.0,
     societe: null,
     costType: 'FTE',
-    diversity: null,
     keuro: 0,
     isDirty: false,
+    plNumber: 'PL-01',
+    plName: 'Project Alpha',
+    metier: 'H-DESIGN',
+    ownerN2: 'Zone-A',
+    juCode: 'JU-001',
+    juDescription: 'Test JU',
+    fmmDescription: '',
+    organType: '',
+    energy: '',
+    allianceCode: '',
+    vehicleCode: '',
+    standardEmissions: '',
+    market: '',
+    totalFte: 1.0,
+    fteByYear: { '2024': 0.5, '2025': 0.5 },
+    keByYear: { '2024': 0, '2025': 0 },
     ...overrides,
   };
 }
@@ -76,5 +98,114 @@ describe('rowNeedsWarning (ALLOC-BR-07)', () => {
 
   it('zero FTE does not trigger warning', () => {
     expect(rowNeedsWarning(row({ costType: 'FTE', fte: 0, societe: null }))).toBe(false);
+  });
+});
+
+describe('distributeTcKeByYear (ALLOC-BR-20)', () => {
+  it('distributes proportionally to FTE share', () => {
+    const result = distributeTcKeByYear(1000, { '2024': 1.0, '2025': 2.0, '2026': 1.0 });
+    expect(result['2024']).toBeCloseTo(250);
+    expect(result['2025']).toBeCloseTo(500);
+    expect(result['2026']).toBeCloseTo(250);
+  });
+
+  it('returns zeros when totalFte is zero', () => {
+    const result = distributeTcKeByYear(1000, { '2024': 0, '2025': 0 });
+    expect(result['2024']).toBe(0);
+    expect(result['2025']).toBe(0);
+  });
+
+  it('sum of distributed values equals totalKe (rounding tolerance)', () => {
+    const result = distributeTcKeByYear(100, { '2024': 1.0, '2025': 1.0, '2026': 1.0 });
+    const total = Object.values(result).reduce((a, b) => a + b, 0);
+    expect(total).toBeCloseTo(100, 1);
+  });
+});
+
+describe('splitFteProportional (ALLOC-BR-23)', () => {
+  it('splits FTE proportionally across two societes', () => {
+    const result = splitFteProportional({ '2024': 2.0, '2025': 4.0 }, [25, 75]);
+    expect(result[0]['2024']).toBeCloseTo(0.5);
+    expect(result[0]['2025']).toBeCloseTo(1.0);
+    expect(result[1]['2024']).toBeCloseTo(1.5);
+    expect(result[1]['2025']).toBeCloseTo(3.0);
+  });
+
+  it('FTE sum per year equals original (invariant ALLOC-BR-23)', () => {
+    const original: Record<string, number> = { '2024': 3.0, '2025': 5.0 };
+    const result = splitFteProportional(original, [30, 70]);
+    for (const year of Object.keys(original)) {
+      const sum = result.reduce((acc, r) => acc + r[year], 0);
+      expect(sum).toBeCloseTo(original[year], 1);
+    }
+  });
+});
+
+describe('applyAllocationFilters (ALLOC-BR-14, ALLOC-BR-25)', () => {
+  const baseFilters: AllocationFilterState = {
+    plSearch: '', metier: '', ownerN2: '', societe: '', costType: '', unresolvedOnly: false,
+  };
+
+  const makeFilterRow = (overrides: Partial<AllocationRow> = {}): AllocationRow => ({
+    id: 'r1', engineerId: 'eng-1', percentage: 100, days: 209, fte: 1.0, totalFte: 1.0,
+    fteByYear: { '2025': 0.5, '2026': 0.5 }, keByYear: { '2025': 425, '2026': 425 },
+    societe: null, costType: 'FTE', keuro: 850, isDirty: false,
+    plNumber: 'PL-01', plName: 'Project Alpha', metier: 'H-DESIGN', ownerN2: 'Zone-A',
+    juCode: 'JU-001', juDescription: '', fmmDescription: '', organType: '', energy: '',
+    allianceCode: '', vehicleCode: '', standardEmissions: '', market: '',
+    ...overrides,
+  });
+
+  const rows = [
+    makeFilterRow({ plNumber: 'PL-01', plName: 'Project Alpha', metier: 'H-DESIGN', ownerN2: 'Zone-A', societe: 'Renault SAS-Paris', costType: 'FTE' }),
+    makeFilterRow({ id: 'r2', plNumber: 'PL-02', plName: 'Project Beta', metier: 'H-TESTING', ownerN2: 'Zone-B', societe: null, costType: 'TC' }),
+    makeFilterRow({ id: 'r3', plNumber: 'PL-01', plName: 'Project Alpha', metier: 'H-DESIGN', ownerN2: 'Zone-A', societe: null, costType: 'FTE' }),
+  ];
+
+  it('empty filters return all rows', () => {
+    expect(applyAllocationFilters(rows, baseFilters)).toHaveLength(3);
+  });
+
+  it('plSearch filters by plNumber', () => {
+    expect(applyAllocationFilters(rows, { ...baseFilters, plSearch: 'PL-01' })).toHaveLength(2);
+  });
+
+  it('plSearch filters by plName (case-insensitive)', () => {
+    expect(applyAllocationFilters(rows, { ...baseFilters, plSearch: 'beta' })).toHaveLength(1);
+  });
+
+  it('metier filter', () => {
+    expect(applyAllocationFilters(rows, { ...baseFilters, metier: 'H-TESTING' })).toHaveLength(1);
+  });
+
+  it('societe = __unassigned__ shows only rows without societe', () => {
+    const result = applyAllocationFilters(rows, { ...baseFilters, societe: '__unassigned__' });
+    expect(result).toHaveLength(2);
+    result.forEach(r => expect(r.societe).toBeNull());
+  });
+
+  it('unresolvedOnly shows rows missing societe OR costType', () => {
+    const result = applyAllocationFilters(rows, { ...baseFilters, unresolvedOnly: true });
+    expect(result).toHaveLength(2);
+  });
+});
+
+describe('sortAllocationRows (ALLOC-BR-19)', () => {
+  const makeSortRow = (id: string, plNumber: string, metier: string, ownerN2: string, juCode: string): AllocationRow => ({
+    id, engineerId: 'eng-1', percentage: 100, days: 209, fte: 1.0, totalFte: 1.0,
+    fteByYear: {}, keByYear: {}, societe: null, costType: 'FTE', keuro: 0, isDirty: false,
+    plNumber, plName: '', metier, ownerN2, juCode, juDescription: '', fmmDescription: '',
+    organType: '', energy: '', allianceCode: '', vehicleCode: '', standardEmissions: '', market: '',
+  });
+
+  it('sorts by PL Number then Métier then Owner N2 then JU Code', () => {
+    const unsorted = [
+      makeSortRow('d', 'PL-02', 'H-DESIGN', 'Z', 'JU-01'),
+      makeSortRow('c', 'PL-01', 'H-TESTING', 'A', 'JU-01'),
+      makeSortRow('a', 'PL-01', 'H-DESIGN', 'A', 'JU-01'),
+      makeSortRow('b', 'PL-01', 'H-DESIGN', 'A', 'JU-02'),
+    ];
+    const sorted = sortAllocationRows(unsorted);
+    expect(sorted.map(r => r.id)).toEqual(['a', 'b', 'c', 'd']);
   });
 });
