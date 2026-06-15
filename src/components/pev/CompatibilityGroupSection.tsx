@@ -36,7 +36,11 @@ export function CompatibilityGroupSection({
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
           {group.key}
         </span>
-        <span className="text-xs text-slate-400">({t('preEst.lines', { n: group.lines.length })})</span>
+        <span className="text-xs text-slate-400">
+          {visibleLines.length === group.lines.length
+            ? `(${t('preEst.lines', { n: group.lines.length })})`
+            : `(${visibleLines.length} / ${t('preEst.lines', { n: group.lines.length })})`}
+        </span>
         <div className="flex-1 border-t border-slate-200" />
       </div>
       <GridFiltersBar value={filters} onChange={setFilters} showOwnerFilters={showOwnerFilters} />

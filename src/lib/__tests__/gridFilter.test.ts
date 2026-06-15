@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyOwnerScope, applyUiFilters, DEFAULT_FILTERS } from '../gridFilter';
+import { applyOwnerScope, applyUiFilters, applyGridFilters, DEFAULT_FILTERS } from '../gridFilter';
 import type { ProjectLine } from '../../types';
 
 const line = (overrides: Partial<ProjectLine> = {}): ProjectLine => ({
@@ -102,5 +102,24 @@ describe('applyUiFilters', () => {
     const result = applyUiFilters(lines, { status: 'Draft', metier: 'H-DESIGN', assignee: 'all', search: 'Auth' });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('l1');
+  });
+});
+
+describe('applyGridFilters (composition)', () => {
+  it('applies owner scope then UI filters, equivalent to chaining the two functions', () => {
+    const lines = [
+      line({ id: 'l1', assignedEngineerId: 'eng-1', status: 'Draft' }),
+      line({ id: 'l2', assignedEngineerId: 'eng-2', status: 'Draft' }),
+      line({ id: 'l3', assignedEngineerId: 'eng-1', status: 'To do' }),
+    ];
+    const f = { ...DEFAULT_FILTERS, status: 'Draft' as const };
+    const scope = { ownOnly: true, activeEngineerId: 'eng-1' };
+
+    const direct = applyGridFilters(lines, f, scope);
+    const composed = applyUiFilters(applyOwnerScope(lines, scope), f);
+
+    expect(direct).toEqual(composed);
+    expect(direct).toHaveLength(1);
+    expect(direct[0].id).toBe('l1');
   });
 });

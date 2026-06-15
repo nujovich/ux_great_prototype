@@ -168,6 +168,8 @@ function PreEstimationContent() {
           line={currentLine}
           onClose={() => openEstimationPanel(null)}
           navLines={
+            /* In compatible mode, navLines uses scopedLines (via visibleLines with no global filter) —
+               per-group filter state is owned by CompatibilityGroupSection and not aggregable here. */
             visibleLines.some((l) => l.id === currentLine.id)
               ? visibleLines
               : [currentLine, ...visibleLines]
