@@ -7,9 +7,3 @@ export const SOCIETES = [
 ] as const;
 
 export type Societe = typeof SOCIETES[number];
-
-export const DIVERSITY_OPTIONS = [
-  'Standard',
-  'Diversity Enhanced',
-  'International',
-] as const;
