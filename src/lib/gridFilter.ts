@@ -12,11 +12,24 @@ export interface OwnerScope {
   activeEngineerId: string | null;
 }
 
-export function applyGridFilters(lines: ProjectLine[], f: GridFilters, scope: OwnerScope): ProjectLine[] {
-  let list = lines;
+export const DEFAULT_FILTERS: GridFilters = {
+  status: 'all',
+  metier: 'all',
+  assignee: 'all',
+  search: '',
+};
+
+/** Applies only the owner-scope gate (Engineer sees own lines only). */
+export function applyOwnerScope(lines: ProjectLine[], scope: OwnerScope): ProjectLine[] {
   if (scope.ownOnly && scope.activeEngineerId) {
-    list = list.filter((l) => l.assignedEngineerId === scope.activeEngineerId);
+    return lines.filter((l) => l.assignedEngineerId === scope.activeEngineerId);
   }
+  return lines;
+}
+
+/** Applies UI filter controls (status, métier, assignee, search) — no owner scoping. */
+export function applyUiFilters(lines: ProjectLine[], f: GridFilters): ProjectLine[] {
+  let list = lines;
   if (f.status !== 'all') list = list.filter((l) => l.status === f.status);
   if (f.metier !== 'all') list = list.filter((l) => l.metier === f.metier);
   if (f.assignee !== 'all') list = list.filter((l) => l.assignedEngineerId === f.assignee);
@@ -30,6 +43,11 @@ export function applyGridFilters(lines: ProjectLine[], f: GridFilters, scope: Ow
     );
   }
   return list;
+}
+
+/** Convenience: owner scope + UI filters combined (backwards-compatible). */
+export function applyGridFilters(lines: ProjectLine[], f: GridFilters, scope: OwnerScope): ProjectLine[] {
+  return applyUiFilters(applyOwnerScope(lines, scope), f);
 }
 
 /** Engineers (own-lines-only) do not get Assignee/Métier filter controls. */
