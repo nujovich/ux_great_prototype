@@ -3,8 +3,6 @@ import {
   calcRowKeuro,
   validateAllocationSave,
   rowNeedsWarning,
-} from '../allocationCalc';
-import {
   distributeTcKeByYear,
   splitFteProportional,
   applyAllocationFilters,
@@ -184,9 +182,16 @@ describe('applyAllocationFilters (ALLOC-BR-14, ALLOC-BR-25)', () => {
     result.forEach(r => expect(r.societe).toBeNull());
   });
 
-  it('unresolvedOnly shows rows missing societe OR costType', () => {
+  it('unresolvedOnly shows only rows where societe is null', () => {
     const result = applyAllocationFilters(rows, { ...baseFilters, unresolvedOnly: true });
     expect(result).toHaveLength(2);
+    result.forEach(r => expect(r.societe).toBeNull());
+  });
+
+  it('unresolvedOnly excludes rows that have a societe assigned', () => {
+    const result = applyAllocationFilters(rows, { ...baseFilters, unresolvedOnly: true });
+    const assignedRows = result.filter(r => r.societe !== null);
+    expect(assignedRows).toHaveLength(0);
   });
 });
 

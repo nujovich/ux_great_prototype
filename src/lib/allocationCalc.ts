@@ -30,12 +30,16 @@ export function distributeTcKeByYear(
   if (totalFte === 0) {
     return Object.fromEntries(Object.keys(fteByYear).map(k => [k, 0]));
   }
-  return Object.fromEntries(
-    Object.entries(fteByYear).map(([year, fte]) => [
-      year,
-      Math.round((totalKe * (fte / totalFte)) * 100) / 100,
-    ])
-  );
+  const years = Object.keys(fteByYear).sort();
+  const result: Record<string, number> = {};
+  let allocated = 0;
+  for (let i = 0; i < years.length - 1; i++) {
+    const v = Math.round((totalKe * (fteByYear[years[i]] / totalFte)) * 100) / 100;
+    result[years[i]] = v;
+    allocated += v;
+  }
+  result[years[years.length - 1]] = Math.round((totalKe - allocated) * 100) / 100;
+  return result;
 }
 
 export function splitFteProportional(
@@ -69,7 +73,7 @@ export function applyAllocationFilters(
     if (filters.societe === '__unassigned__' && row.societe) return false;
     if (filters.societe && filters.societe !== '__unassigned__' && row.societe !== filters.societe) return false;
     if (filters.costType && row.costType !== filters.costType) return false;
-    if (filters.unresolvedOnly && row.societe && row.costType) return false;
+    if (filters.unresolvedOnly && row.societe !== null) return false;
     return true;
   });
 }
