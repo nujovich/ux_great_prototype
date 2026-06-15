@@ -4,7 +4,8 @@ import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
 import { useUIStore } from '../store/uiStore';
 import { GridFiltersBar } from '../components/grid/GridFilters';
-import { applyGridFilters, shouldShowOwnerFilters, type GridFilters } from '../lib/gridFilter';
+import { applyOwnerScope, applyUiFilters, DEFAULT_FILTERS, shouldShowOwnerFilters, type GridFilters } from '../lib/gridFilter';
+import { CompatibilityGroupSection } from '../components/pev/CompatibilityGroupSection';
 import { ProjectLineGrid } from '../components/grid/ProjectLineGrid';
 import { BulkActionsBar } from '../components/grid/BulkActionsBar';
 import { EstimationPanel } from '../components/estimation/EstimationPanel';
@@ -37,13 +38,18 @@ function PreEstimationContent() {
   } = useUIStore();
 
   const t = useT();
-  const [filters, setFilters] = useState<GridFilters>({ status: 'all', metier: 'all', assignee: 'all', search: '' });
+  const [filters, setFilters] = useState<GridFilters>(DEFAULT_FILTERS);
   const [compatibleMode, setCompatibleMode] = useState(false);
   const [showAllColumns, setShowAllColumns] = useState(false);
 
+  const scopedLines = useMemo(
+    () => applyOwnerScope(lines, { ownOnly: can('view:own-lines-only'), activeEngineerId }),
+    [lines, can, activeEngineerId],
+  );
+
   const visibleLines = useMemo(
-    () => applyGridFilters(lines, filters, { ownOnly: can('view:own-lines-only'), activeEngineerId }),
-    [lines, filters, can, activeEngineerId],
+    () => applyUiFilters(scopedLines, filters),
+    [scopedLines, filters],
   );
 
   const selectedLines = useMemo(
@@ -59,12 +65,13 @@ function PreEstimationContent() {
 
   const showSelection = role !== 'RCRC';
   const showKEuro = can('view:k-euro-rates') || role === 'Engineer';
+  const showOwnerFilters = shouldShowOwnerFilters(can('view:own-lines-only'));
 
   const currentLine = lines.find((l) => l.id === estimationPanelLineId) ?? null;
 
   const compatibleGroups = useMemo(
-    () => (compatibleMode ? groupByCompatibility(visibleLines) : null),
-    [visibleLines, compatibleMode],
+    () => (compatibleMode ? groupByCompatibility(scopedLines) : null),
+    [scopedLines, compatibleMode],
   );
 
   function handleBulkEstimate() {
@@ -101,8 +108,6 @@ function PreEstimationContent() {
         </div>
       </div>
 
-      <GridFiltersBar value={filters} onChange={setFilters} showOwnerFilters={shouldShowOwnerFilters(can('view:own-lines-only'))} />
-
       {showSelection && (
         <BulkActionsBar
           count={selectedLineIds.length}
@@ -112,44 +117,49 @@ function PreEstimationContent() {
         />
       )}
 
-      {visibleLines.length === 0 ? (
-        <EmptyState
-          title={t('preEst.noLines')}
-          description={can('view:own-lines-only') ? t('preEst.noLinesOwn') : t('preEst.noLinesAll')}
-        />
-      ) : compatibleGroups ? (
-        <div className="space-y-6">
-          {compatibleGroups.map((group) => (
-            <div key={group.key}>
-              <div className="mb-2 flex items-center gap-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  {group.key}
-                </span>
-                <span className="text-xs text-slate-400">({t('preEst.lines', { n: group.lines.length })})</span>
-                <div className="flex-1 border-t border-slate-200" />
-              </div>
-              <ProjectLineGrid
-                lines={group.lines}
+      {compatibleGroups ? (
+        scopedLines.length === 0 ? (
+          <EmptyState
+            title={t('preEst.noLines')}
+            description={can('view:own-lines-only') ? t('preEst.noLinesOwn') : t('preEst.noLinesAll')}
+          />
+        ) : (
+          <div className="space-y-6">
+            {compatibleGroups.map((group) => (
+              <CompatibilityGroupSection
+                key={group.key}
+                group={group}
                 selectedIds={selectedLineIds}
                 onToggleSelect={toggleSelect}
                 onRowClick={(id) => openEstimationPanel(id)}
                 showSelection={showSelection}
                 showKEuro={showKEuro}
                 showAllColumns={showAllColumns}
+                showOwnerFilters={showOwnerFilters}
               />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       ) : (
-        <ProjectLineGrid
-          lines={visibleLines}
-          selectedIds={selectedLineIds}
-          onToggleSelect={toggleSelect}
-          onRowClick={(id) => openEstimationPanel(id)}
-          showSelection={showSelection}
-          showKEuro={showKEuro}
-          showAllColumns={showAllColumns}
-        />
+        <>
+          <GridFiltersBar value={filters} onChange={setFilters} showOwnerFilters={showOwnerFilters} />
+          {visibleLines.length === 0 ? (
+            <EmptyState
+              title={t('preEst.noLines')}
+              description={can('view:own-lines-only') ? t('preEst.noLinesOwn') : t('preEst.noLinesAll')}
+            />
+          ) : (
+            <ProjectLineGrid
+              lines={visibleLines}
+              selectedIds={selectedLineIds}
+              onToggleSelect={toggleSelect}
+              onRowClick={(id) => openEstimationPanel(id)}
+              showSelection={showSelection}
+              showKEuro={showKEuro}
+              showAllColumns={showAllColumns}
+            />
+          )}
+        </>
       )}
 
       {currentLine && (
