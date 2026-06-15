@@ -118,6 +118,7 @@ function PreEstimationContent() {
       )}
 
       {compatibleGroups ? (
+        /* groupByCompatibility never produces empty groups, so scopedLines.length is the right gate */
         scopedLines.length === 0 ? (
           <EmptyState
             title={t('preEst.noLines')}
