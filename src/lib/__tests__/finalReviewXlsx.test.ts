@@ -26,6 +26,8 @@ describe('buildPlSheetMatrix', () => {
     expect(header).toContain('K€ 2025');
     expect(header).toContain('BH 2025');
     expect(header).toContain('KM 2025');
+    // per-year columns must be metric-grouped: K€ 2025 comes after FTE 2025
+    expect(header.indexOf('K€ 2025')).toBeGreaterThan(header.indexOf('FTE 2025'));
   });
 
   it('includes a JU data row and a PL total row with aggregated values', () => {

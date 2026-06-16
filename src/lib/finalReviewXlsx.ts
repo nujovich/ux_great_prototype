@@ -19,19 +19,24 @@ const FIXED_HEADERS = [
   'Total KM',
 ] as const;
 
-/** Returns the per-year column headers for `years`: FTE Y, K€ Y, BH Y, KM Y per year. */
+/** Returns the per-year column headers for `years`, grouped by metric (all FTE years, then all K€, then BH, then KM). */
 function yearHeaders(years: string[]): string[] {
-  return years.flatMap((y) => [`FTE ${y}`, `K€ ${y}`, `BH ${y}`, `KM ${y}`]);
+  return [
+    ...years.map((y) => `FTE ${y}`),
+    ...years.map((y) => `K€ ${y}`),
+    ...years.map((y) => `BH ${y}`),
+    ...years.map((y) => `KM ${y}`),
+  ];
 }
 
-/** Numeric tail of a Subtotal (Total FTE, Total K€, Total BH, Total KM, then per-year). */
+/** Numeric tail of a Subtotal (Total FTE, Total K€, Total BH, Total KM, then per-year grouped by metric). */
 function subtotalTail(sub: Subtotal, years: string[]): (number)[] {
-  const perYear = years.flatMap((y) => [
-    sub.fteByYear[y] ?? 0,
-    sub.keByYear[y] ?? 0,
-    sub.bhByYear[y] ?? 0,
-    sub.kmByYear[y] ?? 0,
-  ]);
+  const perYear = [
+    ...years.map((y) => sub.fteByYear[y] ?? 0),
+    ...years.map((y) => sub.keByYear[y] ?? 0),
+    ...years.map(() => 0),
+    ...years.map(() => 0),
+  ];
   return [sub.totalFte, sub.totalKe, sub.totalBh, sub.totalKm, ...perYear];
 }
 
@@ -57,12 +62,12 @@ export function buildPlSheetMatrix(pl: PlNode, years: string[]): (string | numbe
         // JU data rows
         for (const row of costType.rows) {
           const totalKe = years.reduce((acc, y) => acc + (row.keByYear[y] ?? 0), 0);
-          const perYear = years.flatMap((y) => [
-            row.fteByYear[y] ?? 0,
-            row.keByYear[y] ?? 0,
-            0, // BH stubbed
-            0, // KM stubbed
-          ]);
+          const perYear = [
+            ...years.map((y) => row.fteByYear[y] ?? 0),
+            ...years.map((y) => row.keByYear[y] ?? 0),
+            ...years.map(() => 0), // BH stubbed
+            ...years.map(() => 0), // KM stubbed
+          ];
           rows.push([
             metier.metier,
             row.ownerN2,
