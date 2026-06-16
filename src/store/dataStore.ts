@@ -94,11 +94,14 @@ export const useDataStore = create<DataState>((set, get) => ({
     const src = get().estimations[sourceId];
     const srcLine = get().lines.find((l) => l.id === sourceId);
     if (!src || !srcLine) return;
+    const srcProto = get().prototypeEstimations[sourceId];
     set((s) => {
       const updated = { ...s.estimations };
+      const updatedProto = { ...s.prototypeEstimations };
       const updatedLines = s.lines.map((l) => {
         if (!targetIds.includes(l.id)) return l;
         updated[l.id] = { ...src, lineId: l.id, status: 'Draft' as LineStatus };
+        if (srcProto) updatedProto[l.id] = { ...srcProto, lineId: l.id };
         return {
           ...l,
           status: 'Draft' as LineStatus,
@@ -107,7 +110,7 @@ export const useDataStore = create<DataState>((set, get) => ({
           lastUpdatedAt: new Date().toISOString(),
         };
       });
-      return { estimations: updated, lines: updatedLines };
+      return { estimations: updated, lines: updatedLines, prototypeEstimations: updatedProto };
     });
   },
   addComment: (comment) =>
