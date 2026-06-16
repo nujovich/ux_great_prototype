@@ -938,6 +938,14 @@ function CustomJUSection({
         </div>
       ) : (
         <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="flex-1">{t('panel.customName')}</span>
+            <span className="w-14 text-right">{t('panel.colVar')}</span>
+            <span className="w-14 text-right">{t('panel.colFixed')}</span>
+            <span className="w-14 text-right">{t('panel.colOcc')}</span>
+            <span className="w-14 text-right">{t('panel.colDays')}</span>
+            <span className="w-[13px]" />
+          </div>
           {customJUs.map((ju, idx) => (
             <div key={ju.id} className="flex items-center gap-2">
               <input value={ju.name} placeholder={t('panel.customName')} disabled={!canEditCustomJU}
