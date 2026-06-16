@@ -57,6 +57,8 @@ export const INDUCTORS: PrototypeInductor[] = [
       cr('cr-3-1', 'HTTP REST', [
         ju('ju-3-1-1', 'INT-R01 HTTP client setup', 1.0),
         ju('ju-3-1-2', 'INT-R02 Endpoint integration', 3.0),
+        // G2/K11: kilometres unit JU so KM rendering is exercised in the panel
+        ju('ju-3-1-3', 'INT-R03 Data transfer volume', 2.0, 'H-DESIGN', 0, 'kilometres'),
       ]),
       cr('cr-3-2', 'SOAP', [
         ju('ju-3-2-1', 'INT-S01 WSDL parsing', 2.5),
@@ -128,6 +130,8 @@ export const INDUCTORS: PrototypeInductor[] = [
       cr('cr-8-1', 'Standard', [
         ju('ju-8-1-1', 'INF-S01 Environment provisioning', 2.0, 'H-PROJECT'),
         ju('ju-8-1-2', 'INF-S02 CI/CD pipeline setup', 2.0, 'H-PROJECT'),
+        // G2/K11: kiloeuros unit JU so K€ rendering is exercised in the panel
+        ju('ju-8-1-3', 'INF-S03 Cloud resource costs', 5.0, 'H-PROJECT', 0, 'kiloeuros'),
       ]),
       cr('cr-8-2', 'Blue-Green', [
         ju('ju-8-2-1', 'INF-B01 Blue-green setup', 3.0, 'H-PROJECT'),
@@ -184,6 +188,8 @@ export const INDUCTORS: PrototypeInductor[] = [
       cr('cr-12-2', 'Extended', [
         ju('ju-12-2-1', 'DOC-E01 Architecture & design', 1.3),
         ju('ju-12-2-2', 'DOC-E02 Runbook & ops guide', 1.5),
+        // G2: non-zero fixed so (Var×Occ)+Fixed formula is visually exercised; variable=2 fixed=3 occ=2 → (2×2)+3=7
+        ju('ju-12-2-3', 'DOC-E03 Stakeholder review & sign-off', 2.0, 'H-DESIGN', 3.0),
       ]),
     ],
   },

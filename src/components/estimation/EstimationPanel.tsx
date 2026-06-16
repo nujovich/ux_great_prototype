@@ -33,6 +33,7 @@ function formatJuTotal(unit: string | undefined, value: number): string {
   switch (unit) {
     case 'bench_hours': return formatBenchHours(value);
     case 'kilometres': return formatKm(value);
+    case 'kiloeuros': return formatKEuro(value);
     default: return formatDays(value);
   }
 }
