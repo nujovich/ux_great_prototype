@@ -296,7 +296,7 @@ export interface Translations {
     toastDraftSaved: string;
     toastPromoted: string;
     clearCran: string;
-    totalEtp: string;
+    totalFTEs: string;
     totalBh: string;
     totalKm: string;
     customName: string;

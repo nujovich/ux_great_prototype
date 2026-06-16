@@ -281,7 +281,7 @@ export const es: Translations = {
     toastDraftSaved: 'Borrador guardado para {id}',
     toastPromoted: '{id} promovida a estimación definitiva',
     clearCran: 'Limpiar',
-    totalEtp: 'Total FTEs',
+    totalFTEs: 'Total FTEs',
     totalBh: 'Total Bench Hours',
     totalKm: 'Total KMs',
     customName: 'Nombre',

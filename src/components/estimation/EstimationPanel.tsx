@@ -505,7 +505,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
               </div>
 
               <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[10px] text-slate-500">{t('panel.totalEtp')}</div>
+                <div className="text-[10px] text-slate-500">{t('panel.totalFTEs')}</div>
                 <div className="text-xl font-bold text-slate-900">{formatFTE(totals.fte)}</div>
               </div>
               <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -571,7 +571,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
           {t('panel.confirmBody', { id: line.id })}
         </p>
         <ul className="mt-3 space-y-1 text-sm text-slate-600">
-          <li>• {t('panel.totalEtp')}: {formatFTE(totals.fte)}</li>
+          <li>• {t('panel.totalFTEs')}: {formatFTE(totals.fte)}</li>
           <li>• {t('panel.totalBh')}: {formatBenchHours(totals.benchHours)}</li>
           <li>• {t('panel.totalKm')}: {formatKm(totals.km)}</li>
         </ul>
