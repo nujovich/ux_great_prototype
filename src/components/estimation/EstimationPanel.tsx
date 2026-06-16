@@ -577,7 +577,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
         </ul>
       </Modal>
 
-      {showCopyModal && <CopyEstimationModal sourceLine={line} onClose={() => setShowCopyModal(false)} />}
+      {showCopyModal && <CopyEstimationModal sourceLine={line} mode="copy" onClose={() => setShowCopyModal(false)} />}
       {showManage && (
         <ManageInductorsModal
           activeInductorIds={selections.map((s) => s.inductorId)}
