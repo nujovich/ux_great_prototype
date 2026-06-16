@@ -37,6 +37,13 @@ describe('buildPlTree', () => {
     expect(pl.metiers[0].societes[0].costTypes[0].subtotal.keByYear['2025']).toBe(300);
     expect(pl.subtotal.bhByYear['2025']).toBe(0);
     expect(pl.subtotal.kmByYear['2025']).toBe(0);
+    expect(pl.subtotal.totalBh).toBe(0);
+    expect(pl.subtotal.totalKm).toBe(0);
+  });
+
+  it('groups rows with no société under "—"', () => {
+    const [pl] = buildPlTree([mk({ id: 'a', societe: null })], ['2025']);
+    expect(pl.metiers[0].societes[0].societe).toBe('—');
   });
 });
 
