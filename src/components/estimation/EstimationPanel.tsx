@@ -24,6 +24,7 @@ import { RelatedLinesBanner } from './RelatedLinesBanner';
 import { useT } from '../../i18n/useT';
 import { canSaveDraft, canPromoteDefinitive } from '../../lib/saveGate';
 import { buildProtoEstimation } from '../../lib/protoPersist';
+import { panelCopyAction } from '../../lib/estimationPanelButtons';
 
 const UNIT_LABEL: Record<string, string> = {
   man_day: 'MD', bench_hours: 'BH', kilometres: 'km', kiloeuros: 'k€',
@@ -112,6 +113,8 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   const canEdit = can('edit:estimation') && !locked;
   const canCopy = can('copy:estimation');
   const canEditCustomJU = can('edit:custom-jus') && !locked;
+
+  const copyAction = panelCopyAction({ existing, canEdit, canCopy, locked });
 
   const totals = useMemo(
     () => calcEstimationTotals(selections, INDUCTORS, customJUs, globalOccurrences),
@@ -297,6 +300,17 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   }
 
   const t = useT();
+
+  const handleApplyLegacy = useCallback(
+    (sel: InductorSelection[], cjus: CustomJU[], label: string) => {
+      setSelections(sel);
+      setCustomJUs(cjus);
+      // globalOccurrences intentionally left untouched: legacy fixtures carry per-JU
+      // data only; the user sets occurrence before saving. The form becomes dirty.
+      pushToast(t('panel.toastLegacyPreloaded', { label }), 'success');
+    },
+    [pushToast, t],
+  );
 
   const dirty = useMemo(
     () => isEstimationDirty(
@@ -526,9 +540,14 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
           {/* Footer */}
           <div className="flex flex-shrink-0 items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3">
             <div>
-              {existing && canCopy && (
+              {copyAction === 'legacy' && (
                 <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
-                  <Copy size={14} /> {t('panel.copyToLines')}
+                  <Copy size={14} /> {t('panel.importLegacy')}
+                </Button>
+              )}
+              {copyAction === 'copy' && (
+                <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
+                  <Copy size={14} /> {t('panel.copyFromLines')}
                 </Button>
               )}
             </div>
@@ -577,7 +596,14 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
         </ul>
       </Modal>
 
-      {showCopyModal && <CopyEstimationModal sourceLine={line} mode="copy" onClose={() => setShowCopyModal(false)} />}
+      {showCopyModal && line && (
+        <CopyEstimationModal
+          sourceLine={line}
+          mode={copyAction === 'legacy' ? 'legacy' : 'copy'}
+          onApplyLegacy={handleApplyLegacy}
+          onClose={() => setShowCopyModal(false)}
+        />
+      )}
       {showManage && (
         <ManageInductorsModal
           activeInductorIds={selections.map((s) => s.inductorId)}
