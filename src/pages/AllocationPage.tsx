@@ -280,6 +280,7 @@ function AllocationContent() {
           open
           row={splitTarget}
           societeOptions={societeOptions}
+          canViewKeuro={can('view:k-euro-rates')}
           onConfirm={handleSplitConfirm}
           onClose={() => setSplitTarget(null)}
         />

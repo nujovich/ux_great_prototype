@@ -12,6 +12,7 @@ interface SplitModalProps {
   open: boolean;
   row: AllocationRow;
   societeOptions: string[];
+  canViewKeuro?: boolean;
   onConfirm: (slots: SplitSlot[]) => void;
   onClose: () => void;
 }
@@ -21,7 +22,7 @@ const DEFAULT_SLOTS: SplitSlot[] = [
   { societe: '', percentage: 50 },
 ];
 
-export function SplitModal({ open, row, societeOptions, onConfirm, onClose }: SplitModalProps) {
+export function SplitModal({ open, row, societeOptions, canViewKeuro, onConfirm, onClose }: SplitModalProps) {
   const years = Object.keys(row.fteByYear).sort();
   const [slots, setSlots] = useState<SplitSlot[]>(DEFAULT_SLOTS);
   // Track the last open+rowId pair that triggered a reset, to perform the reset during render
@@ -43,6 +44,7 @@ export function SplitModal({ open, row, societeOptions, onConfirm, onClose }: Sp
   const canConfirm = pctSum === 100 && slots.length >= 2;
 
   const ftePreviewBySlot = splitFteProportional(row.fteByYear, slots.map(s => s.percentage));
+  const kePreviewBySlot = splitFteProportional(row.keByYear, slots.map(s => s.percentage));
 
   return (
     <Modal open={open} title={`Split — ${row.juCode} / ${row.plName}`} onClose={onClose}>
@@ -56,7 +58,10 @@ export function SplitModal({ open, row, societeOptions, onConfirm, onClose }: Sp
             <th className="px-2 py-1 border text-left">Société</th>
             <th className="px-2 py-1 border text-right">%</th>
             {years.map(y => (
-              <th key={y} className="px-2 py-1 border text-right">FTE {y}</th>
+              <th key={`fte-${y}`} className="px-2 py-1 border text-right">FTE {y}</th>
+            ))}
+            {canViewKeuro && years.map(y => (
+              <th key={`ke-${y}`} className="px-2 py-1 border text-right">K€ {y}</th>
             ))}
           </tr>
         </thead>
@@ -84,8 +89,13 @@ export function SplitModal({ open, row, societeOptions, onConfirm, onClose }: Sp
                 />
               </td>
               {years.map(y => (
-                <td key={y} className="px-2 py-1 border text-right text-gray-700">
+                <td key={`fte-${y}`} className="px-2 py-1 border text-right text-gray-700">
                   {(ftePreviewBySlot[idx]?.[y] ?? 0).toFixed(2)}
+                </td>
+              ))}
+              {canViewKeuro && years.map(y => (
+                <td key={`ke-${y}`} className="px-2 py-1 border text-right text-gray-700">
+                  {(kePreviewBySlot[idx]?.[y] ?? 0).toFixed(0)}
                 </td>
               ))}
             </tr>
