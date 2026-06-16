@@ -8,6 +8,7 @@ import { Button } from '../components/shared/Button';
 import { formatDays, formatKEuro } from '../lib/format';
 import { exportFinalReviewCsv } from '../lib/finalReviewCsv';
 import { buildPlTree, filterPlTree } from '../lib/finalReviewAggregation';
+import { exportPlToXlsx } from '../lib/finalReviewXlsx';
 import { PLAccordion } from '../components/finalReview/PLAccordion';
 import { useT } from '../i18n/useT';
 
@@ -128,7 +129,7 @@ function FinalReviewContent() {
               years={years}
               canViewKeuro={can('view:k-euro-rates')}
               canExport={can('export:final-review')}
-              onExport={() => {}}
+              onExport={(pl) => exportPlToXlsx(pl, years)}
             />
           ))
         )}
