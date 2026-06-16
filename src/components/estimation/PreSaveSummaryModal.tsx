@@ -66,15 +66,17 @@ export function PreSaveSummaryModal({ open, onClose, lineName, totals, spDate, d
         </div>
       </div>
       {lines && lines.length > 1 ? (
-        lines.map((l) => {
-          const rows = annualBreakdown(totals, l.spDate, l.durationMonths);
-          return (
-            <div key={l.id} className="mb-4">
-              <h4 className="mb-1 text-xs font-semibold text-slate-700">{l.lineName}</h4>
-              {renderBreakdownTable(rows)}
-            </div>
-          );
-        })
+        <div className="mt-2 max-h-[50vh] overflow-y-auto pr-1">
+          {lines.map((l) => {
+            const rows = annualBreakdown(totals, l.spDate, l.durationMonths);
+            return (
+              <div key={l.id} className="mb-4">
+                <h4 className="mb-1 text-xs font-semibold text-slate-700">{l.lineName}</h4>
+                {renderBreakdownTable(rows)}
+              </div>
+            );
+          })}
+        </div>
       ) : (
         renderBreakdownTable(annualBreakdown(totals, spDate, durationMonths))
       )}
