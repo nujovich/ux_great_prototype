@@ -12,7 +12,7 @@ export const es: Translations = {
     viewAs: 'Ver como',
   },
   status: {
-    to_do: 'Sin estimar',
+    to_do: 'Por hacer',
     draft: 'Borrador',
     estimated: 'Estimada',
     sent: 'Enviada',
