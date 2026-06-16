@@ -1014,8 +1014,6 @@ export interface components {
             society?: string;
             /** @default false */
             is_exception: boolean;
-            /** @default false */
-            diversity_flag: boolean;
             /** @default 0 */
             priority: number;
             /** @default 0 */
