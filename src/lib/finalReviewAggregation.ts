@@ -25,6 +25,8 @@ function emptySubtotal(years: string[]): Subtotal {
 }
 
 function accumulate(into: Subtotal, row: AllocationRow, years: string[]): void {
+  // totalFte comes from the pre-computed row.totalFte (source of truth);
+  // totalKe is derived here by summing keByYear over the declared years.
   into.totalFte += row.totalFte ?? 0;
   for (const y of years) {
     const fte = row.fteByYear[y] ?? 0;
@@ -42,8 +44,8 @@ function sumChildren(subs: Subtotal[], years: string[]): Subtotal {
     out.totalFte += s.totalFte;
     out.totalKe += s.totalKe;
     for (const y of years) {
-      out.fteByYear[y] += s.fteByYear[y];
-      out.keByYear[y] += s.keByYear[y];
+      out.fteByYear[y] += s.fteByYear[y] ?? 0;
+      out.keByYear[y] += s.keByYear[y] ?? 0;
     }
   }
   return out;
@@ -83,7 +85,7 @@ export function buildPlTree(rows: AllocationRow[], years: string[]): PlNode[] {
       metiers.push({ metier, societes, subtotal: sumChildren(societes.map((s) => s.subtotal), years) });
     }
     pls.push({
-      plNumber, plName: plRows[0].plName, metiers,
+      plNumber, plName: plRows[0].plName, metiers, // all rows under a plNumber share the same plName by construction
       subtotal: sumChildren(metiers.map((m) => m.subtotal), years),
     });
   }

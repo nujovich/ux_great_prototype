@@ -45,6 +45,10 @@ describe('buildPlTree', () => {
     const [pl] = buildPlTree([mk({ id: 'a', societe: null })], ['2025']);
     expect(pl.metiers[0].societes[0].societe).toBe('—');
   });
+
+  it('returns empty array for empty input', () => {
+    expect(buildPlTree([], ['2025'])).toEqual([]);
+  });
 });
 
 describe('filterPlTree', () => {
@@ -56,5 +60,10 @@ describe('filterPlTree', () => {
     expect(filterPlTree(tree, 'PL2').map((p) => p.plNumber)).toEqual(['PL2']);
     expect(filterPlTree(tree, 'alpha').map((p) => p.plNumber)).toEqual(['PL1']);
     expect(filterPlTree(tree, '')).toHaveLength(2);
+  });
+
+  it('returns empty array when nothing matches', () => {
+    const tree = buildPlTree([mk({ plNumber: 'PL1', plName: 'Alpha' })], ['2025']);
+    expect(filterPlTree(tree, 'zzz')).toEqual([]);
   });
 });
