@@ -79,13 +79,14 @@ describe('Allocation permissions (allocation_specs.py)', () => {
   });
 });
 
-describe('Management View permissions (management_view_specs.py)', () => {
-  it('only Admin and PMO can view Management', () => {
+describe('Management View permissions (management_view_specs.py — MGMT-BR-01, v2.2.1)', () => {
+  it('Admin, PMO and RCRC can view Management', () => {
     expect(can('Admin', 'view:management')).toBe(true);
     expect(can('PMO', 'view:management')).toBe(true);
+    expect(can('RCRC', 'view:management')).toBe(true);
   });
-  it('RCRC cannot view Management (spec: MANAGEMENT_ACCESS[RCRC]=False)', () => {
-    expect(can('RCRC', 'view:management')).toBe(false);
+  it('RCRC can view Management (spec: MANAGEMENT_ACCESS[RCRC]=True)', () => {
+    expect(can('RCRC', 'view:management')).toBe(true);
   });
   it('CPO cannot view Management (spec: MANAGEMENT_ACCESS[CPO]=False)', () => {
     expect(can('CPO', 'view:management')).toBe(false);
