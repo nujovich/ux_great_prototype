@@ -1,12 +1,10 @@
 import { create } from 'zustand';
-import type { ProjectLine, LineStatus, Allocation, AllocationRow, Estimation, EstimationComment, PrototypeEstimation, Cycle, InductorSelection, CustomJU } from '../types';
+import type { ProjectLine, LineStatus, Allocation, AllocationRow, Estimation, EstimationComment, PrototypeEstimation, Cycle } from '../types';
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
 import { CYCLES } from '../fixtures/cycles';
 import { canTransition } from '../lib/stateMachine';
 import { buildBulkEstimations } from '../lib/bulkSave';
-import { calcEstimationTotals } from '../lib/calc';
-import { INDUCTORS } from '../fixtures/inductors';
 
 interface DataState {
   lines: ProjectLine[];
@@ -28,7 +26,6 @@ interface DataState {
   bulkAssignSociete: (lineIds: string[], societe: string) => void;
   saveDirtyAllocations: (lineId: string, splits: AllocationRow[]) => void;
   simulateHvtApproval: (lineIds: string[]) => void;
-  copyFromLegacy: (targetLineId: string, inductorSelections: InductorSelection[], customJUs: CustomJU[]) => void;
 }
 
 export const useDataStore = create<DataState>((set, get) => ({
@@ -184,26 +181,4 @@ export const useDataStore = create<DataState>((set, get) => ({
           : l,
       ),
     })),
-  copyFromLegacy: (targetLineId, inductorSelections, customJUs) =>
-    set((s) => {
-      const totals = calcEstimationTotals(inductorSelections, INDUCTORS, customJUs, 1);
-      const est: Estimation = {
-        lineId: targetLineId,
-        inductorSelections,
-        customJUs,
-        globalOccurrences: 1,
-        yearlyBreakdown: [],
-        totalDays: totals.manDays,
-        totalKEuro: totals.keuro,
-        status: 'Draft',
-      };
-      return {
-        estimations: { ...s.estimations, [targetLineId]: est },
-        lines: s.lines.map((l) =>
-          l.id === targetLineId
-            ? { ...l, status: 'Draft' as LineStatus, estimatedDays: totals.manDays, estimatedKEuro: totals.keuro, lastUpdatedAt: new Date().toISOString() }
-            : l,
-        ),
-      };
-    }),
 }));

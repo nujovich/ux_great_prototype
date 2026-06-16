@@ -283,7 +283,6 @@ export interface Translations {
     yearlyDist: string;
     legendInherits: string;
     legendLocked: string;
-    copyToLines: string;
     importLegacy: string;
     copyFromLines: string;
     toastLegacyPreloaded: string;
@@ -338,9 +337,6 @@ export interface Translations {
     confirm: string;
     confirmLegacy: string;
     toastCopied: string;
-    tabCurrent: string;
-    tabLegacy: string;
-    toastLegacyCopied: string;
     noLegacy: string;
   };
   manageInductors: {

@@ -268,7 +268,6 @@ export const es: Translations = {
     yearlyDist: 'Distribución anual',
     legendInherits: 'Hereda ocurr. inductor',
     legendLocked: 'Bloqueada 🔒',
-    copyToLines: 'Copiar a otras líneas',
     importLegacy: 'Importar estimación legacy',
     copyFromLines: 'Copiar de otras project lines',
     toastLegacyPreloaded: 'Estimación legacy "{label}" cargada en el formulario — revisá y guardá',
@@ -323,9 +322,6 @@ export const es: Translations = {
     confirm: 'Copiar a {n} línea(s)',
     confirmLegacy: 'Aplicar estimación legada',
     toastCopied: 'Estimación copiada a {n} línea(s)',
-    tabCurrent: 'Ciclo actual',
-    tabLegacy: 'Ciclo legado',
-    toastLegacyCopied: 'Estimación legada "{label}" copiada como Borrador',
     noLegacy: 'No hay estimaciones legadas disponibles.',
   },
   manageInductors: {

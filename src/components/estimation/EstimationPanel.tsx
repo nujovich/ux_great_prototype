@@ -596,7 +596,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
         </ul>
       </Modal>
 
-      {showCopyModal && line && (
+      {showCopyModal && line && copyAction !== 'none' && (
         <CopyEstimationModal
           sourceLine={line}
           mode={copyAction === 'legacy' ? 'legacy' : 'copy'}
