@@ -163,6 +163,23 @@ export interface Translations {
     colDistribution: string;
     exportCsv: string;
     sendStage3: string;
+    searchPlaceholder: string;
+    colSociete: string;
+    colCostType: string;
+    colOwnerN2: string;
+    colJuCode: string;
+    colJuDesc: string;
+    colFmmDesc: string;
+    colTotalFte: string;
+    colTotalKe: string;
+    colTotalBh: string;
+    colTotalKm: string;
+    plTotal: string;
+    subtotalMetier: string;
+    subtotalSociete: string;
+    subtotalCostType: string;
+    exportXlsx: string;
+    noRows: string;
   };
   mgmt: {
     title: string;
