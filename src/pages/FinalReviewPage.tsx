@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Download, Send } from 'lucide-react';
 import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
@@ -7,9 +7,10 @@ import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { formatDays, formatKEuro } from '../lib/format';
 import { exportFinalReviewCsv } from '../lib/finalReviewCsv';
+import { buildPlTree, filterPlTree } from '../lib/finalReviewAggregation';
+import { exportPlToXlsx } from '../lib/finalReviewXlsx';
+import { PLAccordion } from '../components/finalReview/PLAccordion';
 import { useT } from '../i18n/useT';
-import { useSortable } from '../lib/useSortable';
-import type { Metier } from '../types';
 
 export function FinalReviewPage() {
   return (
@@ -27,34 +28,44 @@ function FinalReviewContent() {
   const pushToast = useUIStore((s) => s.pushToast);
   const t = useT();
 
+  const [search, setSearch] = useState('');
+
   const activeCycleId = useMemo(() => cycles.find((c) => c.is_active)?.id ?? 'export', [cycles]);
   const approvedLines = useMemo(
     () => lines.filter((l) => l.status === 'Approved' && l.cycleId === activeCycleId),
     [lines, activeCycleId],
   );
 
-  const byMetier = useMemo(() => {
-    const map = new Map<Metier, { count: number; days: number; kEuro: number }>();
-    approvedLines.forEach((l) => {
-      if (l.estimatedDays == null) return;
-      const cur = map.get(l.metier) ?? { count: 0, days: 0, kEuro: 0 };
-      cur.count += 1;
-      cur.days += l.estimatedDays;
-      cur.kEuro += l.estimatedKEuro ?? 0;
-      map.set(l.metier, cur);
+  // Mirror the join in finalReviewCsv.ts: allocByLine.get(line.id) → splits
+  const rows = useMemo(() => {
+    const allocByLine = new Map(allocations.map((a) => [a.lineId, a]));
+    return approvedLines.flatMap((line) => {
+      const alloc = allocByLine.get(line.id);
+      return alloc?.splits ?? [];
     });
-    return [...map.entries()].sort((a, b) => b[1].kEuro - a[1].kEuro);
-  }, [approvedLines]);
+  }, [approvedLines, allocations]);
 
-  const metierRows = useMemo(
-    () => byMetier.map(([m, v]) => ({ metier: m, ...v })),
-    [byMetier],
-  );
-  const { sorted: sortedMetier, requestSort, getSortIcon } = useSortable(metierRows);
+  const years = useMemo(() => {
+    const set = new Set<string>();
+    rows.forEach((r) => Object.keys(r.fteByYear).forEach((y) => set.add(y)));
+    return [...set].sort();
+  }, [rows]);
 
-  const totals = byMetier.reduce(
-    (acc, [, v]) => ({ count: acc.count + v.count, days: acc.days + v.days, kEuro: acc.kEuro + v.kEuro }),
-    { count: 0, days: 0, kEuro: 0 },
+  const tree = useMemo(() => buildPlTree(rows, years), [rows, years]);
+  const visible = useMemo(() => filterPlTree(tree, search), [tree, search]);
+
+  // Stat card totals derived from approvedLines (consistent with existing behaviour)
+  const totals = useMemo(
+    () =>
+      approvedLines.reduce(
+        (acc, l) => ({
+          count: acc.count + 1,
+          days: acc.days + (l.estimatedDays ?? 0),
+          kEuro: acc.kEuro + (l.estimatedKEuro ?? 0),
+        }),
+        { count: 0, days: 0, kEuro: 0 },
+      ),
+    [approvedLines],
   );
 
   function handleSendStage3() {
@@ -97,47 +108,31 @@ function FinalReviewContent() {
         <Stat label="Total k€" value={formatKEuro(totals.kEuro)} />
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-            <tr>
-              <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('metier')}>
-                {t('finalReview.colMetier')} {getSortIcon('metier')}
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('count')}>
-                {t('finalReview.colLines')} {getSortIcon('count')}
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('days')}>
-                {t('finalReview.colDays')} {getSortIcon('days')}
-              </th>
-              <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('kEuro')}>
-                k€ {getSortIcon('kEuro')}
-              </th>
-              <th className="px-3 py-2 text-left font-medium">{t('finalReview.colDistribution')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sortedMetier.map((row) => {
-              const pct = totals.kEuro > 0 ? (row.kEuro / totals.kEuro) * 100 : 0;
-              return (
-                <tr key={row.metier} className="border-t border-slate-100">
-                  <td className="px-3 py-2.5 font-medium text-slate-800">{row.metier}</td>
-                  <td className="px-3 py-2.5 text-right">{row.count}</td>
-                  <td className="px-3 py-2.5 text-right">{formatDays(row.days)}</td>
-                  <td className="px-3 py-2.5 text-right font-medium">{formatKEuro(row.kEuro)}</td>
-                  <td className="px-3 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
-                        <div className="h-full bg-brand-500" style={{ width: `${pct}%` }} />
-                      </div>
-                      <span className="w-12 text-right text-xs text-slate-500">{pct.toFixed(0)}%</span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="space-y-2">
+        <input
+          type="search"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
+          placeholder={t('finalReview.searchPlaceholder')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+
+        {visible.length === 0 ? (
+          <p className="rounded-lg border border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-500">
+            {t('finalReview.noRows')}
+          </p>
+        ) : (
+          visible.map((pl) => (
+            <PLAccordion
+              key={pl.plNumber}
+              pl={pl}
+              years={years}
+              canViewKeuro={can('view:k-euro-rates')}
+              canExport={can('export:final-review')}
+              onExport={(pl) => exportPlToXlsx(pl, years)}
+            />
+          ))
+        )}
       </div>
     </div>
   );
