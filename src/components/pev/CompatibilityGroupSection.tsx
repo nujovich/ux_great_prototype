@@ -12,7 +12,6 @@ interface Props {
   onRowClick: (id: string) => void;
   showSelection: boolean;
   showKEuro: boolean;
-  showAllColumns: boolean;
   showOwnerFilters: boolean;
 }
 
@@ -23,7 +22,6 @@ export function CompatibilityGroupSection({
   onRowClick,
   showSelection,
   showKEuro,
-  showAllColumns,
   showOwnerFilters,
 }: Props) {
   const [filters, setFilters] = useState<GridFilters>(DEFAULT_FILTERS);
@@ -51,7 +49,6 @@ export function CompatibilityGroupSection({
         onRowClick={onRowClick}
         showSelection={showSelection}
         showKEuro={showKEuro}
-        showAllColumns={showAllColumns}
       />
     </div>
   );

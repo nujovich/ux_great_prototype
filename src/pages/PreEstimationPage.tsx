@@ -40,7 +40,6 @@ function PreEstimationContent() {
   const t = useT();
   const [filters, setFilters] = useState<GridFilters>(DEFAULT_FILTERS);
   const [compatibleMode, setCompatibleMode] = useState(false);
-  const [showAllColumns, setShowAllColumns] = useState(false);
 
   const scopedLines = useMemo(
     () => applyOwnerScope(lines, { ownOnly: can('view:own-lines-only'), activeEngineerId }),
@@ -63,7 +62,7 @@ function PreEstimationContent() {
     [selectedLines, compatibility],
   );
 
-  const showSelection = role !== 'RCRC';
+  const showSelection = can('edit:estimation');
   const showKEuro = can('view:k-euro-rates') || role === 'Engineer';
   const showOwnerFilters = shouldShowOwnerFilters(can('view:own-lines-only'));
 
@@ -91,13 +90,6 @@ function PreEstimationContent() {
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant={showAllColumns ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setShowAllColumns((v) => !v)}
-          >
-            {t('showAllColumns')}
-          </Button>
-          <Button
             variant={compatibleMode ? 'primary' : 'secondary'}
             size="sm"
             onClick={() => setCompatibleMode((v) => !v)}
@@ -113,7 +105,7 @@ function PreEstimationContent() {
           count={selectedLineIds.length}
           compatibility={compatibility}
           onClear={clearSelection}
-          onBulkEstimate={role !== 'Engineer' ? handleBulkEstimate : undefined}
+          onBulkEstimate={can('edit:estimation') ? handleBulkEstimate : undefined}
         />
       )}
 
@@ -135,7 +127,6 @@ function PreEstimationContent() {
                 onRowClick={(id) => openEstimationPanel(id)}
                 showSelection={showSelection}
                 showKEuro={showKEuro}
-                showAllColumns={showAllColumns}
                 showOwnerFilters={showOwnerFilters}
               />
             ))}
@@ -157,7 +148,6 @@ function PreEstimationContent() {
               onRowClick={(id) => openEstimationPanel(id)}
               showSelection={showSelection}
               showKEuro={showKEuro}
-              showAllColumns={showAllColumns}
             />
           )}
         </>

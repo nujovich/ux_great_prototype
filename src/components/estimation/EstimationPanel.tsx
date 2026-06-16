@@ -22,7 +22,7 @@ import { CommentSection } from './CommentSection';
 import { PrototypeEstimationForm } from './PrototypeEstimationForm';
 import { RelatedLinesBanner } from './RelatedLinesBanner';
 import { useT } from '../../i18n/useT';
-import { canSaveDraft } from '../../lib/saveGate';
+import { canSaveDraft, canPromoteDefinitive } from '../../lib/saveGate';
 import { buildProtoEstimation } from '../../lib/protoPersist';
 
 const UNIT_LABEL: Record<string, string> = {
@@ -33,6 +33,7 @@ function formatJuTotal(unit: string | undefined, value: number): string {
   switch (unit) {
     case 'bench_hours': return formatBenchHours(value);
     case 'kilometres': return formatKm(value);
+    case 'kiloeuros': return formatKEuro(value);
     default: return formatDays(value);
   }
 }
@@ -123,7 +124,13 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
       const existingIds = prev.map((s) => s.inductorId);
       const toAdd: InductorSelection[] = ids
         .filter((id) => !existingIds.includes(id))
-        .map((id) => ({ inductorId: id, selectedCranId: null, inductorOccurrence: 1, juOccurrences: [] }));
+        .map((id) => {
+          const inductor = INDUCTORS.find((i) => i.id === id);
+          if (inductor && inductor.crans.length === 1) {
+            return { inductorId: id, ...buildCranSelection(inductor, inductor.crans[0].id) };
+          }
+          return { inductorId: id, selectedCranId: null, inductorOccurrence: 1, juOccurrences: [] };
+        });
       const toKeep = prev.filter((s) => ids.includes(s.inductorId));
       return [...toKeep, ...toAdd];
     });
@@ -323,9 +330,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   }, [pendingAction, onClose, onSwitchLine]);
 
   const hasMinimumForDraft = canSaveDraft(selections, customJUs);
-  const hasMinimumForDefinitive =
-    globalOccurrences > 0 &&
-    selections.some((s) => s.selectedCranId !== null && s.juOccurrences.length > 0);
+  const hasMinimumForDefinitive = canPromoteDefinitive(selections, customJUs, globalOccurrences);
 
   if (!line) return null;
 
@@ -500,7 +505,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
               </div>
 
               <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-[10px] text-slate-500">{t('panel.totalEtp')}</div>
+                <div className="text-[10px] text-slate-500">{t('panel.totalFTEs')}</div>
                 <div className="text-xl font-bold text-slate-900">{formatFTE(totals.fte)}</div>
               </div>
               <div className="mb-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
@@ -514,7 +519,6 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[10px] text-slate-500">{t('panel.totalKeuro')}</div>
                 <div className="text-lg font-bold text-slate-900">{formatKEuro(totals.keuro)}</div>
-                <p className="mt-1 text-[9px] text-slate-400">{t('panel.keuroHint')}</p>
               </div>
             </div>
           </div>
@@ -567,7 +571,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
           {t('panel.confirmBody', { id: line.id })}
         </p>
         <ul className="mt-3 space-y-1 text-sm text-slate-600">
-          <li>• {t('panel.totalEtp')}: {formatFTE(totals.fte)}</li>
+          <li>• {t('panel.totalFTEs')}: {formatFTE(totals.fte)}</li>
           <li>• {t('panel.totalBh')}: {formatBenchHours(totals.benchHours)}</li>
           <li>• {t('panel.totalKm')}: {formatKm(totals.km)}</li>
         </ul>
@@ -744,7 +748,7 @@ function InductorTreeView({
               <div className="border-t border-slate-100 bg-slate-50 px-4 py-1.5 text-[10px] text-slate-500">
                 {t('panel.noWorkloadStandard')}
               </div>
-            ) : !sel.selectedCranId ? (
+            ) : (!sel.selectedCranId && shouldShowCranDropdown(availableCrans.length)) ? (
               <div className="border-t border-amber-100 bg-amber-50 px-4 py-1.5 text-[10px] text-amber-700">
                 {t('panel.selectCranWarning')}
               </div>
@@ -939,6 +943,14 @@ function CustomJUSection({
         </div>
       ) : (
         <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+            <span className="flex-1">{t('panel.customName')}</span>
+            <span className="w-14 text-right">{t('panel.colVar')}</span>
+            <span className="w-14 text-right">{t('panel.colFixed')}</span>
+            <span className="w-14 text-right">{t('panel.colOcc')}</span>
+            <span className="w-14 text-right">{t('panel.colDays')}</span>
+            <span className="w-[13px]" />
+          </div>
           {customJUs.map((ju, idx) => (
             <div key={ju.id} className="flex items-center gap-2">
               <input value={ju.name} placeholder={t('panel.customName')} disabled={!canEditCustomJU}

@@ -12,7 +12,7 @@ export const en: Translations = {
     viewAs: 'View as',
   },
   status: {
-    to_do: 'Not estimated',
+    to_do: 'To do',
     draft: 'Draft',
     estimated: 'Estimated',
     sent: 'Sent',
@@ -46,7 +46,6 @@ export const en: Translations = {
     vehicleCode: 'Vehicle Code', energy: 'Energy', spDate: 'SP', pcDate: 'PC',
     coDate: 'CO', sopDate: 'SOP', engineering: 'Engineering', estimateType: 'Estimate Type',
   },
-  showAllColumns: 'Show all columns',
   bulk: {
     selected: '{n} line(s) selected',
     incompatible: 'Incompatible selection.',
@@ -282,10 +281,9 @@ export const en: Translations = {
     toastDraftSaved: 'Draft saved for {id}',
     toastPromoted: '{id} promoted to definitive estimation',
     clearCran: 'Clear',
-    totalEtp: 'Total ETPs',
+    totalFTEs: 'Total FTEs',
     totalBh: 'Total Bench Hours',
     totalKm: 'Total KMs',
-    keuroHint: 'Calculated in Allocation',
     customName: 'Name',
     summaryTitle: 'Pre-save summary',
     summaryNoKeuro: 'K€ is calculated in Allocation.',

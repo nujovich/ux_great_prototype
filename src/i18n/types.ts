@@ -61,7 +61,6 @@ export interface Translations {
     engineering: string;
     estimateType: string;
   };
-  showAllColumns: string;
   bulk: {
     selected: string;
     incompatible: string;
@@ -297,10 +296,9 @@ export interface Translations {
     toastDraftSaved: string;
     toastPromoted: string;
     clearCran: string;
-    totalEtp: string;
+    totalFTEs: string;
     totalBh: string;
     totalKm: string;
-    keuroHint: string;
     customName: string;
     summaryTitle: string;
     summaryNoKeuro: string;

@@ -71,7 +71,11 @@ export const useDataStore = create<DataState>((set, get) => ({
     set((s) => ({ estimations: { ...s.estimations, [lineId]: est } })),
   bulkSetEstimation: (lineIds, base) =>
     set((s) => {
-      const built = buildBulkEstimations(lineIds, base);
+      const eligible = lineIds.filter((id) => {
+        const line = s.lines.find((l) => l.id === id);
+        return line ? canTransition(line.status, 'Draft') : false;
+      });
+      const built = buildBulkEstimations(eligible, base);
       const estimations = { ...s.estimations, ...built };
       const lines = s.lines.map((l) =>
         built[l.id]
@@ -90,11 +94,14 @@ export const useDataStore = create<DataState>((set, get) => ({
     const src = get().estimations[sourceId];
     const srcLine = get().lines.find((l) => l.id === sourceId);
     if (!src || !srcLine) return;
+    const srcProto = get().prototypeEstimations[sourceId];
     set((s) => {
       const updated = { ...s.estimations };
+      const updatedProto = { ...s.prototypeEstimations };
       const updatedLines = s.lines.map((l) => {
         if (!targetIds.includes(l.id)) return l;
         updated[l.id] = { ...src, lineId: l.id, status: 'Draft' as LineStatus };
+        if (srcProto) updatedProto[l.id] = { ...srcProto, lineId: l.id };
         return {
           ...l,
           status: 'Draft' as LineStatus,
@@ -103,7 +110,7 @@ export const useDataStore = create<DataState>((set, get) => ({
           lastUpdatedAt: new Date().toISOString(),
         };
       });
-      return { estimations: updated, lines: updatedLines };
+      return { estimations: updated, lines: updatedLines, prototypeEstimations: updatedProto };
     });
   },
   addComment: (comment) =>

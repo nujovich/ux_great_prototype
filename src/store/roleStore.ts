@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Role } from '../types';
 import { ACTIVE_ENGINEER_ID } from '../fixtures/engineers';
 import { ROLE_PERMISSIONS, type Permission } from '../fixtures/roles';
+import { useUIStore } from './uiStore';
 
 interface RoleState {
   currentRole: Role;
@@ -13,10 +14,13 @@ interface RoleState {
 export const useRoleStore = create<RoleState>((set, get) => ({
   currentRole: 'Engineer',
   activeEngineerId: ACTIVE_ENGINEER_ID,
-  setRole: (r) =>
+  setRole: (r) => {
     set({
       currentRole: r,
       activeEngineerId: r === 'Engineer' ? ACTIVE_ENGINEER_ID : null,
-    }),
+    });
+    useUIStore.getState().clearSelection();
+    useUIStore.getState().openEstimationPanel(null);
+  },
   can: (p) => ROLE_PERMISSIONS[get().currentRole].includes(p),
 }));

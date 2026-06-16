@@ -1,9 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { formatFTE, formatBenchHours, formatKm, formatDays, formatKEuro } from '../format';
 
+describe('formatFTE', () => {
+  it('uses the FTE unit suffix (HIW-174 K10)', () => {
+    expect(formatFTE(3)).toBe('3.0 FTE');
+  });
+  it('renders em dash for null', () => {
+    expect(formatFTE(null)).toBe('—');
+  });
+});
+
 describe('unit formatters (HIW-174 §6 totals)', () => {
-  it('formats FTE/ETP with one decimal', () => {
-    expect(formatFTE(1.234)).toBe('1.2 ETP');
+  it('formats FTE with one decimal', () => {
+    expect(formatFTE(1.234)).toBe('1.2 FTE');
     expect(formatFTE(null)).toBe('—');
   });
   it('formats bench hours', () => {

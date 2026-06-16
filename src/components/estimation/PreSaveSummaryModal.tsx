@@ -25,7 +25,7 @@ export function PreSaveSummaryModal({ open, onClose, lineName, totals, spDate, d
         <thead className="text-[10px] uppercase text-slate-500">
           <tr>
             <th className="px-2 py-1 text-left font-medium">{t('panel.summaryYear')}</th>
-            <th className="px-2 py-1 text-right font-medium">{t('panel.totalEtp')}</th>
+            <th className="px-2 py-1 text-right font-medium">{t('panel.totalFTEs')}</th>
             <th className="px-2 py-1 text-right font-medium">{t('panel.totalBh')}</th>
             <th className="px-2 py-1 text-right font-medium">{t('panel.totalKm')}</th>
           </tr>
@@ -53,7 +53,7 @@ export function PreSaveSummaryModal({ open, onClose, lineName, totals, spDate, d
     >
       <div className="grid grid-cols-3 gap-2">
         <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
-          <div className="text-[10px] text-slate-500">{t('panel.totalEtp')}</div>
+          <div className="text-[10px] text-slate-500">{t('panel.totalFTEs')}</div>
           <div className="text-lg font-bold text-slate-900">{formatFTE(totals.fte)}</div>
         </div>
         <div className="rounded-md border border-slate-200 bg-slate-50 p-2">
@@ -66,15 +66,17 @@ export function PreSaveSummaryModal({ open, onClose, lineName, totals, spDate, d
         </div>
       </div>
       {lines && lines.length > 1 ? (
-        lines.map((l) => {
-          const rows = annualBreakdown(totals, l.spDate, l.durationMonths);
-          return (
-            <div key={l.id} className="mb-4">
-              <h4 className="mb-1 text-xs font-semibold text-slate-700">{l.lineName}</h4>
-              {renderBreakdownTable(rows)}
-            </div>
-          );
-        })
+        <div className="mt-2 max-h-[50vh] overflow-y-auto pr-1">
+          {lines.map((l) => {
+            const rows = annualBreakdown(totals, l.spDate, l.durationMonths);
+            return (
+              <div key={l.id} className="mb-4">
+                <h4 className="mb-1 text-xs font-semibold text-slate-700">{l.lineName}</h4>
+                {renderBreakdownTable(rows)}
+              </div>
+            );
+          })}
+        </div>
       ) : (
         renderBreakdownTable(annualBreakdown(totals, spDate, durationMonths))
       )}

@@ -15,7 +15,7 @@ export function formatDate(iso: string): string {
 
 export function formatFTE(v: number | null | undefined): string {
   if (v == null) return '—';
-  return `${v.toFixed(1)} ETP`;
+  return `${v.toFixed(1)} FTE`;
 }
 
 export function formatBenchHours(v: number | null | undefined): string {
