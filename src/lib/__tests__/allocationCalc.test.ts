@@ -7,6 +7,7 @@ import {
   splitFteProportional,
   applyAllocationFilters,
   sortAllocationRows,
+  groupRowsByPl,
 } from '../allocationCalc';
 import type { AllocationRow } from '../../types';
 import type { AllocationFilterState } from '../../types';
@@ -212,5 +213,44 @@ describe('sortAllocationRows (ALLOC-BR-19)', () => {
     ];
     const sorted = sortAllocationRows(unsorted);
     expect(sorted.map(r => r.id)).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('groupRowsByPl', () => {
+  const makeRow = (id: string, plNumber: string, plName: string, metier: string): AllocationRow => ({
+    id, engineerId: 'eng-1', percentage: 100, days: 209, fte: 1.0, totalFte: 1.0,
+    fteByYear: {}, keByYear: {}, societe: null, costType: 'FTE', keuro: 0, isDirty: false,
+    plNumber, plName, metier, ownerN2: 'Z', juCode: 'JU-01', juDescription: '', fmmDescription: '',
+    organType: '', energy: '', allianceCode: '', vehicleCode: '', standardEmissions: '', market: '',
+  });
+
+  it('groups rows into one bucket per plNumber', () => {
+    const rows = [
+      makeRow('a', 'PL-01', 'Alpha', 'H-DESIGN'),
+      makeRow('b', 'PL-01', 'Alpha', 'H-TESTING'),
+      makeRow('c', 'PL-02', 'Beta', 'H-DESIGN'),
+    ];
+    const groups = groupRowsByPl(rows);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].plNumber).toBe('PL-01');
+    expect(groups[0].plName).toBe('Alpha');
+    expect(groups[0].rows.map(r => r.id)).toEqual(['a', 'b']);
+    expect(groups[1].plNumber).toBe('PL-02');
+    expect(groups[1].rows.map(r => r.id)).toEqual(['c']);
+  });
+
+  it('preserves the incoming row order within and across groups', () => {
+    const rows = [
+      makeRow('a', 'PL-02', 'Beta', 'H-DESIGN'),
+      makeRow('b', 'PL-01', 'Alpha', 'H-DESIGN'),
+      makeRow('c', 'PL-02', 'Beta', 'H-TESTING'),
+    ];
+    const groups = groupRowsByPl(rows);
+    expect(groups.map(g => g.plNumber)).toEqual(['PL-02', 'PL-01']);
+    expect(groups[0].rows.map(r => r.id)).toEqual(['a', 'c']);
+  });
+
+  it('returns an empty array for no rows', () => {
+    expect(groupRowsByPl([])).toEqual([]);
   });
 });

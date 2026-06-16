@@ -78,6 +78,31 @@ export function applyAllocationFilters(
   });
 }
 
+export interface PlGroup {
+  plNumber: string;
+  plName: string;
+  rows: AllocationRow[];
+}
+
+/**
+ * Group allocation rows into one bucket per plNumber, preserving the incoming
+ * row order both within a group and in the order each plNumber first appears.
+ */
+export function groupRowsByPl(rows: AllocationRow[]): PlGroup[] {
+  const groups: PlGroup[] = [];
+  const byPl = new Map<string, PlGroup>();
+  for (const row of rows) {
+    let group = byPl.get(row.plNumber);
+    if (!group) {
+      group = { plNumber: row.plNumber, plName: row.plName, rows: [] };
+      byPl.set(row.plNumber, group);
+      groups.push(group);
+    }
+    group.rows.push(row);
+  }
+  return groups;
+}
+
 export function sortAllocationRows(rows: AllocationRow[]): AllocationRow[] {
   return [...rows].sort((a, b) => {
     const pl = a.plNumber.localeCompare(b.plNumber);

@@ -52,12 +52,39 @@ describe('AllocationGrid', () => {
     expect(screen.queryByText('K€ 2025')).toBeNull();
   });
 
-  it('check-all checkbox calls onSelectAll(true)', () => {
+  it('check-all checkbox calls onSelectAll with checked + the group row ids', () => {
     const onSelectAll = vi.fn();
     render(<AllocationGrid {...defaultProps} onSelectAll={onSelectAll} />);
     const checkAll = screen.getByRole('checkbox', { name: /select all/i });
     fireEvent.click(checkAll);
-    expect(onSelectAll).toHaveBeenCalledWith(true);
+    expect(onSelectAll).toHaveBeenCalledWith(true, ['r1']);
+  });
+
+  it('renders one table with a heading per plNumber group', () => {
+    const rows = [
+      row({ id: 'a', plNumber: 'PL-01', plName: 'Project Alpha', metier: 'H-DESIGN' }),
+      row({ id: 'b', plNumber: 'PL-01', plName: 'Project Alpha', metier: 'H-TESTING' }),
+      row({ id: 'c', plNumber: 'PL-02', plName: 'Project Beta', metier: 'H-DESIGN' }),
+    ];
+    const { container } = render(<AllocationGrid {...defaultProps} rows={rows} />);
+    expect(container.querySelectorAll('table')).toHaveLength(2);
+    // Heading carries a métier count unique to the group header (not the row cells)
+    expect(screen.getByText(/2 métiers/)).toBeDefined();
+    expect(screen.getByText(/1 métier\b/)).toBeDefined();
+    // Each group has its own select-all, addressable by plNumber
+    expect(screen.getByRole('checkbox', { name: /select all PL-01/i })).toBeDefined();
+    expect(screen.getByRole('checkbox', { name: /select all PL-02/i })).toBeDefined();
+  });
+
+  it('per-table select-all passes only that group row ids', () => {
+    const onSelectAll = vi.fn();
+    const rows = [
+      row({ id: 'a', plNumber: 'PL-01', plName: 'Alpha' }),
+      row({ id: 'c', plNumber: 'PL-02', plName: 'Beta' }),
+    ];
+    render(<AllocationGrid {...defaultProps} rows={rows} onSelectAll={onSelectAll} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: /select all PL-02/i }));
+    expect(onSelectAll).toHaveBeenCalledWith(true, ['c']);
   });
 
   it('row checkbox calls onSelectRow', () => {

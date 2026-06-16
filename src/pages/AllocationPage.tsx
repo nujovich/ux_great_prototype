@@ -48,8 +48,12 @@ function AllocationContent() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const handleSelectRow = (id: string, checked: boolean) =>
     setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
-  const handleSelectAll = (checked: boolean) =>
-    setSelectedIds(checked ? filteredRows.map((r) => r.id) : []);
+  const handleSelectAll = (checked: boolean, ids: string[]) =>
+    setSelectedIds((prev) =>
+      checked
+        ? [...new Set([...prev, ...ids])]
+        : prev.filter((x) => !ids.includes(x)),
+    );
 
   const updateRow = (id: string, patch: Partial<AllocationRow>) =>
     setDisplayRows((prev) =>
