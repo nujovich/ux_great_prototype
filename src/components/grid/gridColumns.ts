@@ -39,6 +39,6 @@ const COLUMNS: GridColumn[] = [
 
 export const KEY_COLUMN_KEYS = COLUMNS.filter((c) => c.group === 'key').map((c) => c.key);
 
-export function getGridColumns(showAll: boolean): GridColumn[] {
-  return showAll ? COLUMNS : COLUMNS.filter((c) => c.group === 'key');
+export function getGridColumns(): GridColumn[] {
+  return COLUMNS;
 }

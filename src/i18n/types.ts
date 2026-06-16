@@ -61,7 +61,6 @@ export interface Translations {
     engineering: string;
     estimateType: string;
   };
-  showAllColumns: string;
   bulk: {
     selected: string;
     incompatible: string;

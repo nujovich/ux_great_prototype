@@ -14,14 +14,13 @@ interface Props {
   onRowClick: (id: string) => void;
   showSelection: boolean;
   showKEuro: boolean;
-  showAllColumns: boolean;
 }
 
 export function ProjectLineGrid({
-  lines, selectedIds, onToggleSelect, onRowClick, showSelection, showKEuro, showAllColumns,
+  lines, selectedIds, onToggleSelect, onRowClick, showSelection, showKEuro,
 }: Props) {
   const t = useT();
-  const columns = getGridColumns(showAllColumns);
+  const columns = getGridColumns();
 
   function renderCell(col: GridColumn, line: ProjectLine) {
     switch (col.key) {

@@ -46,7 +46,6 @@ export const es: Translations = {
     vehicleCode: 'Código Vehículo', energy: 'Energía', spDate: 'SP', pcDate: 'PC',
     coDate: 'CO', sopDate: 'SOP', engineering: 'Ingeniería', estimateType: 'Tipo de Estimación',
   },
-  showAllColumns: 'Mostrar todas las columnas',
   bulk: {
     selected: '{n} línea(s) seleccionada(s)',
     incompatible: 'Selección incompatible.',

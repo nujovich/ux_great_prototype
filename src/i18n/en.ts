@@ -46,7 +46,6 @@ export const en: Translations = {
     vehicleCode: 'Vehicle Code', energy: 'Energy', spDate: 'SP', pcDate: 'PC',
     coDate: 'CO', sopDate: 'SOP', engineering: 'Engineering', estimateType: 'Estimate Type',
   },
-  showAllColumns: 'Show all columns',
   bulk: {
     selected: '{n} line(s) selected',
     incompatible: 'Incompatible selection.',
