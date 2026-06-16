@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { SplitModal } from '../SplitModal';
 import type { AllocationRow } from '../../../types';
 
@@ -63,5 +64,26 @@ describe('SplitModal', () => {
       { societe: 'Renault SAS-Paris', percentage: 60 },
       { societe: 'RNBV-Amsterdam', percentage: 40 },
     ]);
+  });
+
+  it('shows K€ preview columns proportional to percentage when canViewKeuro', () => {
+    const row = {
+      id: 'r1', plNumber: 'PL1', plName: 'Line', metier: 'BE', ownerN2: 'X',
+      juCode: 'JU1', juDescription: 'd', fmmDescription: 'f', organType: '', energy: '',
+      allianceCode: '', vehicleCode: '', standardEmissions: '', market: '',
+      totalFte: 2, fteByYear: { '2025': 1, '2026': 1 },
+      keByYear: { '2025': 100, '2026': 200 },
+      societe: null, costType: 'FTE' as const, fte: 2, keuro: 300,
+      engineerId: 'e', percentage: 100, days: 0, isDirty: false,
+    };
+    render(
+      <SplitModal open row={row} societeOptions={['S1', 'S2']} canViewKeuro
+        onConfirm={() => {}} onClose={() => {}} />,
+    );
+    // header has K€ columns per year
+    expect(screen.getByText('K€ 2025')).toBeInTheDocument();
+    expect(screen.getByText('K€ 2026')).toBeInTheDocument();
+    // default 50/50 split → 2025 K€ preview = 50 in each of the two slot rows
+    expect(screen.getAllByText('50')).toHaveLength(2);
   });
 });

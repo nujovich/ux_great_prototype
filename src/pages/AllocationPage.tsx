@@ -211,6 +211,22 @@ function AllocationContent() {
           </p>
         </div>
         <div className="flex gap-2 items-center">
+          {can('edit:allocation') && filteredRows.length > 0 && (
+            <label className="flex items-center gap-1 text-sm text-gray-600">
+              <input
+                type="checkbox"
+                aria-label="Select all filtered"
+                checked={
+                  filteredRows.length > 0 &&
+                  filteredRows.every((r) => selectedIds.includes(r.id))
+                }
+                onChange={(e) =>
+                  handleSelectAll(e.target.checked, filteredRows.map((r) => r.id))
+                }
+              />
+              Select all filtered ({filteredRows.length})
+            </label>
+          )}
           {can('edit:allocation') && selectedIds.length > 0 && (
             <button
               onClick={() => setShowBulkModal(true)}
@@ -264,6 +280,7 @@ function AllocationContent() {
           open
           row={splitTarget}
           societeOptions={societeOptions}
+          canViewKeuro={can('view:k-euro-rates')}
           onConfirm={handleSplitConfirm}
           onClose={() => setSplitTarget(null)}
         />

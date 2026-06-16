@@ -142,7 +142,6 @@ export interface Translations {
     colFte: string;
     colSociete: string;
     colCostType: string;
-    colDiversity: string;
     colKeuro: string;
     unsaved: string;
     saveAll: string;

@@ -127,7 +127,6 @@ export const es: Translations = {
     colFte: 'FTE',
     colSociete: 'Société',
     colCostType: 'Tipo de Costo',
-    colDiversity: 'Diversidad',
     colKeuro: 'K€',
     unsaved: 'Sin guardar',
     saveAll: 'Guardar',
