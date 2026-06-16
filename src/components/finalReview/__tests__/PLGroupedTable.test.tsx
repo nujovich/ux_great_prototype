@@ -40,4 +40,15 @@ describe('PLGroupedTable', () => {
     rerender(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro={false} />);
     expect(screen.queryByText('K€ 2025')).not.toBeInTheDocument();
   });
+
+  it('renders multiple métier groups without key collisions', () => {
+    const [pl] = buildPlTree([
+      mk({ id: 'a', metier: 'BE' }),
+      mk({ id: 'b', metier: 'EE', juCode: 'JU2' }),
+    ], ['2025']);
+    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    expect(screen.getAllByText(/métier subtotal/i).length).toBe(2);
+    expect(screen.getByText('JU1')).toBeInTheDocument();
+    expect(screen.getByText('JU2')).toBeInTheDocument();
+  });
 });

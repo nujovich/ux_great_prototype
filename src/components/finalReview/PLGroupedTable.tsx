@@ -80,6 +80,7 @@ function TotalCells({
 export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
   const t = useT();
 
+  // number of fixed info <th> columns before the Total/per-year columns; keep in sync with the header row
   // Fixed info columns: Métier, Owner N2, Société, Cost Type, FMM Desc, JU Desc, JU Code
   const FIXED_COLS = 7;
   // Aggregate columns: Total FTE + [Total K€] + Total BH + Total KM
@@ -92,31 +93,31 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
     <table className="min-w-full text-xs border-collapse">
       <thead className="bg-gray-100">
         <tr>
-          <th className="px-2 py-1 border text-left">{t('finalReview.colMetier')}</th>
-          <th className="px-2 py-1 border text-left">{t('finalReview.colOwnerN2')}</th>
-          <th className="px-2 py-1 border text-left">{t('finalReview.colSociete')}</th>
-          <th className="px-2 py-1 border text-left">{t('finalReview.colCostType')}</th>
-          <th className="px-2 py-1 border text-left">{t('finalReview.colFmmDesc')}</th>
-          <th className="px-2 py-1 border text-left">{t('finalReview.colJuDesc')}</th>
-          <th className="px-2 py-1 border text-left">{t('finalReview.colJuCode')}</th>
-          <th className="px-2 py-1 border text-right">{t('finalReview.colTotalFte')}</th>
+          <th scope="col" className="px-2 py-1 border text-left">{t('finalReview.colMetier')}</th>
+          <th scope="col" className="px-2 py-1 border text-left">{t('finalReview.colOwnerN2')}</th>
+          <th scope="col" className="px-2 py-1 border text-left">{t('finalReview.colSociete')}</th>
+          <th scope="col" className="px-2 py-1 border text-left">{t('finalReview.colCostType')}</th>
+          <th scope="col" className="px-2 py-1 border text-left">{t('finalReview.colFmmDesc')}</th>
+          <th scope="col" className="px-2 py-1 border text-left">{t('finalReview.colJuDesc')}</th>
+          <th scope="col" className="px-2 py-1 border text-left">{t('finalReview.colJuCode')}</th>
+          <th scope="col" className="px-2 py-1 border text-right">{t('finalReview.colTotalFte')}</th>
           {canViewKeuro && (
-            <th className="px-2 py-1 border text-right">{t('finalReview.colTotalKe')}</th>
+            <th scope="col" className="px-2 py-1 border text-right">{t('finalReview.colTotalKe')}</th>
           )}
-          <th className="px-2 py-1 border text-right">{t('finalReview.colTotalBh')}</th>
-          <th className="px-2 py-1 border text-right">{t('finalReview.colTotalKm')}</th>
+          <th scope="col" className="px-2 py-1 border text-right">{t('finalReview.colTotalBh')}</th>
+          <th scope="col" className="px-2 py-1 border text-right">{t('finalReview.colTotalKm')}</th>
           {years.map((y) => (
-            <th key={`h-fte-${y}`} className="px-2 py-1 border text-right">{`FTE ${y}`}</th>
+            <th scope="col" key={`h-fte-${y}`} className="px-2 py-1 border text-right">{`FTE ${y}`}</th>
           ))}
           {canViewKeuro &&
             years.map((y) => (
-              <th key={`h-ke-${y}`} className="px-2 py-1 border text-right">{`K€ ${y}`}</th>
+              <th scope="col" key={`h-ke-${y}`} className="px-2 py-1 border text-right">{`K€ ${y}`}</th>
             ))}
           {years.map((y) => (
-            <th key={`h-bh-${y}`} className="px-2 py-1 border text-right">{`BH ${y}`}</th>
+            <th scope="col" key={`h-bh-${y}`} className="px-2 py-1 border text-right">{`BH ${y}`}</th>
           ))}
           {years.map((y) => (
-            <th key={`h-km-${y}`} className="px-2 py-1 border text-right">{`KM ${y}`}</th>
+            <th scope="col" key={`h-km-${y}`} className="px-2 py-1 border text-right">{`KM ${y}`}</th>
           ))}
         </tr>
       </thead>
@@ -144,9 +145,7 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
                         </td>
                         {canViewKeuro && (
                           <td className="px-2 py-1 border text-right">
-                            {Object.values(row.keByYear)
-                              .reduce((s, v) => s + v, 0)
-                              .toFixed(0)}
+                            {years.reduce((s, y) => s + (row.keByYear[y] ?? 0), 0).toFixed(0)}
                           </td>
                         )}
                         {/* BH / KM stubs (FINAL-01) */}
