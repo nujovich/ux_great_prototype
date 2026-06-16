@@ -118,6 +118,9 @@ export interface Translations {
     selectAll: string;
     deselectAll: string;
     selectedCount: string;
+    unassigned: string;
+    subtotal: string;
+    groupLineCount: string;
     clearFilters: string;
   };
   alloc: {
