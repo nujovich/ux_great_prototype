@@ -80,6 +80,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'view:final-review',
     'export:final-review',
     'upload:workload-standards',
+    'view:management',
   ],
   CPO: [
     'view:estimation-review',

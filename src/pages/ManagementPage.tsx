@@ -32,6 +32,8 @@ function ManagementContent() {
       lines.filter(
         (l) =>
           l.cycleId === activeCycleId &&
+          // MGMT-BR-04: H-NP and H-PROJECT are excluded from the Management View
+          METIERS.includes(l.metier) &&
           (statusFilter === 'all' || l.status === statusFilter) &&
           (metierFilter === 'all' || l.metier === metierFilter),
       ),
