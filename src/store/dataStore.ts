@@ -71,7 +71,11 @@ export const useDataStore = create<DataState>((set, get) => ({
     set((s) => ({ estimations: { ...s.estimations, [lineId]: est } })),
   bulkSetEstimation: (lineIds, base) =>
     set((s) => {
-      const built = buildBulkEstimations(lineIds, base);
+      const eligible = lineIds.filter((id) => {
+        const line = s.lines.find((l) => l.id === id);
+        return line ? canTransition(line.status, 'Draft') : false;
+      });
+      const built = buildBulkEstimations(eligible, base);
       const estimations = { ...s.estimations, ...built };
       const lines = s.lines.map((l) =>
         built[l.id]
