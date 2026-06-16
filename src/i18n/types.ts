@@ -281,6 +281,9 @@ export interface Translations {
     legendInherits: string;
     legendLocked: string;
     copyToLines: string;
+    importLegacy: string;
+    copyFromLines: string;
+    toastLegacyPreloaded: string;
     close: string;
     saveDraft: string;
     promote: string;
