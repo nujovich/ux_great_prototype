@@ -22,7 +22,7 @@ import { CommentSection } from './CommentSection';
 import { PrototypeEstimationForm } from './PrototypeEstimationForm';
 import { RelatedLinesBanner } from './RelatedLinesBanner';
 import { useT } from '../../i18n/useT';
-import { canSaveDraft } from '../../lib/saveGate';
+import { canSaveDraft, canPromoteDefinitive } from '../../lib/saveGate';
 import { buildProtoEstimation } from '../../lib/protoPersist';
 
 const UNIT_LABEL: Record<string, string> = {
@@ -323,9 +323,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   }, [pendingAction, onClose, onSwitchLine]);
 
   const hasMinimumForDraft = canSaveDraft(selections, customJUs);
-  const hasMinimumForDefinitive =
-    globalOccurrences > 0 &&
-    selections.some((s) => s.selectedCranId !== null && s.juOccurrences.length > 0);
+  const hasMinimumForDefinitive = canPromoteDefinitive(selections, customJUs, globalOccurrences);
 
   if (!line) return null;
 
