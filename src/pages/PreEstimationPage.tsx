@@ -62,7 +62,7 @@ function PreEstimationContent() {
     [selectedLines, compatibility],
   );
 
-  const showSelection = role !== 'RCRC';
+  const showSelection = can('edit:estimation');
   const showKEuro = can('view:k-euro-rates') || role === 'Engineer';
   const showOwnerFilters = shouldShowOwnerFilters(can('view:own-lines-only'));
 
@@ -105,7 +105,7 @@ function PreEstimationContent() {
           count={selectedLineIds.length}
           compatibility={compatibility}
           onClear={clearSelection}
-          onBulkEstimate={role !== 'Engineer' ? handleBulkEstimate : undefined}
+          onBulkEstimate={can('edit:estimation') ? handleBulkEstimate : undefined}
         />
       )}
 
