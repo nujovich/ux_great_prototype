@@ -514,7 +514,6 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <div className="text-[10px] text-slate-500">{t('panel.totalKeuro')}</div>
                 <div className="text-lg font-bold text-slate-900">{formatKEuro(totals.keuro)}</div>
-                <p className="mt-1 text-[9px] text-slate-400">{t('panel.keuroHint')}</p>
               </div>
             </div>
           </div>

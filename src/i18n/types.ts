@@ -300,7 +300,6 @@ export interface Translations {
     totalEtp: string;
     totalBh: string;
     totalKm: string;
-    keuroHint: string;
     customName: string;
     summaryTitle: string;
     summaryNoKeuro: string;

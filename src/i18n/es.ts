@@ -285,7 +285,6 @@ export const es: Translations = {
     totalEtp: 'Total FTEs',
     totalBh: 'Total Bench Hours',
     totalKm: 'Total KMs',
-    keuroHint: 'Se calcula en Allocation',
     customName: 'Nombre',
     summaryTitle: 'Resumen previo al guardado',
     summaryNoKeuro: 'El K€ se calcula en Allocation.',

@@ -285,7 +285,6 @@ export const en: Translations = {
     totalEtp: 'Total FTEs',
     totalBh: 'Total Bench Hours',
     totalKm: 'Total KMs',
-    keuroHint: 'Calculated in Allocation',
     customName: 'Name',
     summaryTitle: 'Pre-save summary',
     summaryNoKeuro: 'K€ is calculated in Allocation.',
