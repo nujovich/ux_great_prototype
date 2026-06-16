@@ -282,7 +282,7 @@ export const en: Translations = {
     toastDraftSaved: 'Draft saved for {id}',
     toastPromoted: '{id} promoted to definitive estimation',
     clearCran: 'Clear',
-    totalEtp: 'Total ETPs',
+    totalEtp: 'Total FTEs',
     totalBh: 'Total Bench Hours',
     totalKm: 'Total KMs',
     keuroHint: 'Calculated in Allocation',
