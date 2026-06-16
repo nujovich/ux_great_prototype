@@ -123,7 +123,13 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
       const existingIds = prev.map((s) => s.inductorId);
       const toAdd: InductorSelection[] = ids
         .filter((id) => !existingIds.includes(id))
-        .map((id) => ({ inductorId: id, selectedCranId: null, inductorOccurrence: 1, juOccurrences: [] }));
+        .map((id) => {
+          const inductor = INDUCTORS.find((i) => i.id === id);
+          if (inductor && inductor.crans.length === 1) {
+            return { inductorId: id, ...buildCranSelection(inductor, inductor.crans[0].id) };
+          }
+          return { inductorId: id, selectedCranId: null, inductorOccurrence: 1, juOccurrences: [] };
+        });
       const toKeep = prev.filter((s) => ids.includes(s.inductorId));
       return [...toKeep, ...toAdd];
     });
@@ -741,7 +747,7 @@ function InductorTreeView({
               <div className="border-t border-slate-100 bg-slate-50 px-4 py-1.5 text-[10px] text-slate-500">
                 {t('panel.noWorkloadStandard')}
               </div>
-            ) : !sel.selectedCranId ? (
+            ) : (!sel.selectedCranId && shouldShowCranDropdown(availableCrans.length)) ? (
               <div className="border-t border-amber-100 bg-amber-50 px-4 py-1.5 text-[10px] text-amber-700">
                 {t('panel.selectCranWarning')}
               </div>
