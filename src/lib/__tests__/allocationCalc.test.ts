@@ -3,6 +3,7 @@ import {
   calcRowKeuro,
   validateAllocationSave,
   rowNeedsWarning,
+  rowIsUnresolved,
   distributeTcKeByYear,
   splitFteProportional,
   applyAllocationFilters,
@@ -289,5 +290,17 @@ describe('recalcKeByRate', () => {
 
   it('TC is not rate-based → returns existing zeros (handled by popup elsewhere)', () => {
     expect(recalcKeByRate({ '2025': 0.5 }, 'Oyak Horse', 'TC')).toEqual({ '2025': 0 });
+  });
+});
+
+describe('rowIsUnresolved', () => {
+  it('is true when societe is null regardless of cost type', () => {
+    expect(rowIsUnresolved(row({ societe: null, costType: 'FTE' }))).toBe(true);
+    expect(rowIsUnresolved(row({ societe: null, costType: 'TSA' }))).toBe(true);
+    expect(rowIsUnresolved(row({ societe: null, costType: 'TC' }))).toBe(true);
+  });
+
+  it('is false when a societe is assigned', () => {
+    expect(rowIsUnresolved(row({ societe: 'Oyak Horse', costType: 'FTE' }))).toBe(false);
   });
 });
