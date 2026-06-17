@@ -113,22 +113,20 @@ function AllocationContent() {
   const [splitTarget, setSplitTarget] = useState<AllocationRow | null>(null);
   const handleSplitConfirm = (slots: Array<{ societe: string; percentage: number }>) => {
     if (!splitTarget) return;
-    const childFteByYear = splitFteProportional(
-      splitTarget.fteByYear,
-      slots.map((s) => s.percentage),
-    );
+    const pcts = slots.map((s) => s.percentage);
+    const childFteByYear = splitFteProportional(splitTarget.fteByYear, pcts);
+    const childKeByYear = splitFteProportional(splitTarget.keByYear, pcts);
     const children: AllocationRow[] = slots.map((slot, i) => ({
       ...splitTarget,
       id: `${splitTarget.id}-split-${i}`,
       societe: slot.societe || null,
       percentage: slot.percentage,
       fteByYear: childFteByYear[i],
-      keByYear: Object.fromEntries(Object.keys(splitTarget.fteByYear).map((y) => [y, 0])),
+      keByYear: childKeByYear[i],
       isSplitChild: true,
       splitParentId: splitTarget.id,
       isDirty: true,
     }));
-    // Replace parent row with child rows in place
     setDisplayRows((prev) => {
       const idx = prev.findIndex((r) => r.id === splitTarget.id);
       return [...prev.slice(0, idx), ...children, ...prev.slice(idx + 1)];
