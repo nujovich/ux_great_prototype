@@ -1,15 +1,7 @@
 import type { LineStatus } from '../../types';
 import { useT } from '../../i18n/useT';
 import { statusI18nKey } from '../../lib/stateMachine';
-
-const STATUS_COLORS: Record<LineStatus, string> = {
-  'To do':    '#94a3b8',
-  'Draft':    '#f59e0b',
-  'Estimated': '#3b82f6',
-  'Sent':     '#a855f7',
-  'Modification Requested': '#ef4444',
-  'Approved': '#22c55e',
-};
+import { STATUS_COLORS } from './statusColors';
 
 interface Props {
   data: Partial<Record<LineStatus, number>>;
