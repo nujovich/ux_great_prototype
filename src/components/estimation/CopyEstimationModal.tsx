@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { clsx } from 'clsx';
-import type { ProjectLine } from '../../types';
+import type { ProjectLine, InductorSelection, CustomJU } from '../../types';
 import { Modal } from '../shared/Modal';
 import { Button } from '../shared/Button';
 import { useDataStore } from '../../store/dataStore';
@@ -14,19 +13,24 @@ import { INDUCTORS } from '../../fixtures/inductors';
 
 interface Props {
   sourceLine: ProjectLine;
+  mode: 'copy' | 'legacy';
+  /** Legacy mode only: pre-load the selected legacy estimation into the caller's working state. */
+  onApplyLegacy?: (
+    inductorSelections: InductorSelection[],
+    customJUs: CustomJU[],
+    label: string,
+  ) => void;
   onClose: () => void;
 }
 
-export function CopyEstimationModal({ sourceLine, onClose }: Props) {
+export function CopyEstimationModal({ sourceLine, mode, onApplyLegacy, onClose }: Props) {
   const lines = useDataStore((s) => s.lines);
   const copyEstimation = useDataStore((s) => s.copyEstimation);
-  const copyFromLegacy = useDataStore((s) => s.copyFromLegacy);
   const pushToast = useUIStore((s) => s.pushToast);
   const t = useT();
   const can = useRoleStore((s) => s.can);
   const activeEngineerId = useRoleStore((s) => s.activeEngineerId);
   const [selected, setSelected] = useState<string[]>([]);
-  const [tab, setTab] = useState<'current' | 'legacy'>('current');
   const [legacyId, setLegacyId] = useState<string | null>(null);
 
   const candidates = useMemo(
@@ -39,20 +43,19 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
   }
 
   function handleConfirm() {
-    if (tab === 'current') {
+    if (mode === 'copy') {
       copyEstimation(sourceLine.id, selected);
       pushToast(t('copy.toastCopied', { n: selected.length }), 'success');
     } else {
       const leg = LEGACY_ESTIMATIONS.find((l) => l.id === legacyId);
       if (!leg) return;
       const { inductorSelections, customJUs } = mergeLegacyEstimation(leg.jus, INDUCTORS);
-      copyFromLegacy(sourceLine.id, inductorSelections, customJUs);
-      pushToast(t('copy.toastLegacyCopied', { label: leg.label }), 'success');
+      onApplyLegacy?.(inductorSelections, customJUs, leg.label);
     }
     onClose();
   }
 
-  const confirmDisabled = tab === 'current' ? selected.length === 0 : !legacyId;
+  const confirmDisabled = mode === 'copy' ? selected.length === 0 : !legacyId;
 
   return (
     <Modal
@@ -64,7 +67,7 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
         <>
           <Button variant="secondary" onClick={onClose}>{t('copy.cancel')}</Button>
           <Button variant="primary" onClick={handleConfirm} disabled={confirmDisabled}>
-            {tab === 'current'
+            {mode === 'copy'
               ? t('copy.confirm', { n: selected.length })
               : t('copy.confirmLegacy')}
           </Button>
@@ -75,40 +78,8 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
         {t('copy.subtitle', { id: sourceLine.id })}
       </p>
 
-      {/* Tab strip */}
-      <div className="mb-3 flex gap-1 border-b border-slate-200" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'current'}
-          className={clsx(
-            'px-3 py-1.5 text-sm',
-            tab === 'current'
-              ? 'border-b-2 border-brand-600 font-medium text-brand-700'
-              : 'text-slate-500',
-          )}
-          onClick={() => setTab('current')}
-        >
-          {t('copy.tabCurrent')}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tab === 'legacy'}
-          className={clsx(
-            'px-3 py-1.5 text-sm',
-            tab === 'legacy'
-              ? 'border-b-2 border-brand-600 font-medium text-brand-700'
-              : 'text-slate-500',
-          )}
-          onClick={() => setTab('legacy')}
-        >
-          {t('copy.tabLegacy')}
-        </button>
-      </div>
-
-      {/* Current cycle tab — existing candidates table */}
-      {tab === 'current' && (
+      {/* Current cycle — existing candidates table */}
+      {mode === 'copy' && (
         candidates.length === 0 ? (
           <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
             {t('copy.noCompatible')}
@@ -149,8 +120,8 @@ export function CopyEstimationModal({ sourceLine, onClose }: Props) {
         )
       )}
 
-      {/* Legacy cycle tab — radio list of historical estimations */}
-      {tab === 'legacy' && (
+      {/* Legacy cycle — radio list of historical estimations */}
+      {mode === 'legacy' && (
         LEGACY_ESTIMATIONS.length === 0 ? (
           <div className="rounded-md border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
             {t('copy.noLegacy')}

@@ -118,6 +118,9 @@ export interface Translations {
     selectAll: string;
     deselectAll: string;
     selectedCount: string;
+    unassigned: string;
+    subtotal: string;
+    groupLineCount: string;
     clearFilters: string;
   };
   alloc: {
@@ -280,7 +283,9 @@ export interface Translations {
     yearlyDist: string;
     legendInherits: string;
     legendLocked: string;
-    copyToLines: string;
+    importLegacy: string;
+    copyFromLines: string;
+    toastLegacyPreloaded: string;
     close: string;
     saveDraft: string;
     promote: string;
@@ -332,9 +337,6 @@ export interface Translations {
     confirm: string;
     confirmLegacy: string;
     toastCopied: string;
-    tabCurrent: string;
-    tabLegacy: string;
-    toastLegacyCopied: string;
     noLegacy: string;
   };
   manageInductors: {

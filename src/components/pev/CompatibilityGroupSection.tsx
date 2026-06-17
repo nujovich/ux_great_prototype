@@ -49,6 +49,7 @@ export function CompatibilityGroupSection({
         onRowClick={onRowClick}
         showSelection={showSelection}
         showKEuro={showKEuro}
+        isSelectable={(line) => line.status !== 'Estimated' && line.status !== 'Approved'}
       />
     </div>
   );

@@ -12,6 +12,7 @@ import { useT } from '../i18n/useT';
 import { useSortable } from '../lib/useSortable';
 import { deriveGridRow } from '../lib/estimationReviewRows';
 import { generateCsv, downloadCsv } from '../lib/estimationReviewCsv';
+import { groupRowsByAssignee } from '../lib/estimationReviewGrouping';
 import { ENGINEERS } from '../fixtures/engineers';
 import { INDUCTORS } from '../fixtures/inductors';
 import type { LineStatus, Metier } from '../types';
@@ -110,16 +111,19 @@ function ReviewContent() {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
   }
-  function toggleSelectAll() {
-    const allFilteredIds = filteredRows.map((r) => r.id);
-    const allSelected = allFilteredIds.every((id) => selectedIds.includes(id));
-    setSelectedIds(allSelected ? [] : allFilteredIds);
-  }
-  const allFilteredSelected =
-    filteredRows.length > 0 && filteredRows.every((r) => selectedIds.includes(r.id));
-
   // ── Sorting ───────────────────────────────────────────────
   const { sorted, requestSort, getSortIcon } = useSortable(filteredRows);
+
+  // ── Grouping ──────────────────────────────────────────────
+  const groups = useMemo(
+    () =>
+      groupRowsByAssignee(
+        sorted,
+        (id) => (id ? (ENGINEERS.find((e) => e.id === id)?.name ?? id) : t('estReview.unassigned')),
+        cycleYears,
+      ),
+    [sorted, cycleYears, t],
+  );
 
   // ── CSV export ────────────────────────────────────────────
   function handleExportSelected() {
@@ -218,108 +222,107 @@ function ReviewContent() {
         </div>
       </div>
 
-      {/* Grid */}
+      {/* Grid — one subtable per assignee */}
       {filteredRows.length === 0 ? (
         <EmptyState
           title={hasActiveFilters ? t('estReview.noLinesFiltered') : t('estReview.noLines')}
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-3 py-2 text-left w-8">
-                  <input
-                    type="checkbox"
-                    checked={allFilteredSelected}
-                    onChange={toggleSelectAll}
-                    title={allFilteredSelected ? t('estReview.deselectAll') : t('estReview.selectAll')}
-                    className="cursor-pointer"
-                  />
-                </th>
-                <th className="cursor-pointer px-3 py-2 text-left font-medium resize-x overflow-hidden min-w-[80px]"
-                    onClick={() => requestSort('id')}>
-                  {t('estReview.colPlNumber')} {getSortIcon('id')}
-                </th>
-                <th className="cursor-pointer px-3 py-2 text-left font-medium resize-x overflow-hidden min-w-[120px]"
-                    onClick={() => requestSort('lineName')}>
-                  {t('estReview.colPlName')} {getSortIcon('lineName')}
-                </th>
-                <th className="cursor-pointer px-3 py-2 text-left font-medium resize-x overflow-hidden"
-                    onClick={() => requestSort('metier')}>
-                  {t('estReview.colMetier')} {getSortIcon('metier')}
-                </th>
-                <th className="cursor-pointer px-3 py-2 text-left font-medium resize-x overflow-hidden"
-                    onClick={() => requestSort('assignedEngineerId')}>
-                  {t('estReview.colAssignee')} {getSortIcon('assignedEngineerId')}
-                </th>
-                <th className="cursor-pointer px-3 py-2 text-left font-medium resize-x overflow-hidden"
-                    onClick={() => requestSort('status')}>
-                  {t('estReview.colStatus')} {getSortIcon('status')}
-                </th>
-                <th className="px-3 py-2 text-left font-medium">{t('estReview.colEngineerApproval')}</th>
-                <th className="px-3 py-2 text-left font-medium">{t('estReview.colCpoApproval')}</th>
-                <th className="cursor-pointer px-3 py-2 text-right font-medium"
-                    onClick={() => requestSort('totalFte')}>
-                  {t('estReview.colTotalFte')} {getSortIcon('totalFte')}
-                </th>
-                <th className="cursor-pointer px-3 py-2 text-right font-medium"
-                    onClick={() => requestSort('totalBh')}>
-                  {t('estReview.colTotalBh')} {getSortIcon('totalBh')}
-                </th>
-                <th className="cursor-pointer px-3 py-2 text-right font-medium"
-                    onClick={() => requestSort('totalKm')}>
-                  {t('estReview.colTotalKm')} {getSortIcon('totalKm')}
-                </th>
-                {cycleYears.flatMap((y) => [
-                  <th key={`fte-${y}`} className="px-3 py-2 text-right font-medium whitespace-nowrap">FTE {y}</th>,
-                  <th key={`bh-${y}`}  className="px-3 py-2 text-right font-medium whitespace-nowrap">BH {y}</th>,
-                  <th key={`km-${y}`}  className="px-3 py-2 text-right font-medium whitespace-nowrap">KM {y}</th>,
-                  <th key={`ke-${y}`}  className="px-3 py-2 text-right font-medium whitespace-nowrap">K€ {y}</th>,
-                ])}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((row) => {
-                const eng = ENGINEERS.find((e) => e.id === row.assignedEngineerId);
-                const isSelected = selectedIds.includes(row.id);
-                return (
-                  <tr
-                    key={row.id}
-                    className={`border-t border-slate-100 ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`}
-                  >
-                    <td className="px-3 py-2.5">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelect(row.id)}
-                        className="cursor-pointer"
-                      />
-                    </td>
-                    <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{row.id}</td>
-                    <td className="px-3 py-2.5">
-                      <div className="font-medium text-slate-900">{row.lineName}</div>
-                      <div className="text-xs text-slate-500">{row.projectName}</div>
-                    </td>
-                    <td className="px-3 py-2.5 text-slate-600">{row.metier ?? '—'}</td>
-                    <td className="px-3 py-2.5 text-slate-600">{eng?.name ?? '—'}</td>
-                    <td className="px-3 py-2.5"><StatusBadge status={row.status} /></td>
-                    <td className="px-3 py-2.5 text-slate-600">{row.engineerApproval}</td>
-                    <td className="px-3 py-2.5 text-slate-600">{row.cpoApproval}</td>
-                    <td className="px-3 py-2.5 text-right">{row.totalFte.toFixed(2)}</td>
-                    <td className="px-3 py-2.5 text-right">{row.totalBh.toFixed(1)}</td>
-                    <td className="px-3 py-2.5 text-right">{row.totalKm.toFixed(0)}</td>
+        <div className="space-y-6">
+          {groups.map((group) => (
+            <div key={group.assigneeId ?? '__unassigned__'} className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+              <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
+                <span className="text-sm font-semibold text-slate-700">{group.assigneeName}</span>
+                <span className="text-xs text-slate-400">
+                  {t('estReview.groupLineCount', { n: group.rows.length })}
+                </span>
+              </div>
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                  <tr>
+                    <th className="w-8 px-3 py-2 text-left" />
+                    <th className="cursor-pointer px-3 py-2 text-left font-medium min-w-[80px]" onClick={() => requestSort('id')}>
+                      {t('estReview.colPlNumber')} {getSortIcon('id')}
+                    </th>
+                    <th className="cursor-pointer px-3 py-2 text-left font-medium min-w-[120px]" onClick={() => requestSort('lineName')}>
+                      {t('estReview.colPlName')} {getSortIcon('lineName')}
+                    </th>
+                    <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('metier')}>
+                      {t('estReview.colMetier')} {getSortIcon('metier')}
+                    </th>
+                    <th className="cursor-pointer px-3 py-2 text-left font-medium" onClick={() => requestSort('status')}>
+                      {t('estReview.colStatus')} {getSortIcon('status')}
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium">{t('estReview.colEngineerApproval')}</th>
+                    <th className="px-3 py-2 text-left font-medium">{t('estReview.colCpoApproval')}</th>
+                    <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('totalFte')}>
+                      {t('estReview.colTotalFte')} {getSortIcon('totalFte')}
+                    </th>
+                    <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('totalBh')}>
+                      {t('estReview.colTotalBh')} {getSortIcon('totalBh')}
+                    </th>
+                    <th className="cursor-pointer px-3 py-2 text-right font-medium" onClick={() => requestSort('totalKm')}>
+                      {t('estReview.colTotalKm')} {getSortIcon('totalKm')}
+                    </th>
                     {cycleYears.flatMap((y) => [
-                      <td key={`fte-${y}`} className="px-3 py-2.5 text-right text-slate-400">{(row.yearlyFte[y] ?? 0).toFixed(2)}</td>,
-                      <td key={`bh-${y}`}  className="px-3 py-2.5 text-right text-slate-400">{(row.yearlyBh[y]  ?? 0).toFixed(1)}</td>,
-                      <td key={`km-${y}`}  className="px-3 py-2.5 text-right text-slate-400">{(row.yearlyKm[y]  ?? 0).toFixed(0)}</td>,
-                      <td key={`ke-${y}`}  className="px-3 py-2.5 text-right">{(row.yearlyKEuro[y] ?? 0).toFixed(1)}</td>,
+                      <th key={`fte-${y}`} className="px-3 py-2 text-right font-medium whitespace-nowrap">FTE {y}</th>,
+                      <th key={`bh-${y}`}  className="px-3 py-2 text-right font-medium whitespace-nowrap">BH {y}</th>,
+                      <th key={`km-${y}`}  className="px-3 py-2 text-right font-medium whitespace-nowrap">KM {y}</th>,
+                      <th key={`ke-${y}`}  className="px-3 py-2 text-right font-medium whitespace-nowrap">K€ {y}</th>,
                     ])}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody>
+                  {group.rows.map((row) => {
+                    const isSelected = selectedIds.includes(row.id);
+                    return (
+                      <tr key={row.id} className={`border-t border-slate-100 ${isSelected ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
+                        <td className="px-3 py-2.5">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelect(row.id)}
+                            className="cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{row.id}</td>
+                        <td className="px-3 py-2.5">
+                          <div className="font-medium text-slate-900">{row.lineName}</div>
+                          <div className="text-xs text-slate-500">{row.projectName}</div>
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-600">{row.metier ?? '—'}</td>
+                        <td className="px-3 py-2.5"><StatusBadge status={row.status} /></td>
+                        <td className="px-3 py-2.5 text-slate-600">{row.engineerApproval}</td>
+                        <td className="px-3 py-2.5 text-slate-600">{row.cpoApproval}</td>
+                        <td className="px-3 py-2.5 text-right">{row.totalFte.toFixed(2)}</td>
+                        <td className="px-3 py-2.5 text-right">{row.totalBh.toFixed(1)}</td>
+                        <td className="px-3 py-2.5 text-right">{row.totalKm.toFixed(0)}</td>
+                        {cycleYears.flatMap((y) => [
+                          <td key={`fte-${y}`} className="px-3 py-2.5 text-right text-slate-400">{(row.yearlyFte[y] ?? 0).toFixed(2)}</td>,
+                          <td key={`bh-${y}`}  className="px-3 py-2.5 text-right text-slate-400">{(row.yearlyBh[y]  ?? 0).toFixed(1)}</td>,
+                          <td key={`km-${y}`}  className="px-3 py-2.5 text-right text-slate-400">{(row.yearlyKm[y]  ?? 0).toFixed(0)}</td>,
+                          <td key={`ke-${y}`}  className="px-3 py-2.5 text-right">{(row.yearlyKEuro[y] ?? 0).toFixed(1)}</td>,
+                        ])}
+                      </tr>
+                    );
+                  })}
+                  <tr className="border-t-2 border-slate-300 bg-slate-50 font-semibold text-slate-700">
+                    <td className="px-3 py-2" />
+                    <td className="px-3 py-2" colSpan={6}>{t('estReview.subtotal')}</td>
+                    <td className="px-3 py-2 text-right">{group.subtotal.totalFte.toFixed(2)}</td>
+                    <td className="px-3 py-2 text-right">{group.subtotal.totalBh.toFixed(1)}</td>
+                    <td className="px-3 py-2 text-right">{group.subtotal.totalKm.toFixed(0)}</td>
+                    {cycleYears.flatMap((y) => [
+                      <td key={`fte-${y}`} className="px-3 py-2 text-right">{group.subtotal.yearlyFte[y].toFixed(2)}</td>,
+                      <td key={`bh-${y}`}  className="px-3 py-2 text-right">{group.subtotal.yearlyBh[y].toFixed(1)}</td>,
+                      <td key={`km-${y}`}  className="px-3 py-2 text-right">{group.subtotal.yearlyKm[y].toFixed(0)}</td>,
+                      <td key={`ke-${y}`}  className="px-3 py-2 text-right">{group.subtotal.yearlyKEuro[y].toFixed(1)}</td>,
+                    ])}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
       )}
     </div>

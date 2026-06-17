@@ -14,10 +14,12 @@ interface Props {
   onRowClick: (id: string) => void;
   showSelection: boolean;
   showKEuro: boolean;
+  /** Optional gate: when it returns false, the row's selection checkbox is disabled. Defaults to always selectable. */
+  isSelectable?: (line: ProjectLine) => boolean;
 }
 
 export function ProjectLineGrid({
-  lines, selectedIds, onToggleSelect, onRowClick, showSelection, showKEuro,
+  lines, selectedIds, onToggleSelect, onRowClick, showSelection, showKEuro, isSelectable,
 }: Props) {
   const t = useT();
   const columns = getGridColumns();
@@ -88,8 +90,9 @@ export function ProjectLineGrid({
                     <input
                       type="checkbox"
                       checked={selected}
+                      disabled={isSelectable ? !isSelectable(line) : false}
                       onChange={() => onToggleSelect(line.id)}
-                      className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-40"
                     />
                   </td>
                 )}
