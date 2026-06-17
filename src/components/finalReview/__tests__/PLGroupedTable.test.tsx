@@ -27,13 +27,25 @@ describe('PLGroupedTable (tree-grid)', () => {
     expect(screen.queryByText('S1 (1)')).not.toBeInTheDocument();
   });
 
+  it('renders two independent métier groups', () => {
+    const [pl] = buildPlTree([
+      mk({ id: 'a', metier: 'BE' }),
+      mk({ id: 'b', metier: 'EE', juCode: 'JU2' }),
+    ], ['2025']);
+    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    expect(screen.getByText('BE (1)')).toBeInTheDocument();
+    expect(screen.getByText('EE (1)')).toBeInTheDocument();
+  });
+
   it('expands métier to reveal société, then société to reveal the cost type leaf', () => {
     const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
     render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
     fireEvent.click(screen.getByRole('button', { name: /BE \(1\)/ }));
     expect(screen.getByText('S1 (1)')).toBeInTheDocument();
+    // cost-type leaf is not yet rendered until its société is expanded
+    expect(screen.queryByRole('cell', { name: 'FTE' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /S1 \(1\)/ }));
-    expect(screen.getByText('FTE')).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'FTE' })).toBeInTheDocument();
   });
 
   it('renders the reduced column set and drops the old detail columns', () => {
