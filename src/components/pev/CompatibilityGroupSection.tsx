@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { GridFiltersBar } from '../grid/GridFilters';
 import { ProjectLineGrid } from '../grid/ProjectLineGrid';
 import { applyUiFilters, DEFAULT_FILTERS, type GridFilters } from '../../lib/gridFilter';
+import { isLineSelectableForEstimate } from '../../lib/lineSelection';
 import type { CompatibilityGroup } from '../../lib/grouping';
 import { useT } from '../../i18n/useT';
 
@@ -49,7 +50,7 @@ export function CompatibilityGroupSection({
         onRowClick={onRowClick}
         showSelection={showSelection}
         showKEuro={showKEuro}
-        isSelectable={(line) => line.status !== 'Estimated' && line.status !== 'Approved'}
+        isSelectable={isLineSelectableForEstimate}
       />
     </div>
   );

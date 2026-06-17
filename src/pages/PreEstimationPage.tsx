@@ -14,6 +14,7 @@ import { RoleGate } from '../components/shared/RoleGate';
 import { Button } from '../components/shared/Button';
 import { checkCompatibility } from '../lib/compatibility';
 import { groupByCompatibility } from '../lib/grouping';
+import { isLineSelectableForEstimate } from '../lib/lineSelection';
 import { useT } from '../i18n/useT';
 
 export function PreEstimationPage() {
@@ -148,6 +149,7 @@ function PreEstimationContent() {
               onRowClick={(id) => openEstimationPanel(id)}
               showSelection={showSelection}
               showKEuro={showKEuro}
+              isSelectable={isLineSelectableForEstimate}
             />
           )}
         </>
