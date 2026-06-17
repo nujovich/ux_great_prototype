@@ -14,6 +14,7 @@ interface AllocationGridProps {
   onUndoSplit: (rowId: string) => void;
   activeYears: string[];
   canViewKeuro: boolean;
+  onEditTcKe: (rowId: string) => void;
 }
 
 export function AllocationGrid({
@@ -28,6 +29,7 @@ export function AllocationGrid({
   onUndoSplit,
   activeYears,
   canViewKeuro,
+  onEditTcKe,
 }: AllocationGridProps) {
   const groups = groupRowsByPl(rows);
 
@@ -93,6 +95,7 @@ export function AllocationGrid({
                         K€ {y}
                       </th>
                     ))}
+                  {canViewKeuro && canEdit && <th className="px-2 py-1 border">K€</th>}
                   {canEdit && <th className="px-2 py-1 border">Actions</th>}
                 </tr>
               </thead>
@@ -187,6 +190,20 @@ export function AllocationGrid({
                     {(row.keByYear[y] ?? 0).toFixed(0)}
                   </td>
                 ))}
+              {canViewKeuro && canEdit && (
+                <td className="px-2 py-1 border text-center">
+                  {row.costType === 'TC' && (
+                    <button
+                      type="button"
+                      aria-label={`Edit K€ for ${row.id}`}
+                      onClick={() => onEditTcKe(row.id)}
+                      className="text-xs px-2 py-0.5 border rounded hover:bg-gray-100"
+                    >
+                      Edit K€
+                    </button>
+                  )}
+                </td>
+              )}
                     {canEdit && (
                       <td className="px-2 py-1 border text-center">
                         {row.isSplitChild ? (

@@ -26,6 +26,7 @@ const defaultProps = {
   onChangeCostType: noop,
   onSplit: noop,
   onUndoSplit: noop,
+  onEditTcKe: noop,
   activeYears: ['2025', '2026'],
   canViewKeuro: true,
 };
