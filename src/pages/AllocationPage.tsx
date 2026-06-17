@@ -139,14 +139,16 @@ function AllocationContent() {
     const row = displayRows.find((r) => r.id === rowId);
     if (!row?.splitParentId) return;
     const parentId = row.splitParentId;
-    const original = allocations.flatMap((a) => a.splits).find((r) => r.id === parentId);
+    const original =
+      allocations.flatMap((a) => a.splits).find((r) => r.id === parentId) ??
+      allocations.find((a) => a.originalRow?.id === parentId)?.originalRow;
     if (!original) return;
     setDisplayRows((prev) => {
       const firstChildIdx = prev.findIndex((r) => r.splitParentId === parentId);
       const withoutChildren = prev.filter((r) => r.splitParentId !== parentId);
       return [
         ...withoutChildren.slice(0, firstChildIdx),
-        { ...original, isDirty: false },
+        { ...original, isDirty: false, isSplitChild: false },
         ...withoutChildren.slice(firstChildIdx),
       ];
     });

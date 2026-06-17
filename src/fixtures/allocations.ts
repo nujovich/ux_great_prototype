@@ -44,6 +44,24 @@ export const ALLOCATIONS: Allocation[] = [
   },
   {
     lineId: 'line-2',
+    originalRow: makeRow({
+      id: 'alloc-2-orig',
+      plNumber: 'PL-002',
+      plName: 'Scenic EV Homologation',
+      metier: 'H-TESTING',
+      ownerN2: 'Zone-EMEA',
+      juCode: 'JU-T-001',
+      juDescription: 'Thermal Test Campaign',
+      societe: 'RNBV-Amsterdam',
+      costType: 'FTE',
+      percentage: 100,
+      days: 209,
+      fte: 1.0,
+      totalFte: 1.0,
+      fteByYear: { '2025': 0.5, '2026': 0.5 },
+      keByYear: { '2025': 425, '2026': 425 },
+      keuro: 850,
+    }),
     splits: [
       makeRow({
         id: 'alloc-2-a',
