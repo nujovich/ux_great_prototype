@@ -3,6 +3,7 @@ import type { ProjectLine, LineStatus, Allocation, AllocationRow, Estimation, Es
 import { PROJECT_LINES } from '../fixtures/projectLines';
 import { ALLOCATIONS } from '../fixtures/allocations';
 import { CYCLES } from '../fixtures/cycles';
+import { TIMELINE_SNAPSHOTS, type TimelineSnapshot } from '../fixtures/timeline';
 import { canTransition } from '../lib/stateMachine';
 import { buildBulkEstimations } from '../lib/bulkSave';
 
@@ -11,6 +12,7 @@ interface DataState {
   allocations: Allocation[];
   estimations: Record<string, Estimation>; // by lineId
   cycles: Cycle[];
+  timeline: TimelineSnapshot[];
   updateLine: (id: string, patch: Partial<ProjectLine>) => void;
   setLineStatus: (id: string, status: LineStatus, extra?: Partial<ProjectLine>) => void;
   rejectLine: (id: string, comment: string) => void;
@@ -33,6 +35,7 @@ export const useDataStore = create<DataState>((set, get) => ({
   allocations: structuredClone(ALLOCATIONS),
   estimations: {},
   cycles: structuredClone(CYCLES),
+  timeline: structuredClone(TIMELINE_SNAPSHOTS),
   prototypeEstimations: {},
   updateLine: (id, patch) =>
     set((s) => ({
