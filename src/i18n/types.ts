@@ -113,7 +113,6 @@ export interface Translations {
     exportSelected: string;
     exportAllFiltered: string;
     exportNoneSelected: string;
-    exportNothingFiltered: string;
     noLines: string;
     noLinesFiltered: string;
     selectAll: string;
