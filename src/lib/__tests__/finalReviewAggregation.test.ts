@@ -51,6 +51,54 @@ describe('buildPlTree', () => {
   });
 });
 
+// ── Issue 6: Multi-year coverage ──────────────────────────────────────────
+describe('buildPlTree — multi-year accumulation (issue 6)', () => {
+  it('accumulates fteByYear and keByYear across multiple years at all subtotal levels', () => {
+    const rows = [
+      mk({
+        id: 'a', plNumber: 'PL1', metier: 'BE', societe: 'S1', costType: 'FTE',
+        totalFte: 3,
+        fteByYear: { '2025': 1, '2026': 2 },
+        keByYear:  { '2025': 100, '2026': 200 },
+      }),
+      mk({
+        id: 'b', plNumber: 'PL1', metier: 'BE', societe: 'S1', costType: 'FTE',
+        totalFte: 5,
+        fteByYear: { '2025': 2, '2026': 3 },
+        keByYear:  { '2025': 50, '2026': 150 },
+      }),
+    ];
+    const years = ['2025', '2026'];
+    const [pl] = buildPlTree(rows, years);
+
+    // Cost Type subtotal
+    const ct = pl.metiers[0].societes[0].costTypes[0].subtotal;
+    expect(ct.fteByYear['2025']).toBe(3);
+    expect(ct.fteByYear['2026']).toBe(5);
+    expect(ct.keByYear['2025']).toBe(150);
+    expect(ct.keByYear['2026']).toBe(350);
+    expect(ct.totalFte).toBe(8);
+    expect(ct.totalKe).toBe(500);
+
+    // Société subtotal rolls up from costType
+    const soc = pl.metiers[0].societes[0].subtotal;
+    expect(soc.fteByYear['2026']).toBe(5);
+    expect(soc.keByYear['2026']).toBe(350);
+
+    // Métier subtotal rolls up from société
+    const met = pl.metiers[0].subtotal;
+    expect(met.fteByYear['2025']).toBe(3);
+    expect(met.totalKe).toBe(500);
+
+    // PL total
+    expect(pl.subtotal.fteByYear['2025']).toBe(3);
+    expect(pl.subtotal.fteByYear['2026']).toBe(5);
+    expect(pl.subtotal.keByYear['2025']).toBe(150);
+    expect(pl.subtotal.keByYear['2026']).toBe(350);
+    expect(pl.subtotal.totalKe).toBe(500);
+  });
+});
+
 describe('filterPlTree', () => {
   it('filters by PL number or name, empty query returns all', () => {
     const tree = buildPlTree([

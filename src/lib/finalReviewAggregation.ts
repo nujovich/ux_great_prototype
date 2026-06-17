@@ -25,15 +25,24 @@ function emptySubtotal(years: string[]): Subtotal {
 }
 
 function accumulate(into: Subtotal, row: AllocationRow, years: string[]): void {
-  // totalFte comes from the pre-computed row.totalFte (source of truth);
-  // totalKe is derived here by summing keByYear over the declared years.
+  // totalFte comes from the pre-computed row.totalFte (source of truth).
+  // totalKe (scalar): sum keByYear over declared years; fall back to row.keuro when keByYear has
+  // no entries (legacy rows without per-year breakdown) to avoid silently contributing 0.
+  // Per-year keByYear columns always use keByYear lookup only (0 when the year is absent).
   into.totalFte += row.totalFte ?? 0;
+  const hasYearBreakdown = Object.keys(row.keByYear).length > 0;
+  if (!hasYearBreakdown) {
+    // Scalar fallback: no per-year data, use the row-level keuro directly.
+    into.totalKe += row.keuro ?? 0;
+  }
   for (const y of years) {
     const fte = row.fteByYear[y] ?? 0;
     const ke = row.keByYear[y] ?? 0;
     into.fteByYear[y] += fte;
     into.keByYear[y] += ke;
-    into.totalKe += ke;
+    if (hasYearBreakdown) {
+      into.totalKe += ke;
+    }
     // bh/km remain 0 until FINAL-01
   }
 }
