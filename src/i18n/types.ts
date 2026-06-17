@@ -187,6 +187,7 @@ export interface Translations {
     title: string;
     subtitle: string;
     pieTitle: string;
+    timelineTitle: string;
     noData: string;
     noCycle: string;
     colTotal: string;
