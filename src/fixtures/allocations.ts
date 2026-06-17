@@ -40,6 +40,17 @@ export const ALLOCATIONS: Allocation[] = [
         costType: 'FTE',
         keuro: 850,
       }),
+      makeRow({
+        id: 'alloc-unassigned',
+        plNumber: 'PL-001',
+        plName: 'Renault R5 EV Platform',
+        metier: 'H-SOFTWARE',
+        ownerN2: 'Zone-EMEA',
+        juCode: 'JU-S-002',
+        juDescription: 'Embedded SW Module',
+        societe: null,
+        costType: 'FTE',
+      }),
     ],
   },
   {
