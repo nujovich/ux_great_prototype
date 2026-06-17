@@ -107,9 +107,23 @@ function AllocationContent() {
 
   const handleTcCancel = () => {
     if (tcTarget && tcEditMode === 'create') {
-      // First-time TC: revert costType to its value before the change.
+      // First-time TC: revert costType to its value before the change. Bypass updateRow
+      // (which always forces isDirty: true) so the row goes back to clean when the TC
+      // toggle was the only change, while preserving dirtiness from any earlier edit
+      // (e.g. a societe change made before opening the popup).
       const original = allocations.flatMap((a) => a.splits).find((r) => r.id === tcTarget.id);
-      if (original) updateRow(tcTarget.id, { costType: original.costType, isDirty: false });
+      if (original) {
+        setDisplayRows((prev) =>
+          prev.map((r) => {
+            if (r.id !== tcTarget.id) return r;
+            const reverted = { ...r, costType: original.costType };
+            const stillDirty =
+              reverted.societe !== original.societe ||
+              JSON.stringify(reverted.keByYear) !== JSON.stringify(original.keByYear);
+            return { ...reverted, isDirty: stillDirty };
+          }),
+        );
+      }
     }
     setTcTarget(null);
   };

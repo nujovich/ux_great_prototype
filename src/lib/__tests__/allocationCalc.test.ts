@@ -288,7 +288,7 @@ describe('recalcKeByRate', () => {
     expect(recalcKeByRate({ '2099': 1 }, 'Oyak Horse', 'FTE')).toEqual({ '2099': 0 });
   });
 
-  it('TC is not rate-based → returns existing zeros (handled by popup elsewhere)', () => {
+  it('TC is not rate-based → always returns 0 (handled by the popup elsewhere)', () => {
     expect(recalcKeByRate({ '2025': 0.5 }, 'Oyak Horse', 'TC')).toEqual({ '2025': 0 });
   });
 });

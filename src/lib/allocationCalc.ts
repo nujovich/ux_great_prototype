@@ -43,6 +43,13 @@ export function distributeTcKeByYear(
   return result;
 }
 
+/**
+ * Split a per-year map proportionally by percentage (reused for both FTE and K€).
+ * Each slot is rounded independently with no last-slot catch-up, so the per-year sum of
+ * children can drift from the parent by up to ±0.01. Acceptable here: the grid renders
+ * to whole units and FTE/K€ share the same rounding, so proportionality stays visually
+ * exact. Add a remainder correction if these sums ever need to be cent-exact.
+ */
 export function splitFteProportional(
   fteByYear: Record<string, number>,
   percentages: number[]
@@ -129,6 +136,11 @@ export function rowIsUnresolved(row: AllocationRow): boolean {
  * Recalculate K€ per year from the societe rate tables (mirror of kit §11.1/§11.2).
  * FTE → fte × FTE_RATES; TSA → fte × TSA_RATES. TC is handled by the popup, not here.
  * Unknown societe / missing year / null societe → 0 (mirrors the kit's `.get(..., 0)`).
+ *
+ * Rounding uses JS round-half-up; the kit (Python `round`) uses banker's rounding, so
+ * half-cent products (e.g. TSA GEHEUNG/Ampere) can differ by ±0.01 from the backend.
+ * Acceptable for the prototype (grid shows K€ to whole units); revisit if these values
+ * ever feed the real backend.
  */
 export function recalcKeByRate(
   fteByYear: Record<string, number>,

@@ -46,4 +46,10 @@ describe('TCPopup', () => {
     await user.click(screen.getByRole('button', { name: /^cancel$/i }));
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
+
+  it('disables Confirm when the row has no societe (ALLOC-BR-13)', () => {
+    render(<TCPopup open row={tcRow({ societe: null })} onConfirm={vi.fn()} onCancel={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /^confirm$/i })).toBeDisabled();
+    expect(screen.getByText(/societe is required/i)).toBeInTheDocument();
+  });
 });
