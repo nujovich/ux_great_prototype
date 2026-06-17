@@ -8,6 +8,7 @@ import { Button } from '../components/shared/Button';
 import { formatDays, formatKEuro } from '../lib/format';
 import { exportFinalReviewCsv } from '../lib/finalReviewCsv';
 import { buildPlTree, filterPlTree } from '../lib/finalReviewAggregation';
+import { filterApprovedLines, buildApprovedRows } from '../lib/finalReviewHelpers';
 import { exportPlToXlsx } from '../lib/finalReviewXlsx';
 import { PLAccordion } from '../components/finalReview/PLAccordion';
 import { useT } from '../i18n/useT';
@@ -32,18 +33,17 @@ function FinalReviewContent() {
 
   const activeCycleId = useMemo(() => cycles.find((c) => c.is_active)?.id ?? 'export', [cycles]);
   const approvedLines = useMemo(
-    () => lines.filter((l) => l.status === 'Approved' && l.cycleId === activeCycleId),
+    () => filterApprovedLines(lines, activeCycleId),
     [lines, activeCycleId],
   );
 
-  // Mirror the join in finalReviewCsv.ts: allocByLine.get(line.id) → splits
-  const rows = useMemo(() => {
-    const allocByLine = new Map(allocations.map((a) => [a.lineId, a]));
-    return approvedLines.flatMap((line) => {
-      const alloc = allocByLine.get(line.id);
-      return alloc?.splits ?? [];
-    });
-  }, [approvedLines, allocations]);
+  // Build rows for the on-screen table and XLSX export.
+  // Uses buildApprovedRows so that approved lines with NO allocation splits
+  // still appear as zero-placeholder rows (matching the CSV path, per spec).
+  const rows = useMemo(
+    () => buildApprovedRows(approvedLines, allocations),
+    [approvedLines, allocations],
+  );
 
   const years = useMemo(() => {
     const set = new Set<string>();

@@ -39,7 +39,7 @@ export function buildFinalReviewCsvRows(lines: ProjectLine[], allocations: Alloc
           line.id,
           line.lineName,
           line.metier,
-          line.assignedEngineerId ?? '',
+          '', // Owner N2: not available without a split; emit empty to match spec
           '',
           '',
           '—',
@@ -57,19 +57,26 @@ export function buildFinalReviewCsvRows(lines: ProjectLine[], allocations: Alloc
     }
 
     for (const split of splits) {
+      // Owner N2 comes from the AllocationRow (split.ownerN2), not the ProjectLine.
+      // Total K€: derived from keByYear when populated; falls back to split.keuro when keByYear
+      // has no entries (e.g. legacy rows without per-year breakdown) to avoid silent zero exports.
+      const keByYearValues = Object.values(split.keByYear);
+      const totalKe = keByYearValues.length > 0
+        ? keByYearValues.reduce((acc, v) => acc + v, 0)
+        : (split.keuro ?? 0);
       rows.push(
         [
           line.id,
           line.lineName,
           line.metier,
-          line.assignedEngineerId ?? '',
+          split.ownerN2 ?? '', // spec-correct source for Owner N2
           split.societe ?? '',
           split.costType,
           '—',
           '—',
           '—',
           split.fte,
-          split.keuro,
+          totalKe, // derived from keByYear, consistent with XLSX path
           0,
           0,
         ]
