@@ -13,7 +13,7 @@ raised two KOs and waived one gap:
   simplified POC look: a hierarchical tree-grid with a single name column and a reduced
   set of metric columns.
 - **KO #2 — Send Stage 3 to HVT is clickable by all roles.** Only PMO and Admin should be
-  able to trigger it.
+  able to trigger it. **Already satisfied in `main` — see "Already satisfied (verified)".**
 - **Waived gap (comment 44733) — "Obviamos el gap de la descarga".** The CSV/XLSX export
   structure mismatch is no longer a requirement. Per Nadia Ujovich (comment 44734) the
   download button is disabled ("queda inhabilitado").
@@ -39,18 +39,31 @@ renders a vertical per-PL accordion with a PL search bar.
   (`exportPlToXlsx`, `src/lib/finalReviewXlsx.ts`).
 - Send Stage 3: `handleSendHvt()` in the page, button gated by `can('send:hvt')`.
 
+## Already satisfied (verified)
+
+These two scope items required **no change** — verified against `main` @ `6fa2288`:
+
+- **Send Stage 3 → PMO/Admin only (KO #2).** `send:stage3` is granted only to PMO and Admin
+  in `src/fixtures/roles.ts` (lines 50, 67). The button in `FinalReviewPage.tsx:97` renders
+  conditionally on `can('send:stage3')`, so it is absent for Engineer/RCRC/CPO. No
+  column-reordering logic exists anywhere under `src/` (the ticket's root cause described an
+  older reorderable-column prototype; this implementation is an accordion). A regression
+  guard already exists — `src/fixtures/__tests__/roles.test.ts:106-112` ("only Admin and PMO
+  can send Stage 3") — and passes. Most likely the retester exercised a build that predated
+  today's regression fixes (PR #7).
+- **Scroll + search (no tabs).** The page already renders all PLs stacked as vertical
+  accordions with a PL search bar (`filterPlTree`). There are no tabs. Nothing to change.
+
 ## Scope
 
 In scope (single iteration):
 
-1. **Table rework** to the POC tree-grid.
+1. **Table rework** to the POC tree-grid (includes the reduced column set).
 2. **Disable both download controls** (global CSV + per-PL XLSX).
-3. **Verify** scroll + search already satisfies the "no tabs" requirement.
-4. **Reduce columns** to the POC set.
-5. **Restrict Send Stage 3** to PMO/Admin.
 
 Out of scope: real HVT transmission/payload (prototype note §8), export structure fixes
-(waived), Job-Unit-level detail.
+(waived), Job-Unit-level detail, Send Stage 3 role restriction (already satisfied), scroll +
+search (already satisfied).
 
 ## Design
 
@@ -81,27 +94,16 @@ Chosen approach: rewrite the component in place. No generic reusable TreeTable c
   (`finalReviewCsv.ts` / `finalReviewXlsx.ts`) are left intact — only the buttons are
   disabled, so the feature can be re-enabled later without rework.
 
-### 3. Scroll + search
-
-- No structural change. The page already renders all PLs stacked as accordions with a PL
-  search bar. Verify UX parity with the estimation review search and leave as is.
-
-### 4. Send Stage 3 → PMO/Admin only
-
-- The button already calls `can('send:hvt')`. Fix the role → permission mapping so that
-  `send:hvt` is granted **only** to PMO and Admin. CPO, RCRC, and Engineer lose the
-  permission, so the button is not rendered for them. (Exact role-store location to be
-  pinned in the implementation plan.)
-
-### 5. Tests (Strict TDD active)
+### 3. Tests (Strict TDD active)
 
 - Vitest + React Testing Library:
   - Tree-grid renders the Métier → Société → Cost Type levels, the reduced column set, and
     collapse/expand behavior; métiers collapsed by default.
   - K€ columns hidden when `view:k-euro-rates` is denied.
   - Both download buttons render disabled.
-  - `send:hvt` is granted only to PMO/Admin; Send button absent for other roles.
 - Run `npm test` (Vitest). The frontend change does not touch the Python SDD kit rules.
+- The `send:stage3` role guard already exists and passes
+  (`src/fixtures/__tests__/roles.test.ts:106-112`); no new test needed for KO #2.
 
 ## Risks
 
