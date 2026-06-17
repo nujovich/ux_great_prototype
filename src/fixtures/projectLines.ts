@@ -122,8 +122,9 @@ export const PROJECT_LINES: ProjectLine[] = [
 
   // ── Draft (6) ──────────────────────────────────────────────
   {
+    // PL-009: non-project (H-NP) line — excluded from Management View (MGMT-BR-04)
     id: 'PL-009', project_id: 'P-AUTH-H-NP', name: 'SAML SSO',
-    metier: M('H-DESIGN'), status: S('Draft'), updated_at: '2026-05-20T15:00:00Z',
+    metier: M('H-NP'), status: S('Draft'), updated_at: '2026-05-20T15:00:00Z',
     lineName: 'SAML SSO', projectName: 'Auth Platform',
     assignedEngineerId: 'eng-1', estimatedDays: 18, estimatedKEuro: 15.3,
     lastUpdatedBy: 'Ana Martinez', lastUpdatedAt: '2026-05-20T15:00:00Z', cycleId: 'cyc-2026h1',
