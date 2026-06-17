@@ -1,4 +1,5 @@
-import type { AllocationRow, AllocationFilterState } from '../types';
+import type { AllocationRow, AllocationFilterState, CostType } from '../types';
+import { FTE_RATES, TSA_RATES } from '../fixtures/societeRates';
 
 const FTE_DIVISOR = 209;
 
@@ -113,4 +114,24 @@ export function sortAllocationRows(rows: AllocationRow[]): AllocationRow[] {
     if (ow !== 0) return ow;
     return a.juCode.localeCompare(b.juCode);
   });
+}
+
+/**
+ * Recalculate K€ per year from the societe rate tables (mirror of kit §11.1/§11.2).
+ * FTE → fte × FTE_RATES; TSA → fte × TSA_RATES. TC is handled by the popup, not here.
+ * Unknown societe / missing year / null societe → 0 (mirrors the kit's `.get(..., 0)`).
+ */
+export function recalcKeByRate(
+  fteByYear: Record<string, number>,
+  societe: string | null,
+  costType: CostType,
+): Record<string, number> {
+  const table = costType === 'TSA' ? TSA_RATES : costType === 'FTE' ? FTE_RATES : null;
+  const rates = table && societe ? (table[societe] ?? {}) : {};
+  return Object.fromEntries(
+    Object.entries(fteByYear).map(([year, fte]) => [
+      year,
+      Math.round(fte * (rates[year] ?? 0) * 100) / 100,
+    ]),
+  );
 }
