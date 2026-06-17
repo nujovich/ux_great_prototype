@@ -39,7 +39,9 @@ export function PLAccordion({ pl, years, canViewKeuro, canExport, onExport }: Pr
         {canExport && (
           <button
             type="button"
-            className="ml-4 flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 bg-white hover:bg-slate-100"
+            disabled
+            title={t('finalReview.exportDisabledHint')}
+            className="ml-4 flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
             onClick={(e) => {
               e.stopPropagation();
               onExport(pl);

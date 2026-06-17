@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { PLGroupedTable } from '../PLGroupedTable';
 import { buildPlTree } from '../../../lib/finalReviewAggregation';
 import type { AllocationRow } from '../../../types';
@@ -13,24 +13,52 @@ const mk = (o: Partial<AllocationRow>): AllocationRow => ({
   fte: 1, keuro: 100, engineerId: 'e', percentage: 100, days: 0, isDirty: false, ...o,
 });
 
-describe('PLGroupedTable', () => {
-  it('renders JU rows and a PL total row with aggregated FTE', () => {
+describe('PLGroupedTable (tree-grid)', () => {
+  it('shows métier rows and PL total, with sociétés collapsed by default', () => {
     const [pl] = buildPlTree(
       [mk({ id: 'a' }), mk({ id: 'b', totalFte: 2, fteByYear: { '2025': 2 } })],
       ['2025'],
     );
     render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
-    expect(screen.getAllByText('JU1').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText('BE (1)')).toBeInTheDocument();
     expect(screen.getByText(/PL total/i)).toBeInTheDocument();
-    expect(screen.getByText('3.00')).toBeInTheDocument(); // total FTE 1+2
+    // 3.00 (= 1 + 2) appears in the métier subtotal and the PL-total rows.
+    expect(screen.getAllByText('3.00').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByText('S1 (1)')).not.toBeInTheDocument();
   });
 
-  it('renders subtotal rows at cost type, société and métier levels', () => {
+  it('renders two independent métier groups', () => {
+    const [pl] = buildPlTree([
+      mk({ id: 'a', metier: 'BE' }),
+      mk({ id: 'b', metier: 'EE', juCode: 'JU2' }),
+    ], ['2025']);
+    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    expect(screen.getByText('BE (1)')).toBeInTheDocument();
+    expect(screen.getByText('EE (1)')).toBeInTheDocument();
+  });
+
+  it('expands métier to reveal société, then société to reveal the cost type leaf', () => {
     const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
     render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
-    expect(screen.getByText(/cost type subtotal/i)).toBeInTheDocument();
-    expect(screen.getByText(/société subtotal/i)).toBeInTheDocument();
-    expect(screen.getByText(/métier subtotal/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /BE \(1\)/ }));
+    expect(screen.getByText('S1 (1)')).toBeInTheDocument();
+    // cost-type leaf is not yet rendered until its société is expanded
+    expect(screen.queryByRole('cell', { name: 'FTE' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /S1 \(1\)/ }));
+    expect(screen.getByRole('cell', { name: 'FTE' })).toBeInTheDocument();
+  });
+
+  it('renders the reduced column set and drops the old detail columns', () => {
+    const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
+    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    expect(screen.getByText('Name')).toBeInTheDocument();
+    expect(screen.getByText('Total FTE')).toBeInTheDocument();
+    expect(screen.getByText('Total K€')).toBeInTheDocument();
+    expect(screen.getByText('FTE 2025')).toBeInTheDocument();
+    expect(screen.getByText('K€ 2025')).toBeInTheDocument();
+    expect(screen.queryByText('Owner N2')).not.toBeInTheDocument();
+    expect(screen.queryByText('JU Code')).not.toBeInTheDocument();
+    expect(screen.queryByText('Total BH')).not.toBeInTheDocument();
   });
 
   it('hides K€ columns when canViewKeuro is false', () => {
@@ -39,16 +67,5 @@ describe('PLGroupedTable', () => {
     expect(screen.getByText('K€ 2025')).toBeInTheDocument();
     rerender(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro={false} />);
     expect(screen.queryByText('K€ 2025')).not.toBeInTheDocument();
-  });
-
-  it('renders multiple métier groups without key collisions', () => {
-    const [pl] = buildPlTree([
-      mk({ id: 'a', metier: 'BE' }),
-      mk({ id: 'b', metier: 'EE', juCode: 'JU2' }),
-    ], ['2025']);
-    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
-    expect(screen.getAllByText(/métier subtotal/i).length).toBe(2);
-    expect(screen.getByText('JU1')).toBeInTheDocument();
-    expect(screen.getByText('JU2')).toBeInTheDocument();
   });
 });

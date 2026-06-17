@@ -160,6 +160,8 @@ export interface Translations {
     estimated: string;
     totalDays: string;
     colMetier: string;
+    colName: string;
+    exportDisabledHint: string;
     colLines: string;
     colDays: string;
     colDistribution: string;

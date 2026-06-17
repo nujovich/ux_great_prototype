@@ -89,6 +89,8 @@ function FinalReviewContent() {
           {can('export:final-review') && (
             <Button
               variant="secondary"
+              disabled
+              title={t('finalReview.exportDisabledHint')}
               onClick={() => exportFinalReviewCsv(approvedLines, allocations, `final-review-${activeCycleId}.csv`)}
             >
               <Download size={14} /> {t('finalReview.exportCsv')}

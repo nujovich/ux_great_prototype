@@ -145,6 +145,8 @@ export const es: Translations = {
     estimated: 'Líneas estimadas',
     totalDays: 'Total días',
     colMetier: 'Métier',
+    colName: 'Nombre',
+    exportDisabledHint: 'Descarga deshabilitada en el prototipo',
     colLines: 'Líneas',
     colDays: 'Días',
     colDistribution: 'Distribución',

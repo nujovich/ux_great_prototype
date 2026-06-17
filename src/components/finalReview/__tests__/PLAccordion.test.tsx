@@ -24,13 +24,21 @@ describe('PLAccordion', () => {
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
-  it('fires onExport without toggling when export clicked', async () => {
+  it('does not fire onExport when export button is clicked (button is disabled)', async () => {
     const user = userEvent.setup();
     const onExport = vi.fn();
     const [pl] = buildPlTree([mk({})], ['2025']);
     render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport onExport={onExport} />);
-    await user.click(screen.getByRole('button', { name: /export excel/i }));
-    expect(onExport).toHaveBeenCalledTimes(1);
-    expect(screen.queryByRole('table')).not.toBeInTheDocument(); // export did not expand
+    const exportBtn = screen.getByRole('button', { name: /export excel/i });
+    expect(exportBtn).toBeDisabled();
+    await user.click(exportBtn);
+    expect(onExport).not.toHaveBeenCalled();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument(); // accordion did not expand
+  });
+
+  it('renders the per-PL Excel export button disabled', () => {
+    const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
+    render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport onExport={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /Export Excel/i })).toBeDisabled();
   });
 });

@@ -145,6 +145,8 @@ export const en: Translations = {
     estimated: 'Estimated lines',
     totalDays: 'Total days',
     colMetier: 'Metier',
+    colName: 'Name',
+    exportDisabledHint: 'Download disabled in the prototype',
     colLines: 'Lines',
     colDays: 'Days',
     colDistribution: 'Distribution',
