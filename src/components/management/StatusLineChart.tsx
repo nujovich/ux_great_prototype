@@ -43,7 +43,7 @@ export function StatusLineChart({ data, title }: Props) {
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       {title && <h3 className="mb-3 text-sm font-semibold text-slate-700">{title}</h3>}
       <div className="flex flex-wrap items-center gap-8">
-        <svg data-testid="status-timeline" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img">
+        <svg data-testid="status-timeline" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={title ?? t('mgmt.timelineTitle')}>
           <line x1={M.left} y1={M.top} x2={M.left} y2={M.top + PLOT_H} stroke="#e2e8f0" />
           <line x1={M.left} y1={M.top + PLOT_H} x2={M.left + PLOT_W} y2={M.top + PLOT_H} stroke="#e2e8f0" />
           <text x={M.left - 6} y={yAt(0)} textAnchor="end" dominantBaseline="middle" fontSize="10" fill="#94a3b8">0</text>

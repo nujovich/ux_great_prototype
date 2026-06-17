@@ -27,7 +27,7 @@
 
 **Business rules honored:** MGMT-BR-02 (count PL·Métier pairs), MGMT-BR-03 (all 6 statuses always rendered), MGMT-BR-05 (single métier filter drives both charts), MGMT-BR-06 (active cycle only).
 
-**Verified ground truth** — active cycle `cyc-2026h1`, 24 management lines (H-NP/H-PROJECT excluded). Final per-status totals: `{ "To do": 5, "Draft": 5, "Estimated": 5, "Sent": 4, "Modification Requested": 1, "Approved": 4 }`. The last fixture snapshot reproduces these exactly.
+**Verified ground truth** — active cycle `cyc-2026h1`, 22 management lines (H-NP/H-PROJECT excluded). Final per-status totals: `{ "To do": 7, "Draft": 5, "Estimated": 5, "Sent": 0, "Modification Requested": 3, "Approved": 4 }` → corrected during implementation to the real committed `PROJECT_LINES` distribution `{ "To do": 7, "Draft": 5, "Estimated": 5, "Sent": 0, "Modification Requested": 3, "Approved": 2 }` (22 pairs; per-métier H-DESIGN:8, H-SOFTWARE:6, H-TUNING:4, H-CUSTOMER:3, H-TESTING:1). The committed `src/fixtures/timeline.ts` and its test are the source of truth; the Task 3 code block below shows the original (pre-correction) numbers and is retained only for history.
 
 ---
 

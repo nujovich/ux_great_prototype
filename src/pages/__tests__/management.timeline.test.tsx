@@ -54,6 +54,15 @@ describe('ManagementPage — Status Evolution timeline (PRD §7)', () => {
     expect(screen.getByTestId('timeline-count-Approved')).toHaveTextContent('3');
   });
 
+  it('does not change the timeline when the status filter changes (PRD §7 — métier filter only)', () => {
+    render(<ManagementPage />);
+    const before = screen.getByTestId('timeline-count-Approved').textContent;
+    // selects[0] = status filter, selects[1] = métier filter
+    const selects = screen.getAllByRole('combobox');
+    fireEvent.change(selects[0], { target: { value: 'Approved' } });
+    expect(screen.getByTestId('timeline-count-Approved')).toHaveTextContent(before!);
+  });
+
   it('does not render the timeline chart when there is no active cycle (MGMT-BR-06)', () => {
     cleanup();
     useRoleStore.getState().setRole('Admin');

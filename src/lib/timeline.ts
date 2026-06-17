@@ -29,7 +29,6 @@ export function buildTimelineSeries(
 ): TimelinePoint[] {
   return snapshots
     .filter((s) => s.cycleId === cycleId)
-    .slice()
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((snapshot) => {
       const metiers = (
