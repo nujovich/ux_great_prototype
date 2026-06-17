@@ -117,6 +117,15 @@ export function sortAllocationRows(rows: AllocationRow[]): AllocationRow[] {
 }
 
 /**
+ * A row is "unresolved" when it has no societe assigned. Used to flag rows on first
+ * render: a blocking error for TSA/TC (ALLOC-BR-06/13), a non-blocking warning for FTE
+ * (ALLOC-BR-07). Independent of dirty state.
+ */
+export function rowIsUnresolved(row: AllocationRow): boolean {
+  return row.societe == null;
+}
+
+/**
  * Recalculate K€ per year from the societe rate tables (mirror of kit §11.1/§11.2).
  * FTE → fte × FTE_RATES; TSA → fte × TSA_RATES. TC is handled by the popup, not here.
  * Unknown societe / missing year / null societe → 0 (mirrors the kit's `.get(..., 0)`).
