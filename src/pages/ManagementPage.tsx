@@ -3,6 +3,8 @@ import { useDataStore } from '../store/dataStore';
 import { RoleGate } from '../components/shared/RoleGate';
 import { StatusBadge } from '../components/shared/StatusBadge';
 import { StatusPieChart } from '../components/management/StatusPieChart';
+import { StatusLineChart } from '../components/management/StatusLineChart';
+import { buildTimelineSeries } from '../lib/timeline';
 import { useT } from '../i18n/useT';
 import { statusI18nKey } from '../lib/stateMachine';
 import type { LineStatus, Metier } from '../types';
@@ -24,6 +26,7 @@ function ManagementContent() {
   // MGMT-BR-06: only the active cycle is shown; historical cycles are not selectable
   const activeCycle = useDataStore((s) => s.cycles.find((c) => c.is_active));
   const activeCycleId = activeCycle?.id ?? '';
+  const timeline = useDataStore((s) => s.timeline);
   const t = useT();
   const [statusFilter, setStatusFilter] = useState<LineStatus | 'all'>('all');
   const [metierFilter, setMetierFilter] = useState<Metier | 'all'>('all');
@@ -59,6 +62,14 @@ function ManagementContent() {
     });
     return totals;
   }, [filtered]);
+
+  // MGMT-BR-05: the timeline reuses the same métier filter as the pie chart.
+  // MGMT-BR-06: only the active cycle's snapshots are shown. The status filter
+  // does not affect the timeline (PRD §7 always shows all 6 status lines).
+  const timelineSeries = useMemo(
+    () => buildTimelineSeries(timeline, activeCycleId, metierFilter),
+    [timeline, activeCycleId, metierFilter],
+  );
 
   // MGMT-BR-06: no active cycle → show a clear message instead of a blank matrix
   if (!activeCycle) {
@@ -97,6 +108,8 @@ function ManagementContent() {
         data={statusTotals}
         title={t('mgmt.pieTitle')}
       />
+
+      <StatusLineChart data={timelineSeries} title={t('mgmt.timelineTitle')} />
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
