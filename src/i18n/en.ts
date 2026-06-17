@@ -103,7 +103,6 @@ export const en: Translations = {
     selectAll: 'Select all',
     deselectAll: 'Deselect all',
     selectedCount: '{n} selected',
-    unassigned: 'Unassigned',
     subtotal: 'Subtotal',
     groupLineCount: '{n} line(s)',
     clearFilters: 'Clear filters',

@@ -12,7 +12,7 @@ import { useT } from '../i18n/useT';
 import { useSortable } from '../lib/useSortable';
 import { deriveGridRow } from '../lib/estimationReviewRows';
 import { generateCsv, downloadCsv } from '../lib/estimationReviewCsv';
-import { groupRowsByAssignee } from '../lib/estimationReviewGrouping';
+import { groupRowsByProject } from '../lib/estimationReviewGrouping';
 import { ENGINEERS } from '../fixtures/engineers';
 import { INDUCTORS } from '../fixtures/inductors';
 import type { LineStatus, Metier } from '../types';
@@ -116,13 +116,8 @@ function ReviewContent() {
 
   // ── Grouping ──────────────────────────────────────────────
   const groups = useMemo(
-    () =>
-      groupRowsByAssignee(
-        sorted,
-        (id) => (id ? (ENGINEERS.find((e) => e.id === id)?.name ?? id) : t('estReview.unassigned')),
-        cycleYears,
-      ),
-    [sorted, cycleYears, t],
+    () => groupRowsByProject(sorted, cycleYears),
+    [sorted, cycleYears],
   );
 
   // ── CSV export ────────────────────────────────────────────
@@ -222,7 +217,7 @@ function ReviewContent() {
         </div>
       </div>
 
-      {/* Grid — one subtable per assignee */}
+      {/* Grid — one subtable per project */}
       {filteredRows.length === 0 ? (
         <EmptyState
           title={hasActiveFilters ? t('estReview.noLinesFiltered') : t('estReview.noLines')}
@@ -230,9 +225,9 @@ function ReviewContent() {
       ) : (
         <div className="space-y-6">
           {groups.map((group) => (
-            <div key={group.assigneeId ?? '__unassigned__'} className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div key={group.projectName} className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
               <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
-                <span className="text-sm font-semibold text-slate-700">{group.assigneeName}</span>
+                <span className="text-sm font-semibold text-slate-700">{group.projectName}</span>
                 <span className="text-xs text-slate-400">
                   {t('estReview.groupLineCount', { n: group.rows.length })}
                 </span>

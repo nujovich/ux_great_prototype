@@ -1,6 +1,6 @@
 import type { EstimationReviewGridRow } from './estimationReviewRows';
 
-export interface AssigneeSubtotal {
+export interface GroupSubtotal {
   totalFte: number;
   totalBh: number;
   totalKm: number;
@@ -10,16 +10,13 @@ export interface AssigneeSubtotal {
   yearlyKEuro: Record<string, number>;
 }
 
-export interface AssigneeGroup {
-  assigneeId: string | null; // null = unassigned
-  assigneeName: string;
+export interface ProjectGroup {
+  projectName: string;
   rows: EstimationReviewGridRow[];
-  subtotal: AssigneeSubtotal;
+  subtotal: GroupSubtotal;
 }
 
-const UNASSIGNED = '__unassigned__';
-
-function emptySubtotal(years: string[]): AssigneeSubtotal {
+function emptySubtotal(years: string[]): GroupSubtotal {
   const zero = () => Object.fromEntries(years.map((y) => [y, 0]));
   return {
     totalFte: 0, totalBh: 0, totalKm: 0,
@@ -27,20 +24,26 @@ function emptySubtotal(years: string[]): AssigneeSubtotal {
   };
 }
 
-export function groupRowsByAssignee(
+/**
+ * Group estimation-review rows into one bucket per project (projectName),
+ * preserving both intra-group row order and the order each project first appears.
+ * Mirrors the allocation grid's plNumber grouping one level up the hierarchy:
+ * each estimation-review row is already a project line, so rows are grouped by
+ * their parent project.
+ */
+export function groupRowsByProject(
   rows: EstimationReviewGridRow[],
-  resolveName: (assigneeId: string | null) => string,
   years: string[],
-): AssigneeGroup[] {
+): ProjectGroup[] {
   const order: string[] = [];
   const buckets = new Map<string, EstimationReviewGridRow[]>();
   for (const r of rows) {
-    const key = r.assignedEngineerId ?? UNASSIGNED;
+    const key = r.projectName;
     if (!buckets.has(key)) { buckets.set(key, []); order.push(key); }
     buckets.get(key)!.push(r);
   }
-  return order.map((key) => {
-    const groupRows = buckets.get(key)!;
+  return order.map((projectName) => {
+    const groupRows = buckets.get(projectName)!;
     const subtotal = emptySubtotal(years);
     for (const r of groupRows) {
       subtotal.totalFte += r.totalFte;
@@ -53,7 +56,6 @@ export function groupRowsByAssignee(
         subtotal.yearlyKEuro[y] += r.yearlyKEuro[y] ?? 0;
       }
     }
-    const assigneeId = key === UNASSIGNED ? null : key;
-    return { assigneeId, assigneeName: resolveName(assigneeId), rows: groupRows, subtotal };
+    return { projectName, rows: groupRows, subtotal };
   });
 }
