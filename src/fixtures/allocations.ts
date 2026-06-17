@@ -106,4 +106,75 @@ export const ALLOCATIONS: Allocation[] = [
       }),
     ],
   },
+  {
+    lineId: 'PL-024',
+    splits: [
+      makeRow({
+        id: 'alloc-24-a', plNumber: 'PL-024', plName: 'Audit log v1',
+        metier: 'H-DESIGN', ownerN2: 'Zone-EMEA', juCode: 'JU-D-024',
+        juDescription: 'Audit Trail Design', societe: 'Renault SAS-Paris', costType: 'FTE',
+        fte: 0.7, totalFte: 0.7, fteByYear: { '2025': 0.4, '2026': 0.3 },
+        keByYear: { '2025': 340, '2026': 255 }, keuro: 595,
+      }),
+      makeRow({
+        id: 'alloc-24-b', plNumber: 'PL-024', plName: 'Audit log v1',
+        metier: 'H-DESIGN', ownerN2: 'Zone-EMEA', juCode: 'JU-D-025',
+        juDescription: 'Compliance Review', societe: 'RNBV-Amsterdam', costType: 'TSA',
+        fte: 0.4, totalFte: 0.4, fteByYear: { '2025': 0.2, '2026': 0.2 },
+        keByYear: { '2025': 150, '2026': 150 }, keuro: 300,
+      }),
+      makeRow({
+        id: 'alloc-24-c', plNumber: 'PL-024', plName: 'Audit log v1',
+        metier: 'H-SOFTWARE', ownerN2: 'Zone-APAC', juCode: 'JU-S-024',
+        juDescription: 'Logging Service', societe: 'Renault Korea', costType: 'TC',
+        fte: 0.8, totalFte: 0.8, fteByYear: { '2026': 0.5, '2027': 0.3 },
+        keByYear: { '2026': 400, '2027': 240 }, keuro: 640,
+      }),
+    ],
+  },
+  {
+    lineId: 'PL-025',
+    splits: [
+      makeRow({
+        id: 'alloc-25-a', plNumber: 'PL-025', plName: 'Public site redesign',
+        metier: 'H-SOFTWARE', ownerN2: 'Zone-EMEA', juCode: 'JU-S-025',
+        juDescription: 'Frontend Rebuild', societe: 'Renault SAS-Paris', costType: 'FTE',
+        fte: 1.2, totalFte: 1.2, fteByYear: { '2025': 0.6, '2026': 0.6 },
+        keByYear: { '2025': 510, '2026': 510 }, keuro: 1020,
+      }),
+      makeRow({
+        id: 'alloc-25-b', plNumber: 'PL-025', plName: 'Public site redesign',
+        metier: 'H-SOFTWARE', ownerN2: 'Zone-EMEA', juCode: 'JU-S-026',
+        juDescription: 'CMS Integration', societe: 'Renault SAS-Paris', costType: 'TSA',
+        fte: 0.4, totalFte: 0.4, fteByYear: { '2025': 0.2, '2026': 0.2 },
+        keByYear: { '2025': 150, '2026': 150 }, keuro: 300,
+      }),
+      makeRow({
+        id: 'alloc-25-c', plNumber: 'PL-025', plName: 'Public site redesign',
+        metier: 'H-CUSTOMER', ownerN2: 'Zone-APAC', juCode: 'JU-C-025',
+        juDescription: 'UX Research', societe: 'RNBV-Amsterdam', costType: 'FTE',
+        fte: 1.0, totalFte: 1.0, fteByYear: { '2026': 0.5, '2027': 0.5 },
+        keByYear: { '2026': 425, '2027': 425 }, keuro: 850,
+      }),
+    ],
+  },
+  {
+    lineId: 'PL-026',
+    splits: [
+      makeRow({
+        id: 'alloc-26-a', plNumber: 'PL-026', plName: 'Monitoring stack',
+        metier: 'H-PROJECT', ownerN2: 'Zone-EMEA', juCode: 'JU-P-026',
+        juDescription: 'Observability Platform', societe: 'Renault SAS-Paris', costType: 'FTE',
+        fte: 0.8, totalFte: 0.8, fteByYear: { '2025': 0.3, '2026': 0.3, '2027': 0.2 },
+        keByYear: { '2025': 255, '2026': 255, '2027': 170 }, keuro: 680,
+      }),
+      makeRow({
+        id: 'alloc-26-b', plNumber: 'PL-026', plName: 'Monitoring stack',
+        metier: 'H-TESTING', ownerN2: 'Zone-APAC', juCode: 'JU-T-026',
+        juDescription: 'Load Testing', societe: 'Renault Korea', costType: 'TSA',
+        fte: 0.8, totalFte: 0.8, fteByYear: { '2026': 0.4, '2027': 0.4 },
+        keByYear: { '2026': 300, '2027': 300 }, keuro: 600,
+      }),
+    ],
+  },
 ];
