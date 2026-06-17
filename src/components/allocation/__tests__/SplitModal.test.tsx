@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { SplitModal } from '../SplitModal';
 import type { AllocationRow } from '../../../types';
@@ -85,5 +86,35 @@ describe('SplitModal', () => {
     expect(screen.getByText('K€ 2026')).toBeInTheDocument();
     // default 50/50 split → 2025 K€ preview = 50 in each of the two slot rows
     expect(screen.getAllByText('50')).toHaveLength(2);
+  });
+});
+
+function row(): AllocationRow {
+  return {
+    id: 'r1', engineerId: 'e', percentage: 100, days: 209, fte: 1, keuro: 0,
+    societe: null, costType: 'FTE', isDirty: false,
+    plNumber: 'PL-1', plName: 'P', metier: 'H-DESIGN', ownerN2: 'Z',
+    juCode: 'JU-1', juDescription: '', fmmDescription: '', organType: '', energy: '',
+    allianceCode: '', vehicleCode: '', standardEmissions: '', market: '',
+    totalFte: 1, fteByYear: { '2025': 0.5, '2026': 0.5 }, keByYear: { '2025': 50, '2026': 50 },
+  };
+}
+
+describe('SplitModal — remove slot', () => {
+  it('removes a slot when more than 2 exist, and hides remove at the 2-slot minimum', async () => {
+    const user = userEvent.setup();
+    render(<SplitModal open row={row()} societeOptions={['A', 'B']} onConfirm={vi.fn()} onClose={vi.fn()} />);
+
+    // Start at 2 slots → no remove buttons (min-2 guard, ALLOC-BR-22).
+    expect(screen.queryAllByRole('button', { name: /remove société/i })).toHaveLength(0);
+
+    // Add a third slot → now removable.
+    await user.click(screen.getByRole('button', { name: /add société/i }));
+    const removeButtons = screen.getAllByRole('button', { name: /remove société/i });
+    expect(removeButtons).toHaveLength(3);
+
+    // Remove one → back to 2 slots and no remove buttons.
+    await user.click(removeButtons[0]);
+    expect(screen.queryAllByRole('button', { name: /remove société/i })).toHaveLength(0);
   });
 });
