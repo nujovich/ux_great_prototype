@@ -1,6 +1,6 @@
 import type { AllocationRow, CostType } from '../../types';
 import { SOCIETES } from '../../fixtures/societes';
-import { groupRowsByPl } from '../../lib/allocationCalc';
+import { groupRowsByPl, rowIsUnresolved } from '../../lib/allocationCalc';
 
 interface AllocationGridProps {
   rows: AllocationRow[];
@@ -103,7 +103,9 @@ export function AllocationGrid({
                 {group.rows.map(row => (
             <tr
               key={row.id}
-              className={`border-b hover:bg-blue-50 ${row.isDirty ? 'bg-amber-50' : ''}`}
+              className={`border-b hover:bg-blue-50 ${rowIsUnresolved(row) ? 'bg-red-50' : ''} ${
+                row.isDirty ? 'ring-1 ring-amber-300' : ''
+              }`}
             >
               {canEdit && (
                 <td className="px-2 py-1 border text-center">
