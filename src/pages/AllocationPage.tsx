@@ -10,6 +10,7 @@ import { Modal } from '../components/shared/Modal';
 import type { AllocationRow, AllocationFilterState, CostType } from '../types';
 import {
   applyAllocationFilters,
+  recalcKeByRate,
   sortAllocationRows,
   splitFteProportional,
   validateAllocationSave,
@@ -61,18 +62,40 @@ function AllocationContent() {
     );
 
   // Inline cell changes
-  const handleChangeSociete = (rowId: string, societe: string) =>
-    updateRow(rowId, { societe: societe || null });
+  const handleChangeSociete = (rowId: string, societe: string) => {
+    const next = societe || null;
+    const target = displayRows.find((r) => r.id === rowId);
+    if (target && target.costType !== 'TC') {
+      updateRow(rowId, {
+        societe: next,
+        keByYear: recalcKeByRate(target.fteByYear, next, target.costType),
+      });
+    } else {
+      updateRow(rowId, { societe: next });
+    }
+  };
 
   const handleChangeCostType = (rowId: string, costType: CostType) => {
-    updateRow(rowId, { costType });
+    const target = displayRows.find((r) => r.id === rowId);
     if (costType === 'TC') {
-      setTcTarget(displayRows.find((r) => r.id === rowId) ?? null);
+      updateRow(rowId, { costType });
+      setTcEditMode('create');
+      setTcTarget(target ?? null);
+    } else if (target) {
+      updateRow(rowId, {
+        costType,
+        keByYear: recalcKeByRate(target.fteByYear, target.societe, costType),
+      });
+    } else {
+      updateRow(rowId, { costType });
     }
   };
 
   // TC popup (ALLOC-BR-20/21)
   const [tcTarget, setTcTarget] = useState<AllocationRow | null>(null);
+  const [tcEditMode, setTcEditMode] = useState<'create' | 'edit'>('create');
+  // tcEditMode is forwarded to TCPopup in a later task; referenced here to satisfy tsc
+  void tcEditMode;
   const handleTcConfirm = (keByYear: Record<string, number>) => {
     if (tcTarget) updateRow(tcTarget.id, { keByYear });
     setTcTarget(null);
