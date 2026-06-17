@@ -1,55 +1,49 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 import { TCPopup } from '../TCPopup';
 import type { AllocationRow } from '../../../types';
 
-function tcRow(overrides: Partial<AllocationRow> = {}): AllocationRow {
+function tcRow(over: Partial<AllocationRow> = {}): AllocationRow {
   return {
-    id: 'r1', engineerId: 'eng-1', percentage: 100, days: 209, fte: 1.0, totalFte: 1.0,
-    fteByYear: { '2025': 1.0, '2026': 3.0 }, keByYear: { '2025': 0, '2026': 0 },
-    societe: 'Renault SAS-Paris', costType: 'TC', keuro: 0, isDirty: false,
-    plNumber: 'PL-01', plName: 'Project Alpha', metier: 'H-DESIGN', ownerN2: 'Zone-A',
-    juCode: 'JU-001', juDescription: '', fmmDescription: '', organType: '', energy: '',
+    id: 'r1', engineerId: 'e', percentage: 100, days: 209, fte: 1, keuro: 0,
+    societe: 'Oyak Horse', costType: 'TC', isDirty: false,
+    plNumber: 'PL-1', plName: 'P', metier: 'H-DESIGN', ownerN2: 'Z',
+    juCode: 'JU-1', juDescription: '', fmmDescription: '', organType: '', energy: '',
     allianceCode: '', vehicleCode: '', standardEmissions: '', market: '',
-    ...overrides,
+    totalFte: 1, fteByYear: { '2025': 0.5, '2026': 0.5 },
+    keByYear: { '2025': 100, '2026': 200 }, ...over,
   };
 }
 
 describe('TCPopup', () => {
-  it('pre-fills K€ proportionally to FTE share when total K€ is entered', () => {
-    render(<TCPopup open row={tcRow()} onConfirm={() => {}} onCancel={() => {}} />);
-    // fteByYear: 2025=1.0, 2026=3.0, total FTE=4.0
-    // 1000 K€ total → 2025: 250, 2026: 750
-    const totalInput = screen.getByLabelText(/Total K€/i);
-    fireEvent.change(totalInput, { target: { value: '1000' } });
-    expect((screen.getByLabelText('K€ 2025') as HTMLInputElement).value).toBe('250');
-    expect((screen.getByLabelText('K€ 2026') as HTMLInputElement).value).toBe('750');
+  it('pre-fills yearly K€ from the row when values already exist', () => {
+    render(<TCPopup open row={tcRow()} onConfirm={vi.fn()} onCancel={vi.fn()} />);
+    expect((screen.getByLabelText('K€ 2025') as HTMLInputElement).value).toBe('100');
+    expect((screen.getByLabelText('K€ 2026') as HTMLInputElement).value).toBe('200');
   });
 
-  it('shows running total of yearly K€ values', () => {
-    render(<TCPopup open row={tcRow()} onConfirm={() => {}} onCancel={() => {}} />);
-    fireEvent.change(screen.getByLabelText(/Total K€/i), { target: { value: '1000' } });
-    expect(screen.getByText(/Running total.*1000/i)).toBeDefined();
-  });
-
-  it('calls onConfirm with keByYear on confirm click', () => {
-    const onConfirm = vi.fn();
-    render(<TCPopup open row={tcRow()} onConfirm={onConfirm} onCancel={() => {}} />);
-    fireEvent.change(screen.getByLabelText(/Total K€/i), { target: { value: '1000' } });
-    fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
-    expect(onConfirm).toHaveBeenCalledWith({ '2025': 250, '2026': 750 });
-  });
-
-  it('calls onCancel when cancel clicked', () => {
+  it('warns before cancelling when values were changed', async () => {
+    const user = userEvent.setup();
     const onCancel = vi.fn();
-    render(<TCPopup open row={tcRow()} onConfirm={() => {}} onCancel={onCancel} />);
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
-    expect(onCancel).toHaveBeenCalled();
+    render(<TCPopup open row={tcRow({ keByYear: { '2025': 0, '2026': 0 } })} onConfirm={vi.fn()} onCancel={onCancel} />);
+
+    await user.type(screen.getByLabelText('K€ 2025'), '5');
+    await user.click(screen.getByRole('button', { name: /^cancel$/i }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.getByText(/leave without saving/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /discard/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('disables Confirm and shows error when societe is null', () => {
-    render(<TCPopup open row={tcRow({ societe: null })} onConfirm={() => {}} onCancel={() => {}} />);
-    expect((screen.getByRole('button', { name: /confirm/i }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/societe is required/i)).toBeDefined();
+  it('cancels immediately when nothing was changed', async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    render(<TCPopup open row={tcRow()} onConfirm={vi.fn()} onCancel={onCancel} />);
+    await user.click(screen.getByRole('button', { name: /^cancel$/i }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
   });
 });

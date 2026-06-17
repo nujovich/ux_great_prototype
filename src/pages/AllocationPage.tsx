@@ -94,15 +94,15 @@ function AllocationContent() {
   // TC popup (ALLOC-BR-20/21)
   const [tcTarget, setTcTarget] = useState<AllocationRow | null>(null);
   const [tcEditMode, setTcEditMode] = useState<'create' | 'edit'>('create');
-  // tcEditMode is forwarded to TCPopup in a later task; referenced here to satisfy tsc
-  void tcEditMode;
+
   const handleTcConfirm = (keByYear: Record<string, number>) => {
     if (tcTarget) updateRow(tcTarget.id, { keByYear });
     setTcTarget(null);
   };
+
   const handleTcCancel = () => {
-    if (tcTarget) {
-      // Revert costType to its value before the TC change
+    if (tcTarget && tcEditMode === 'create') {
+      // First-time TC: revert costType to its value before the change.
       const original = allocations.flatMap((a) => a.splits).find((r) => r.id === tcTarget.id);
       if (original) updateRow(tcTarget.id, { costType: original.costType, isDirty: false });
     }
