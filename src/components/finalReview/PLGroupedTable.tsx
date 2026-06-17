@@ -83,7 +83,7 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
             <Fragment key={mKey}>
               <tr className="font-semibold bg-gray-50">
                 <td className="px-2 py-1 border">
-                  <button type="button" className="flex items-center gap-1" onClick={() => toggle(mKey)}>
+                  <button type="button" aria-expanded={mOpen} className="flex items-center gap-1" onClick={() => toggle(mKey)}>
                     {mOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     <span>{`${metierNode.metier} (${metierLeafCount(metierNode)})`}</span>
                   </button>
@@ -101,6 +101,7 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
                         <td className="px-2 py-1 border">
                           <button
                             type="button"
+                            aria-expanded={sOpen}
                             className="flex items-center gap-1 pl-4"
                             onClick={() => toggle(sKey)}
                           >

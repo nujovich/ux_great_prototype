@@ -68,4 +68,13 @@ describe('PLGroupedTable (tree-grid)', () => {
     rerender(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro={false} />);
     expect(screen.queryByText('K€ 2025')).not.toBeInTheDocument();
   });
+
+  it('exposes aria-expanded on the métier toggle and flips it on click', () => {
+    const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
+    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    const btn = screen.getByRole('button', { name: /BE \(1\)/ });
+    expect(btn).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(btn);
+    expect(btn).toHaveAttribute('aria-expanded', 'true');
+  });
 });
