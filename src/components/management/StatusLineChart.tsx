@@ -1,4 +1,3 @@
-import type { LineStatus } from '../../types';
 import { useT } from '../../i18n/useT';
 import { statusI18nKey } from '../../lib/stateMachine';
 import { STATUS_COLORS } from './statusColors';
