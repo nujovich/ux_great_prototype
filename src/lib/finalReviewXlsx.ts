@@ -8,7 +8,7 @@ import type { PlNode, Subtotal } from './finalReviewAggregation';
 const FIXED_HEADERS = [
   'Métier',
   'Owner N2',
-  'Société',
+  'Societe', // spec spells it without accent (FINAL_REVIEW_JU_COLUMNS in final_review_specs.py)
   'Cost Type',
   'FMM Description',
   'JU Description',
@@ -61,7 +61,12 @@ export function buildPlSheetMatrix(pl: PlNode, years: string[]): (string | numbe
       for (const costType of societe.costTypes) {
         // JU data rows
         for (const row of costType.rows) {
-          const totalKe = years.reduce((acc, y) => acc + (row.keByYear[y] ?? 0), 0);
+          // Total K€: sum keByYear over declared years; fall back to row.keuro when keByYear is
+          // empty (legacy rows without per-year breakdown) to avoid silently exporting 0.
+          const keByYearEntries = Object.keys(row.keByYear);
+          const totalKe = keByYearEntries.length > 0
+            ? years.reduce((acc, y) => acc + (row.keByYear[y] ?? 0), 0)
+            : (row.keuro ?? 0);
           const perYear = [
             ...years.map((y) => row.fteByYear[y] ?? 0),
             ...years.map((y) => row.keByYear[y] ?? 0),
@@ -78,8 +83,8 @@ export function buildPlSheetMatrix(pl: PlNode, years: string[]): (string | numbe
             row.juCode,
             row.totalFte,
             totalKe,
-            0, // Total BH stubbed
-            0, // Total KM stubbed
+            0, // Total BH — FINAL-01: zeroed pending HVT payload agreement
+            0, // Total KM — FINAL-01: zeroed pending HVT payload agreement
             ...perYear,
           ]);
         }
@@ -88,8 +93,8 @@ export function buildPlSheetMatrix(pl: PlNode, years: string[]): (string | numbe
         rows.push(labelRow('Cost Type subtotal', costType.subtotal, years));
       }
 
-      // Société subtotal
-      rows.push(labelRow('Société subtotal', societe.subtotal, years));
+      // Societe subtotal
+      rows.push(labelRow('Societe subtotal', societe.subtotal, years));
     }
 
     // Métier subtotal

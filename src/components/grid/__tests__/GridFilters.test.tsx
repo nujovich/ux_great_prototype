@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 // We test the exported constant directly because @testing-library/react is not
 // a project dependency and there is no existing component-render test pattern
 // in this repo to follow — all tests are pure-unit style.
-import { FILTER_METIERS } from '../GridFilters';
+import { FILTER_METIERS } from '../filterConstants';
 
 const EXCLUDED = ['H-NP', 'H-TESTING', 'H-PROJECT'] as const;
 const ESTIMABLE = ['H-DESIGN', 'H-SOFTWARE'] as const;

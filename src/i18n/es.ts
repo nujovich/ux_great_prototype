@@ -173,6 +173,7 @@ export const es: Translations = {
     subtitle: 'Timeline de status por (Project Line × Métier). Útil para tracking ejecutivo.',
     pieTitle: 'Distribución por Status — pares (PL × Métier)',
     noData: 'Sin datos para el ciclo activo.',
+    noCycle: 'Sin ciclo activo. Creá un ciclo en Admin para ver el dashboard de Management.',
     colTotal: 'Total',
   },
   admin: {

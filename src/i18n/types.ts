@@ -188,6 +188,7 @@ export interface Translations {
     subtitle: string;
     pieTitle: string;
     noData: string;
+    noCycle: string;
     colTotal: string;
   };
   admin: {

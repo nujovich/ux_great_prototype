@@ -22,7 +22,8 @@ export function ManagementPage() {
 function ManagementContent() {
   const lines = useDataStore((s) => s.lines);
   // MGMT-BR-06: only the active cycle is shown; historical cycles are not selectable
-  const activeCycleId = useDataStore((s) => s.cycles.find((c) => c.is_active)?.id ?? '');
+  const activeCycle = useDataStore((s) => s.cycles.find((c) => c.is_active));
+  const activeCycleId = activeCycle?.id ?? '';
   const t = useT();
   const [statusFilter, setStatusFilter] = useState<LineStatus | 'all'>('all');
   const [metierFilter, setMetierFilter] = useState<Metier | 'all'>('all');
@@ -58,6 +59,21 @@ function ManagementContent() {
     });
     return totals;
   }, [filtered]);
+
+  // MGMT-BR-06: no active cycle → show a clear message instead of a blank matrix
+  if (!activeCycle) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-xl font-bold text-slate-900">{t('mgmt.title')}</h1>
+          <p className="text-sm text-slate-600">{t('mgmt.subtitle')}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500" data-testid="mgmt-no-cycle">
+          {t('mgmt.noCycle')}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
