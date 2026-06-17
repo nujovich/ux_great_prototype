@@ -94,6 +94,10 @@ export interface ProjectLine extends Omit<ProjectLineListItem, 'status'> {
   status: LineStatus;
   lineName: string;
   projectName: string;
+  /** PL Number this line belongs to (HIW-175: Estimation Review groups one table per PL Number). */
+  plNumber?: string;
+  /** Display name of the PL Number group. */
+  plName?: string;
   assignedEngineerId: string | null;
   estimatedDays: number | null;
   estimatedKEuro: number | null;
@@ -224,6 +228,8 @@ export interface AllocationRow extends AllocationSplit {
 export interface Allocation {
   lineId: string;
   splits: AllocationRow[];
+  /** Pre-split snapshot used to restore a row on undo (ALLOC-BR-12). */
+  originalRow?: AllocationRow;
 }
 
 export interface AllocationFilterState {
