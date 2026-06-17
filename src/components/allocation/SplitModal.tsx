@@ -40,6 +40,9 @@ export function SplitModal({ open, row, societeOptions, canViewKeuro, onConfirm,
 
   const addSlot = () => setSlots(prev => [...prev, { societe: '', percentage: 0 }]);
 
+  const removeSlot = (idx: number) =>
+    setSlots((prev) => (prev.length > 2 ? prev.filter((_, i) => i !== idx) : prev));
+
   const pctSum = slots.reduce((a, s) => a + s.percentage, 0);
   const canConfirm = pctSum === 100 && slots.length >= 2;
 
@@ -63,6 +66,7 @@ export function SplitModal({ open, row, societeOptions, canViewKeuro, onConfirm,
             {canViewKeuro && years.map(y => (
               <th key={`ke-${y}`} className="px-2 py-1 border text-right">K€ {y}</th>
             ))}
+            <th className="px-2 py-1 border" aria-hidden="true"></th>
           </tr>
         </thead>
         <tbody>
@@ -98,6 +102,18 @@ export function SplitModal({ open, row, societeOptions, canViewKeuro, onConfirm,
                   {(kePreviewBySlot[idx]?.[y] ?? 0).toFixed(0)}
                 </td>
               ))}
+              <td className="px-2 py-1 border text-center">
+                {slots.length > 2 && (
+                  <button
+                    type="button"
+                    aria-label={`Remove société ${idx + 1}`}
+                    onClick={() => removeSlot(idx)}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
