@@ -100,6 +100,11 @@ function AllocationContent() {
     setTcTarget(null);
   };
 
+  const handleEditTcKe = (rowId: string) => {
+    setTcEditMode('edit');
+    setTcTarget(displayRows.find((r) => r.id === rowId) ?? null);
+  };
+
   const handleTcCancel = () => {
     if (tcTarget && tcEditMode === 'create') {
       // First-time TC: revert costType to its value before the change.
@@ -292,6 +297,7 @@ function AllocationContent() {
           onUndoSplit={handleUndoSplit}
           activeYears={ACTIVE_YEARS}
           canViewKeuro={can('view:k-euro-rates')}
+          onEditTcKe={handleEditTcKe}
         />
       </div>
 
