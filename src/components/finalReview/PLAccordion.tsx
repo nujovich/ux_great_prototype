@@ -9,10 +9,9 @@ interface Props {
   years: string[];
   canViewKeuro: boolean;
   canExport: boolean;
-  onExport: (pl: PlNode) => void;
 }
 
-export function PLAccordion({ pl, years, canViewKeuro, canExport, onExport }: Props) {
+export function PLAccordion({ pl, years, canViewKeuro, canExport }: Props) {
   const [open, setOpen] = useState(false);
   const t = useT();
 
@@ -42,10 +41,6 @@ export function PLAccordion({ pl, years, canViewKeuro, canExport, onExport }: Pr
             disabled
             title={t('finalReview.exportDisabledHint')}
             className="ml-4 flex items-center gap-1 rounded px-3 py-1.5 text-xs font-medium text-slate-600 border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white"
-            onClick={(e) => {
-              e.stopPropagation();
-              onExport(pl);
-            }}
           >
             <Download size={12} />
             {t('finalReview.exportXlsx')}

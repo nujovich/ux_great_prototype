@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PLAccordion } from '../PLAccordion';
@@ -18,27 +18,19 @@ describe('PLAccordion', () => {
   it('is collapsed by default and expands on click', async () => {
     const user = userEvent.setup();
     const [pl] = buildPlTree([mk({})], ['2025']);
-    render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport={false} onExport={() => {}} />);
+    render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport={false} />);
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /PL1/ }));
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
-  it('does not fire onExport when export button is clicked (button is disabled)', async () => {
+  it('renders the per-PL Excel export button disabled; clicking it does not expand', async () => {
     const user = userEvent.setup();
-    const onExport = vi.fn();
-    const [pl] = buildPlTree([mk({})], ['2025']);
-    render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport onExport={onExport} />);
-    const exportBtn = screen.getByRole('button', { name: /export excel/i });
+    const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
+    render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport />);
+    const exportBtn = screen.getByRole('button', { name: /Export Excel/i });
     expect(exportBtn).toBeDisabled();
     await user.click(exportBtn);
-    expect(onExport).not.toHaveBeenCalled();
-    expect(screen.queryByRole('table')).not.toBeInTheDocument(); // accordion did not expand
-  });
-
-  it('renders the per-PL Excel export button disabled', () => {
-    const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
-    render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport onExport={vi.fn()} />);
-    expect(screen.getByRole('button', { name: /Export Excel/i })).toBeDisabled();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 });
