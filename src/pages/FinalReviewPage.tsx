@@ -128,7 +128,6 @@ function FinalReviewContent() {
               key={pl.plNumber}
               pl={pl}
               years={years}
-              canViewKeuro={can('view:k-euro-rates')}
               canExport={can('export:final-review')}
             />
           ))
