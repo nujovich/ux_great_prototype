@@ -10,6 +10,7 @@ import { Modal } from '../components/shared/Modal';
 import type { AllocationRow, AllocationFilterState, CostType } from '../types';
 import {
   applyAllocationFilters,
+  rowIsUnresolved,
   sortAllocationRows,
   splitFteProportional,
   validateAllocationSave,
@@ -49,8 +50,11 @@ function AllocationContent() {
     [displayRows, filters],
   );
 
-  // Bulk selection scoped to filteredRows (ALLOC-BR-25)
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Bulk selection scoped to filteredRows (ALLOC-BR-25). Rows with no societe are
+  // pre-selected on load so they can be bulk-assigned a societe immediately.
+  const [selectedIds, setSelectedIds] = useState<string[]>(() =>
+    allocations.flatMap((a) => a.splits).filter(rowIsUnresolved).map((r) => r.id),
+  );
   const handleSelectRow = (id: string, checked: boolean) =>
     setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
   const handleSelectAll = (checked: boolean, ids: string[]) =>

@@ -104,7 +104,7 @@ export const ALLOCATIONS: Allocation[] = [
         ownerN2: 'Zone-EMEA',
         juCode: 'JU-T-001',
         juDescription: 'Thermal Test Campaign',
-        societe: 'Renault Korea',
+        societe: 'Renault Korea-Busan',
         costType: 'TSA',
         percentage: 40,
         days: 84,
