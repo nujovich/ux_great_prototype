@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import { describe, it, expect, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { FinalReviewPage } from '../FinalReviewPage';
 import { useRoleStore } from '../../store/roleStore';
 import type { Role } from '../../types';
@@ -21,5 +21,14 @@ describe('FinalReviewPage — Send Stage 3 gating matches SDD kit', () => {
       if (CAN_SEND[role]) expect(btn).toBeInTheDocument();
       else expect(btn).not.toBeInTheDocument();
     });
+  });
+
+  // Regression: switching role AFTER mount must re-gate the button (no stale subscription).
+  it('hides the button when switching from a sender role to a non-sender role after mount', () => {
+    useRoleStore.getState().setRole('Admin');
+    render(<FinalReviewPage />);
+    expect(screen.getByRole('button', { name: /Send Stage 3/i })).toBeInTheDocument();
+    act(() => useRoleStore.getState().setRole('RCRC'));
+    expect(screen.queryByRole('button', { name: /Send Stage 3/i })).not.toBeInTheDocument();
   });
 });
