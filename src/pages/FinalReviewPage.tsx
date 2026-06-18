@@ -24,7 +24,10 @@ function FinalReviewContent() {
   const lines = useDataStore((s) => s.lines);
   const cycles = useDataStore((s) => s.cycles);
   const allocations = useDataStore((s) => s.allocations);
-  const can = useRoleStore((s) => s.can);
+  // Subscribe to the permission *booleans* (not the stable `can` fn ref) so the
+  // component re-renders when the active role changes via the "View as" switcher.
+  const canExport = useRoleStore((s) => s.can('export:final-review'));
+  const canSendStage3 = useRoleStore((s) => s.can('send:stage3'));
   const pushToast = useUIStore((s) => s.pushToast);
   const t = useT();
 
@@ -85,7 +88,7 @@ function FinalReviewContent() {
           <p className="text-sm text-slate-600">{t('finalReview.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          {can('export:final-review') && (
+          {canExport && (
             <Button
               variant="secondary"
               disabled
@@ -95,7 +98,7 @@ function FinalReviewContent() {
               <Download size={14} /> {t('finalReview.exportCsv')}
             </Button>
           )}
-          {can('send:stage3') && (
+          {canSendStage3 && (
             <Button variant="primary" onClick={handleSendStage3}>
               <Send size={14} /> {t('finalReview.sendStage3')}
             </Button>
@@ -128,8 +131,7 @@ function FinalReviewContent() {
               key={pl.plNumber}
               pl={pl}
               years={years}
-              canViewKeuro={can('view:k-euro-rates')}
-              canExport={can('export:final-review')}
+              canExport={canExport}
             />
           ))
         )}

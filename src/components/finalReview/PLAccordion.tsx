@@ -7,11 +7,10 @@ import type { PlNode } from '../../lib/finalReviewAggregation';
 interface Props {
   pl: PlNode;
   years: string[];
-  canViewKeuro: boolean;
   canExport: boolean;
 }
 
-export function PLAccordion({ pl, years, canViewKeuro, canExport }: Props) {
+export function PLAccordion({ pl, years, canExport }: Props) {
   const [open, setOpen] = useState(false);
   const t = useT();
 
@@ -29,9 +28,7 @@ export function PLAccordion({ pl, years, canViewKeuro, canExport }: Props) {
           </span>
           <span className="ml-4 text-xs text-slate-500 font-normal">
             Total FTE: {pl.subtotal.totalFte.toFixed(2)}
-            {canViewKeuro && (
-              <> &nbsp;·&nbsp; Total K€: {pl.subtotal.totalKe.toFixed(0)}</>
-            )}
+            &nbsp;·&nbsp; Total K€: {pl.subtotal.totalKe.toFixed(0)}
           </span>
         </button>
 
@@ -50,7 +47,7 @@ export function PLAccordion({ pl, years, canViewKeuro, canExport }: Props) {
 
       {open && (
         <div className="overflow-x-auto p-2">
-          <PLGroupedTable pl={pl} years={years} canViewKeuro={canViewKeuro} />
+          <PLGroupedTable pl={pl} years={years} />
         </div>
       )}
     </div>

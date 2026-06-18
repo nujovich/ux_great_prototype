@@ -19,10 +19,9 @@ describe('PLGroupedTable (tree-grid)', () => {
       [mk({ id: 'a' }), mk({ id: 'b', totalFte: 2, fteByYear: { '2025': 2 } })],
       ['2025'],
     );
-    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    render(<PLGroupedTable pl={pl} years={['2025']} />);
     expect(screen.getByText('BE (1)')).toBeInTheDocument();
     expect(screen.getByText(/PL total/i)).toBeInTheDocument();
-    // 3.00 (= 1 + 2) appears in the métier subtotal and the PL-total rows.
     expect(screen.getAllByText('3.00').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText('S1 (1)')).not.toBeInTheDocument();
   });
@@ -32,25 +31,24 @@ describe('PLGroupedTable (tree-grid)', () => {
       mk({ id: 'a', metier: 'BE' }),
       mk({ id: 'b', metier: 'EE', juCode: 'JU2' }),
     ], ['2025']);
-    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    render(<PLGroupedTable pl={pl} years={['2025']} />);
     expect(screen.getByText('BE (1)')).toBeInTheDocument();
     expect(screen.getByText('EE (1)')).toBeInTheDocument();
   });
 
   it('expands métier to reveal société, then société to reveal the cost type leaf', () => {
     const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
-    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    render(<PLGroupedTable pl={pl} years={['2025']} />);
     fireEvent.click(screen.getByRole('button', { name: /BE \(1\)/ }));
     expect(screen.getByText('S1 (1)')).toBeInTheDocument();
-    // cost-type leaf is not yet rendered until its société is expanded
     expect(screen.queryByRole('cell', { name: 'FTE' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /S1 \(1\)/ }));
     expect(screen.getByRole('cell', { name: 'FTE' })).toBeInTheDocument();
   });
 
-  it('renders the reduced column set and drops the old detail columns', () => {
+  it('always renders Total K€ and per-year K€ columns (kit: no K€ gating in Final Review)', () => {
     const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
-    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    render(<PLGroupedTable pl={pl} years={['2025']} />);
     expect(screen.getByText('Name')).toBeInTheDocument();
     expect(screen.getByText('Total FTE')).toBeInTheDocument();
     expect(screen.getByText('Total K€')).toBeInTheDocument();
@@ -61,17 +59,9 @@ describe('PLGroupedTable (tree-grid)', () => {
     expect(screen.queryByText('Total BH')).not.toBeInTheDocument();
   });
 
-  it('hides K€ columns when canViewKeuro is false', () => {
-    const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
-    const { rerender } = render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
-    expect(screen.getByText('K€ 2025')).toBeInTheDocument();
-    rerender(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro={false} />);
-    expect(screen.queryByText('K€ 2025')).not.toBeInTheDocument();
-  });
-
   it('exposes aria-expanded on the métier toggle and flips it on click', () => {
     const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
-    render(<PLGroupedTable pl={pl} years={['2025']} canViewKeuro />);
+    render(<PLGroupedTable pl={pl} years={['2025']} />);
     const btn = screen.getByRole('button', { name: /BE \(1\)/ });
     expect(btn).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(btn);

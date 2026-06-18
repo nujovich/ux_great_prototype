@@ -6,7 +6,6 @@ import type { MetierNode, PlNode, Subtotal } from '../../lib/finalReviewAggregat
 interface Props {
   pl: PlNode;
   years: string[];
-  canViewKeuro: boolean;
 }
 
 /** Total cost-type leaf rows under a métier (matches the POC "(n)" count). */
@@ -14,38 +13,27 @@ function metierLeafCount(metier: MetierNode): number {
   return metier.societes.reduce((n, s) => n + s.costTypes.length, 0);
 }
 
-/** Renders the metric cells: Total FTE, [Total K€], FTE per year, [K€ per year]. */
-function MetricCells({
-  subtotal,
-  years,
-  canViewKeuro,
-}: {
-  subtotal: Subtotal;
-  years: string[];
-  canViewKeuro: boolean;
-}) {
+/** Renders the metric cells: Total FTE, Total K€, FTE per year, K€ per year. */
+function MetricCells({ subtotal, years }: { subtotal: Subtotal; years: string[] }) {
   return (
     <>
       <td className="px-2 py-1 border text-right">{subtotal.totalFte.toFixed(2)}</td>
-      {canViewKeuro && (
-        <td className="px-2 py-1 border text-right">{subtotal.totalKe.toFixed(0)}</td>
-      )}
+      <td className="px-2 py-1 border text-right">{subtotal.totalKe.toFixed(0)}</td>
       {years.map((y) => (
         <td key={`fte-${y}`} className="px-2 py-1 border text-right">
           {(subtotal.fteByYear[y] ?? 0).toFixed(2)}
         </td>
       ))}
-      {canViewKeuro &&
-        years.map((y) => (
-          <td key={`ke-${y}`} className="px-2 py-1 border text-right">
-            {(subtotal.keByYear[y] ?? 0).toFixed(0)}
-          </td>
-        ))}
+      {years.map((y) => (
+        <td key={`ke-${y}`} className="px-2 py-1 border text-right">
+          {(subtotal.keByYear[y] ?? 0).toFixed(0)}
+        </td>
+      ))}
     </>
   );
 }
 
-export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
+export function PLGroupedTable({ pl, years }: Props) {
   const t = useT();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -63,16 +51,13 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
         <tr>
           <th scope="col" className="px-2 py-1 border text-left">{t('finalReview.colName')}</th>
           <th scope="col" className="px-2 py-1 border text-right">{t('finalReview.colTotalFte')}</th>
-          {canViewKeuro && (
-            <th scope="col" className="px-2 py-1 border text-right">{t('finalReview.colTotalKe')}</th>
-          )}
+          <th scope="col" className="px-2 py-1 border text-right">{t('finalReview.colTotalKe')}</th>
           {years.map((y) => (
             <th scope="col" key={`h-fte-${y}`} className="px-2 py-1 border text-right">{`FTE ${y}`}</th>
           ))}
-          {canViewKeuro &&
-            years.map((y) => (
-              <th scope="col" key={`h-ke-${y}`} className="px-2 py-1 border text-right">{`K€ ${y}`}</th>
-            ))}
+          {years.map((y) => (
+            <th scope="col" key={`h-ke-${y}`} className="px-2 py-1 border text-right">{`K€ ${y}`}</th>
+          ))}
         </tr>
       </thead>
       <tbody>
@@ -88,7 +73,7 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
                     <span>{`${metierNode.metier} (${metierLeafCount(metierNode)})`}</span>
                   </button>
                 </td>
-                <MetricCells subtotal={metierNode.subtotal} years={years} canViewKeuro={canViewKeuro} />
+                <MetricCells subtotal={metierNode.subtotal} years={years} />
               </tr>
 
               {mOpen &&
@@ -109,7 +94,7 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
                             <span>{`${societeNode.societe} (${societeNode.costTypes.length})`}</span>
                           </button>
                         </td>
-                        <MetricCells subtotal={societeNode.subtotal} years={years} canViewKeuro={canViewKeuro} />
+                        <MetricCells subtotal={societeNode.subtotal} years={years} />
                       </tr>
 
                       {sOpen &&
@@ -120,7 +105,7 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
                               <td className="px-2 py-1 border">
                                 <span className="pl-12 inline-block">{ctNode.costType}</span>
                               </td>
-                              <MetricCells subtotal={ctNode.subtotal} years={years} canViewKeuro={canViewKeuro} />
+                              <MetricCells subtotal={ctNode.subtotal} years={years} />
                             </tr>
                           );
                         })}
@@ -134,7 +119,7 @@ export function PLGroupedTable({ pl, years, canViewKeuro }: Props) {
         {/* PL total */}
         <tr className="font-semibold bg-gray-100">
           <td className="px-2 py-1 border">{t('finalReview.plTotal')}</td>
-          <MetricCells subtotal={pl.subtotal} years={years} canViewKeuro={canViewKeuro} />
+          <MetricCells subtotal={pl.subtotal} years={years} />
         </tr>
       </tbody>
     </table>

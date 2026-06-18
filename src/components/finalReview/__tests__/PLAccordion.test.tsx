@@ -18,16 +18,22 @@ describe('PLAccordion', () => {
   it('is collapsed by default and expands on click', async () => {
     const user = userEvent.setup();
     const [pl] = buildPlTree([mk({})], ['2025']);
-    render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport={false} />);
+    render(<PLAccordion pl={pl} years={['2025']} canExport={false} />);
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /PL1/ }));
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
 
+  it('shows Total K€ in the header summary', () => {
+    const [pl] = buildPlTree([mk({})], ['2025']);
+    render(<PLAccordion pl={pl} years={['2025']} canExport={false} />);
+    expect(screen.getByText(/Total K€:/)).toBeInTheDocument();
+  });
+
   it('renders the per-PL Excel export button disabled; clicking it does not expand', async () => {
     const user = userEvent.setup();
     const [pl] = buildPlTree([mk({ id: 'a' })], ['2025']);
-    render(<PLAccordion pl={pl} years={['2025']} canViewKeuro canExport />);
+    render(<PLAccordion pl={pl} years={['2025']} canExport />);
     const exportBtn = screen.getByRole('button', { name: /Export Excel/i });
     expect(exportBtn).toBeDisabled();
     await user.click(exportBtn);
