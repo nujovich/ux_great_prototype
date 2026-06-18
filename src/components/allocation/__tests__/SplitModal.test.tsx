@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { SplitModal } from '../SplitModal';
 import type { AllocationRow } from '../../../types';
@@ -85,5 +86,40 @@ describe('SplitModal', () => {
     expect(screen.getByText('K€ 2026')).toBeInTheDocument();
     // default 50/50 split → 2025 K€ preview = 50 in each of the two slot rows
     expect(screen.getAllByText('50')).toHaveLength(2);
+  });
+});
+
+function row(): AllocationRow {
+  return {
+    id: 'r1', engineerId: 'e', percentage: 100, days: 209, fte: 1, keuro: 0,
+    societe: null, costType: 'FTE', isDirty: false,
+    plNumber: 'PL-1', plName: 'P', metier: 'H-DESIGN', ownerN2: 'Z',
+    juCode: 'JU-1', juDescription: '', fmmDescription: '', organType: '', energy: '',
+    allianceCode: '', vehicleCode: '', standardEmissions: '', market: '',
+    totalFte: 1, fteByYear: { '2025': 0.5, '2026': 0.5 }, keByYear: { '2025': 50, '2026': 50 },
+  };
+}
+
+describe('SplitModal — remove slot', () => {
+  it('shows a disabled Remove per slot at the 2-slot minimum, enabled once a 3rd is added (ALLOC-BR-22)', async () => {
+    const user = userEvent.setup();
+    render(<SplitModal open row={row()} societeOptions={['A', 'B']} onConfirm={vi.fn()} onClose={vi.fn()} />);
+
+    // The Remove affordance is always visible (discoverable) but disabled at the minimum.
+    const initial = screen.getAllByRole('button', { name: /remove société/i });
+    expect(initial).toHaveLength(2);
+    initial.forEach((btn) => expect(btn).toBeDisabled());
+
+    // Add a third slot → all three Remove buttons become enabled.
+    await user.click(screen.getByRole('button', { name: /add société/i }));
+    const removeButtons = screen.getAllByRole('button', { name: /remove société/i });
+    expect(removeButtons).toHaveLength(3);
+    removeButtons.forEach((btn) => expect(btn).toBeEnabled());
+
+    // Remove one → back to 2 slots, Remove disabled again.
+    await user.click(removeButtons[0]);
+    const afterRemove = screen.getAllByRole('button', { name: /remove société/i });
+    expect(afterRemove).toHaveLength(2);
+    afterRemove.forEach((btn) => expect(btn).toBeDisabled());
   });
 });

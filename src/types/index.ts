@@ -210,6 +210,8 @@ export interface AllocationRow extends AllocationSplit {
   totalFte: number;
   fteByYear: Record<string, number>;
   keByYear: Record<string, number>;
+  /** Estimation K€ baseline; restored when switching TC back to FTE/TSA. */
+  baseKeByYear?: Record<string, number>;
   // Editable fields
   societe: string | null;
   costType: CostType;
@@ -224,6 +226,8 @@ export interface AllocationRow extends AllocationSplit {
 export interface Allocation {
   lineId: string;
   splits: AllocationRow[];
+  /** Pre-split snapshot used to restore a row on undo (ALLOC-BR-12). */
+  originalRow?: AllocationRow;
 }
 
 export interface AllocationFilterState {

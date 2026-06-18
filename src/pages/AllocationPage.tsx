@@ -10,6 +10,7 @@ import { Modal } from '../components/shared/Modal';
 import type { AllocationRow, AllocationFilterState, CostType } from '../types';
 import {
   applyAllocationFilters,
+  rowIsUnresolved,
   sortAllocationRows,
   splitFteProportional,
   validateAllocationSave,
@@ -32,9 +33,14 @@ function AllocationContent() {
   const allocations = useDataStore((s) => s.allocations);
   const saveDirtyAllocations = useDataStore((s) => s.saveDirtyAllocations);
 
-  // Single source of truth — includes split children inserted inline (not in the store)
+  // Single source of truth — includes split children inserted inline (not in the store).
+  // Snapshot each row's estimation K€ as its baseline: TC may override keByYear, and
+  // switching back to FTE/TSA restores this baseline (no rate-based recalc).
   const [displayRows, setDisplayRows] = useState<AllocationRow[]>(() =>
-    sortAllocationRows(allocations.flatMap((a) => a.splits)),
+    sortAllocationRows(allocations.flatMap((a) => a.splits)).map((r) => ({
+      ...r,
+      baseKeByYear: r.baseKeByYear ?? { ...r.keByYear },
+    })),
   );
 
   // Filters — preserved across in-page actions, reset on unmount (ALLOC-BR-14)
@@ -44,8 +50,11 @@ function AllocationContent() {
     [displayRows, filters],
   );
 
-  // Bulk selection scoped to filteredRows (ALLOC-BR-25)
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  // Bulk selection scoped to filteredRows (ALLOC-BR-25). Rows with no societe are
+  // pre-selected on load so they can be bulk-assigned a societe immediately.
+  const [selectedIds, setSelectedIds] = useState<string[]>(() =>
+    allocations.flatMap((a) => a.splits).filter(rowIsUnresolved).map((r) => r.id),
+  );
   const handleSelectRow = (id: string, checked: boolean) =>
     setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
   const handleSelectAll = (checked: boolean, ids: string[]) =>
@@ -60,28 +69,62 @@ function AllocationContent() {
       prev.map((r) => (r.id === id ? { ...r, ...patch, isDirty: true } : r)),
     );
 
-  // Inline cell changes
-  const handleChangeSociete = (rowId: string, societe: string) =>
+  // Inline cell changes. Baseline K€ model: K€ comes from the estimation baseline, not
+  // from the societe, so changing societe never touches K€.
+  const handleChangeSociete = (rowId: string, societe: string) => {
     updateRow(rowId, { societe: societe || null });
+  };
 
   const handleChangeCostType = (rowId: string, costType: CostType) => {
-    updateRow(rowId, { costType });
+    const target = displayRows.find((r) => r.id === rowId);
     if (costType === 'TC') {
-      setTcTarget(displayRows.find((r) => r.id === rowId) ?? null);
+      updateRow(rowId, { costType });
+      setTcEditMode('create');
+      setTcTarget(target ?? null);
+    } else if (target) {
+      // TC → FTE/TSA: discard any TC override and restore the K€ baseline.
+      updateRow(rowId, {
+        costType,
+        keByYear: { ...(target.baseKeByYear ?? target.keByYear) },
+      });
+    } else {
+      updateRow(rowId, { costType });
     }
   };
 
   // TC popup (ALLOC-BR-20/21)
   const [tcTarget, setTcTarget] = useState<AllocationRow | null>(null);
+  const [tcEditMode, setTcEditMode] = useState<'create' | 'edit'>('create');
+
   const handleTcConfirm = (keByYear: Record<string, number>) => {
     if (tcTarget) updateRow(tcTarget.id, { keByYear });
     setTcTarget(null);
   };
+
+  const handleEditTcKe = (rowId: string) => {
+    setTcEditMode('edit');
+    setTcTarget(displayRows.find((r) => r.id === rowId) ?? null);
+  };
+
   const handleTcCancel = () => {
-    if (tcTarget) {
-      // Revert costType to its value before the TC change
+    if (tcTarget && tcEditMode === 'create') {
+      // First-time TC: revert costType to its value before the change. Bypass updateRow
+      // (which always forces isDirty: true) so the row goes back to clean when the TC
+      // toggle was the only change, while preserving dirtiness from any earlier edit
+      // (e.g. a societe change made before opening the popup).
       const original = allocations.flatMap((a) => a.splits).find((r) => r.id === tcTarget.id);
-      if (original) updateRow(tcTarget.id, { costType: original.costType, isDirty: false });
+      if (original) {
+        setDisplayRows((prev) =>
+          prev.map((r) => {
+            if (r.id !== tcTarget.id) return r;
+            const reverted = { ...r, costType: original.costType };
+            const stillDirty =
+              reverted.societe !== original.societe ||
+              JSON.stringify(reverted.keByYear) !== JSON.stringify(original.keByYear);
+            return { ...reverted, isDirty: stillDirty };
+          }),
+        );
+      }
     }
     setTcTarget(null);
   };
@@ -90,22 +133,21 @@ function AllocationContent() {
   const [splitTarget, setSplitTarget] = useState<AllocationRow | null>(null);
   const handleSplitConfirm = (slots: Array<{ societe: string; percentage: number }>) => {
     if (!splitTarget) return;
-    const childFteByYear = splitFteProportional(
-      splitTarget.fteByYear,
-      slots.map((s) => s.percentage),
-    );
+    const pcts = slots.map((s) => s.percentage);
+    const childFteByYear = splitFteProportional(splitTarget.fteByYear, pcts);
+    const childKeByYear = splitFteProportional(splitTarget.keByYear, pcts);
     const children: AllocationRow[] = slots.map((slot, i) => ({
       ...splitTarget,
       id: `${splitTarget.id}-split-${i}`,
       societe: slot.societe || null,
       percentage: slot.percentage,
       fteByYear: childFteByYear[i],
-      keByYear: Object.fromEntries(Object.keys(splitTarget.fteByYear).map((y) => [y, 0])),
+      keByYear: childKeByYear[i],
+      baseKeByYear: childKeByYear[i],
       isSplitChild: true,
       splitParentId: splitTarget.id,
       isDirty: true,
     }));
-    // Replace parent row with child rows in place
     setDisplayRows((prev) => {
       const idx = prev.findIndex((r) => r.id === splitTarget.id);
       return [...prev.slice(0, idx), ...children, ...prev.slice(idx + 1)];
@@ -118,14 +160,21 @@ function AllocationContent() {
     const row = displayRows.find((r) => r.id === rowId);
     if (!row?.splitParentId) return;
     const parentId = row.splitParentId;
-    const original = allocations.flatMap((a) => a.splits).find((r) => r.id === parentId);
+    const original =
+      allocations.flatMap((a) => a.splits).find((r) => r.id === parentId) ??
+      allocations.find((a) => a.originalRow?.id === parentId)?.originalRow;
     if (!original) return;
     setDisplayRows((prev) => {
       const firstChildIdx = prev.findIndex((r) => r.splitParentId === parentId);
       const withoutChildren = prev.filter((r) => r.splitParentId !== parentId);
       return [
         ...withoutChildren.slice(0, firstChildIdx),
-        { ...original, isDirty: false },
+        {
+          ...original,
+          baseKeByYear: original.baseKeByYear ?? { ...original.keByYear },
+          isDirty: false,
+          isSplitChild: false,
+        },
         ...withoutChildren.slice(firstChildIdx),
       ];
     });
@@ -269,6 +318,7 @@ function AllocationContent() {
           onUndoSplit={handleUndoSplit}
           activeYears={ACTIVE_YEARS}
           canViewKeuro={can('view:k-euro-rates')}
+          onEditTcKe={handleEditTcKe}
         />
       </div>
 

@@ -1,7 +1,7 @@
 import type { Allocation, AllocationRow } from '../types';
 
 function makeRow(overrides: Partial<AllocationRow> & Pick<AllocationRow, 'id' | 'juCode' | 'juDescription' | 'plNumber' | 'plName' | 'metier' | 'ownerN2'>): AllocationRow {
-  return {
+  const row: AllocationRow = {
     engineerId: 'eng-1',
     percentage: 100,
     days: 209,
@@ -22,6 +22,8 @@ function makeRow(overrides: Partial<AllocationRow> & Pick<AllocationRow, 'id' | 
     market: 'EU',
     ...overrides,
   };
+  // The estimation K€ baseline mirrors the (possibly overridden) keByYear unless given.
+  return { ...row, baseKeByYear: overrides.baseKeByYear ?? { ...row.keByYear } };
 }
 
 export const ALLOCATIONS: Allocation[] = [
@@ -40,10 +42,39 @@ export const ALLOCATIONS: Allocation[] = [
         costType: 'FTE',
         keuro: 850,
       }),
+      makeRow({
+        id: 'alloc-unassigned',
+        plNumber: 'PL-001',
+        plName: 'Renault R5 EV Platform',
+        metier: 'H-SOFTWARE',
+        ownerN2: 'Zone-EMEA',
+        juCode: 'JU-S-002',
+        juDescription: 'Embedded SW Module',
+        societe: null,
+        costType: 'FTE',
+      }),
     ],
   },
   {
     lineId: 'line-2',
+    originalRow: makeRow({
+      id: 'alloc-2-orig',
+      plNumber: 'PL-002',
+      plName: 'Scenic EV Homologation',
+      metier: 'H-TESTING',
+      ownerN2: 'Zone-EMEA',
+      juCode: 'JU-T-001',
+      juDescription: 'Thermal Test Campaign',
+      societe: 'RNBV-Amsterdam',
+      costType: 'FTE',
+      percentage: 100,
+      days: 209,
+      fte: 1.0,
+      totalFte: 1.0,
+      fteByYear: { '2025': 0.5, '2026': 0.5 },
+      keByYear: { '2025': 425, '2026': 425 },
+      keuro: 850,
+    }),
     splits: [
       makeRow({
         id: 'alloc-2-a',
@@ -73,7 +104,7 @@ export const ALLOCATIONS: Allocation[] = [
         ownerN2: 'Zone-EMEA',
         juCode: 'JU-T-001',
         juDescription: 'Thermal Test Campaign',
-        societe: 'Renault Korea',
+        societe: 'Renault Korea-Busan',
         costType: 'TSA',
         percentage: 40,
         days: 84,

@@ -42,6 +42,13 @@ export function distributeTcKeByYear(
   return result;
 }
 
+/**
+ * Split a per-year map proportionally by percentage (reused for both FTE and K€).
+ * Rounds to 4 decimals to match the SDD kit's `apply_split` (round(fte * pct, 4)), so the
+ * per-year sum of children equals the parent and the ALLOC-BR-23 FTE invariant holds
+ * (e.g. a 50/25/25 split of 0.5 → 0.25 + 0.125 + 0.125 = 0.5, not 0.51 as 2-decimal
+ * rounding produced). The grid still renders FTE to 2 decimals / K€ to whole units.
+ */
 export function splitFteProportional(
   fteByYear: Record<string, number>,
   percentages: number[]
@@ -50,7 +57,7 @@ export function splitFteProportional(
     Object.fromEntries(
       Object.entries(fteByYear).map(([year, fte]) => [
         year,
-        Math.round((fte * (pct / 100)) * 100) / 100,
+        Math.round((fte * (pct / 100)) * 10000) / 10000,
       ])
     )
   );
@@ -113,4 +120,13 @@ export function sortAllocationRows(rows: AllocationRow[]): AllocationRow[] {
     if (ow !== 0) return ow;
     return a.juCode.localeCompare(b.juCode);
   });
+}
+
+/**
+ * A row is "unresolved" when it has no societe assigned. Used to flag rows on first
+ * render: a blocking error for TSA/TC (ALLOC-BR-06/13), a non-blocking warning for FTE
+ * (ALLOC-BR-07). Independent of dirty state.
+ */
+export function rowIsUnresolved(row: AllocationRow): boolean {
+  return row.societe == null;
 }
