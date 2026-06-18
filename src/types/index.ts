@@ -210,6 +210,8 @@ export interface AllocationRow extends AllocationSplit {
   totalFte: number;
   fteByYear: Record<string, number>;
   keByYear: Record<string, number>;
+  /** Estimation K€ baseline; restored when switching TC back to FTE/TSA. */
+  baseKeByYear?: Record<string, number>;
   // Editable fields
   societe: string | null;
   costType: CostType;

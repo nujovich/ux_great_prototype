@@ -10,7 +10,6 @@ import { Modal } from '../components/shared/Modal';
 import type { AllocationRow, AllocationFilterState, CostType } from '../types';
 import {
   applyAllocationFilters,
-  recalcKeByRate,
   sortAllocationRows,
   splitFteProportional,
   validateAllocationSave,
@@ -33,9 +32,14 @@ function AllocationContent() {
   const allocations = useDataStore((s) => s.allocations);
   const saveDirtyAllocations = useDataStore((s) => s.saveDirtyAllocations);
 
-  // Single source of truth — includes split children inserted inline (not in the store)
+  // Single source of truth — includes split children inserted inline (not in the store).
+  // Snapshot each row's estimation K€ as its baseline: TC may override keByYear, and
+  // switching back to FTE/TSA restores this baseline (no rate-based recalc).
   const [displayRows, setDisplayRows] = useState<AllocationRow[]>(() =>
-    sortAllocationRows(allocations.flatMap((a) => a.splits)),
+    sortAllocationRows(allocations.flatMap((a) => a.splits)).map((r) => ({
+      ...r,
+      baseKeByYear: r.baseKeByYear ?? { ...r.keByYear },
+    })),
   );
 
   // Filters — preserved across in-page actions, reset on unmount (ALLOC-BR-14)
@@ -61,18 +65,10 @@ function AllocationContent() {
       prev.map((r) => (r.id === id ? { ...r, ...patch, isDirty: true } : r)),
     );
 
-  // Inline cell changes
+  // Inline cell changes. Baseline K€ model: K€ comes from the estimation baseline, not
+  // from the societe, so changing societe never touches K€.
   const handleChangeSociete = (rowId: string, societe: string) => {
-    const next = societe || null;
-    const target = displayRows.find((r) => r.id === rowId);
-    if (target && target.costType !== 'TC') {
-      updateRow(rowId, {
-        societe: next,
-        keByYear: recalcKeByRate(target.fteByYear, next, target.costType),
-      });
-    } else {
-      updateRow(rowId, { societe: next });
-    }
+    updateRow(rowId, { societe: societe || null });
   };
 
   const handleChangeCostType = (rowId: string, costType: CostType) => {
@@ -82,9 +78,10 @@ function AllocationContent() {
       setTcEditMode('create');
       setTcTarget(target ?? null);
     } else if (target) {
+      // TC → FTE/TSA: discard any TC override and restore the K€ baseline.
       updateRow(rowId, {
         costType,
-        keByYear: recalcKeByRate(target.fteByYear, target.societe, costType),
+        keByYear: { ...(target.baseKeByYear ?? target.keByYear) },
       });
     } else {
       updateRow(rowId, { costType });
@@ -142,6 +139,7 @@ function AllocationContent() {
       percentage: slot.percentage,
       fteByYear: childFteByYear[i],
       keByYear: childKeByYear[i],
+      baseKeByYear: childKeByYear[i],
       isSplitChild: true,
       splitParentId: splitTarget.id,
       isDirty: true,
@@ -167,7 +165,12 @@ function AllocationContent() {
       const withoutChildren = prev.filter((r) => r.splitParentId !== parentId);
       return [
         ...withoutChildren.slice(0, firstChildIdx),
-        { ...original, isDirty: false, isSplitChild: false },
+        {
+          ...original,
+          baseKeByYear: original.baseKeByYear ?? { ...original.keByYear },
+          isDirty: false,
+          isSplitChild: false,
+        },
         ...withoutChildren.slice(firstChildIdx),
       ];
     });

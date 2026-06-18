@@ -104,7 +104,9 @@ export function AllocationGrid({
             <tr
               key={row.id}
               className={`border-b ${
-                rowIsUnresolved(row) ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-blue-50'
+                rowIsUnresolved(row)
+                  ? 'bg-red-100 border-l-4 border-l-red-500 hover:bg-red-200'
+                  : 'hover:bg-blue-50'
               } ${
                 row.isDirty ? 'ring-1 ring-amber-300' : ''
               }`}

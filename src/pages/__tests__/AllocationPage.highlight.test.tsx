@@ -13,6 +13,8 @@ describe('AllocationPage — unresolved rows flagged on first render', () => {
     render(<AllocationPage />);
     const select = screen.getByLabelText('Société for alloc-unassigned');
     const row = select.closest('tr')!;
-    expect(row.className).toMatch(/bg-red-50/);
+    // Clearly flagged from first render: red background + left accent border.
+    expect(row.className).toMatch(/bg-red-100/);
+    expect(row.className).toMatch(/border-l-red-500/);
   });
 });

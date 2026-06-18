@@ -101,20 +101,25 @@ function row(): AllocationRow {
 }
 
 describe('SplitModal — remove slot', () => {
-  it('removes a slot when more than 2 exist, and hides remove at the 2-slot minimum', async () => {
+  it('shows a disabled Remove per slot at the 2-slot minimum, enabled once a 3rd is added (ALLOC-BR-22)', async () => {
     const user = userEvent.setup();
     render(<SplitModal open row={row()} societeOptions={['A', 'B']} onConfirm={vi.fn()} onClose={vi.fn()} />);
 
-    // Start at 2 slots → no remove buttons (min-2 guard, ALLOC-BR-22).
-    expect(screen.queryAllByRole('button', { name: /remove société/i })).toHaveLength(0);
+    // The Remove affordance is always visible (discoverable) but disabled at the minimum.
+    const initial = screen.getAllByRole('button', { name: /remove société/i });
+    expect(initial).toHaveLength(2);
+    initial.forEach((btn) => expect(btn).toBeDisabled());
 
-    // Add a third slot → now removable.
+    // Add a third slot → all three Remove buttons become enabled.
     await user.click(screen.getByRole('button', { name: /add société/i }));
     const removeButtons = screen.getAllByRole('button', { name: /remove société/i });
     expect(removeButtons).toHaveLength(3);
+    removeButtons.forEach((btn) => expect(btn).toBeEnabled());
 
-    // Remove one → back to 2 slots and no remove buttons.
+    // Remove one → back to 2 slots, Remove disabled again.
     await user.click(removeButtons[0]);
-    expect(screen.queryAllByRole('button', { name: /remove société/i })).toHaveLength(0);
+    const afterRemove = screen.getAllByRole('button', { name: /remove société/i });
+    expect(afterRemove).toHaveLength(2);
+    afterRemove.forEach((btn) => expect(btn).toBeDisabled());
   });
 });

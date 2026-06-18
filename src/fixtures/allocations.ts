@@ -1,7 +1,7 @@
 import type { Allocation, AllocationRow } from '../types';
 
 function makeRow(overrides: Partial<AllocationRow> & Pick<AllocationRow, 'id' | 'juCode' | 'juDescription' | 'plNumber' | 'plName' | 'metier' | 'ownerN2'>): AllocationRow {
-  return {
+  const row: AllocationRow = {
     engineerId: 'eng-1',
     percentage: 100,
     days: 209,
@@ -22,6 +22,8 @@ function makeRow(overrides: Partial<AllocationRow> & Pick<AllocationRow, 'id' | 
     market: 'EU',
     ...overrides,
   };
+  // The estimation K€ baseline mirrors the (possibly overridden) keByYear unless given.
+  return { ...row, baseKeByYear: overrides.baseKeByYear ?? { ...row.keByYear } };
 }
 
 export const ALLOCATIONS: Allocation[] = [

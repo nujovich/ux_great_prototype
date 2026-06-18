@@ -9,7 +9,6 @@ import {
   applyAllocationFilters,
   sortAllocationRows,
   groupRowsByPl,
-  recalcKeByRate,
 } from '../allocationCalc';
 import type { AllocationRow } from '../../types';
 import type { AllocationFilterState } from '../../types';
@@ -254,42 +253,6 @@ describe('groupRowsByPl', () => {
 
   it('returns an empty array for no rows', () => {
     expect(groupRowsByPl([])).toEqual([]);
-  });
-});
-
-describe('recalcKeByRate', () => {
-  it('FTE: K€ = fte × FTE rate per year', () => {
-    const result = recalcKeByRate(
-      { '2025': 0.5, '2026': 0.5 },
-      'Horse Spain S.L.-Valladolid',
-      'FTE',
-    );
-    expect(result).toEqual({ '2025': 53, '2026': 51.5 });
-  });
-
-  it('TSA: K€ = fte × TSA rate per year', () => {
-    const result = recalcKeByRate(
-      { '2025': 1, '2026': 1 },
-      'CHENNAI GESC H',
-      'TSA',
-    );
-    expect(result).toEqual({ '2025': 54, '2026': 56.7 });
-  });
-
-  it('unknown societe → 0 per year', () => {
-    expect(recalcKeByRate({ '2025': 1 }, 'Renault SAS-Paris', 'FTE')).toEqual({ '2025': 0 });
-  });
-
-  it('null societe (Unassigned) → 0 per year', () => {
-    expect(recalcKeByRate({ '2025': 1, '2026': 2 }, null, 'FTE')).toEqual({ '2025': 0, '2026': 0 });
-  });
-
-  it('year not in rate table → 0 for that year', () => {
-    expect(recalcKeByRate({ '2099': 1 }, 'Oyak Horse', 'FTE')).toEqual({ '2099': 0 });
-  });
-
-  it('TC is not rate-based → always returns 0 (handled by the popup elsewhere)', () => {
-    expect(recalcKeByRate({ '2025': 0.5 }, 'Oyak Horse', 'TC')).toEqual({ '2025': 0 });
   });
 });
 

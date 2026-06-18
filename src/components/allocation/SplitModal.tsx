@@ -103,16 +103,16 @@ export function SplitModal({ open, row, societeOptions, canViewKeuro, onConfirm,
                 </td>
               ))}
               <td className="px-2 py-1 border text-center">
-                {slots.length > 2 && (
-                  <button
-                    type="button"
-                    aria-label={`Remove société ${idx + 1}`}
-                    onClick={() => removeSlot(idx)}
-                    className="text-xs text-red-600 hover:underline"
-                  >
-                    Remove
-                  </button>
-                )}
+                <button
+                  type="button"
+                  aria-label={`Remove société ${idx + 1}`}
+                  onClick={() => removeSlot(idx)}
+                  disabled={slots.length <= 2}
+                  title={slots.length <= 2 ? 'At least 2 societes required (ALLOC-BR-22)' : undefined}
+                  className="text-xs text-red-600 hover:underline disabled:text-gray-300 disabled:no-underline disabled:cursor-not-allowed"
+                >
+                  Remove
+                </button>
               </td>
             </tr>
           ))}
