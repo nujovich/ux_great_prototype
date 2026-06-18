@@ -139,6 +139,14 @@ describe('splitFteProportional (ALLOC-BR-23)', () => {
       expect(sum).toBeCloseTo(original[year], 1);
     }
   });
+
+  it('preserves the FTE sum exactly on a 50/25/25 split (matches kit 4-decimal rounding)', () => {
+    // 2-decimal rounding produced 0.25 + 0.13 + 0.13 = 0.51 ≠ 0.5 (ALLOC-BR-23 violation).
+    const result = splitFteProportional({ '2025': 0.5, '2026': 0.5 }, [50, 25, 25]);
+    expect(result.map((r) => r['2025'])).toEqual([0.25, 0.125, 0.125]);
+    expect(result.reduce((a, r) => a + r['2025'], 0)).toBe(0.5);
+    expect(result.reduce((a, r) => a + r['2026'], 0)).toBe(0.5);
+  });
 });
 
 describe('applyAllocationFilters (ALLOC-BR-14, ALLOC-BR-25)', () => {

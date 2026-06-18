@@ -44,10 +44,10 @@ export function distributeTcKeByYear(
 
 /**
  * Split a per-year map proportionally by percentage (reused for both FTE and K€).
- * Each slot is rounded independently with no last-slot catch-up, so the per-year sum of
- * children can drift from the parent by up to ±0.01. Acceptable here: the grid renders
- * to whole units and FTE/K€ share the same rounding, so proportionality stays visually
- * exact. Add a remainder correction if these sums ever need to be cent-exact.
+ * Rounds to 4 decimals to match the SDD kit's `apply_split` (round(fte * pct, 4)), so the
+ * per-year sum of children equals the parent and the ALLOC-BR-23 FTE invariant holds
+ * (e.g. a 50/25/25 split of 0.5 → 0.25 + 0.125 + 0.125 = 0.5, not 0.51 as 2-decimal
+ * rounding produced). The grid still renders FTE to 2 decimals / K€ to whole units.
  */
 export function splitFteProportional(
   fteByYear: Record<string, number>,
@@ -57,7 +57,7 @@ export function splitFteProportional(
     Object.fromEntries(
       Object.entries(fteByYear).map(([year, fte]) => [
         year,
-        Math.round((fte * (pct / 100)) * 100) / 100,
+        Math.round((fte * (pct / 100)) * 10000) / 10000,
       ])
     )
   );
