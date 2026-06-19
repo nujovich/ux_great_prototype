@@ -46,4 +46,41 @@ describe('TCPopup', () => {
     await user.click(screen.getByRole('button', { name: /^cancel$/i }));
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
+
+  it('renders one K€ input per activeYear, defaulting missing years to 0', () => {
+    const row = tcRow({
+      fteByYear: { '2026': 0.5, '2027': 0.3 },
+      keByYear: { '2026': 400, '2027': 240 },
+    });
+    render(
+      <TCPopup
+        open
+        row={row}
+        activeYears={['2025', '2026', '2027']}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect((screen.getByLabelText('K€ 2025') as HTMLInputElement).value).toBe('0');
+    expect((screen.getByLabelText('K€ 2026') as HTMLInputElement).value).toBe('400');
+    expect((screen.getByLabelText('K€ 2027') as HTMLInputElement).value).toBe('240');
+  });
+
+  it('uses activeYears, not the row year keys, for the inputs shown', () => {
+    const row = tcRow({
+      fteByYear: { '2026': 0.5, '2027': 0.3 },
+      keByYear: { '2026': 400, '2027': 240 },
+    });
+    render(
+      <TCPopup
+        open
+        row={row}
+        activeYears={['2025', '2026']}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('K€ 2025')).toBeDefined();
+    expect(screen.queryByLabelText('K€ 2027')).toBeNull();
+  });
 });

@@ -127,7 +127,7 @@ export function AllocationGrid({
                     value={row.societe ?? ''}
                     onChange={e => onChangeSociete(row.id, e.target.value)}
                     className={`border rounded px-1 text-xs w-full ${
-                      !row.societe && row.costType !== 'FTE' ? 'border-red-400' : ''
+                      rowIsUnresolved(row) ? 'border-red-400' : ''
                     }`}
                     aria-label={`Société for ${row.id}`}
                   >

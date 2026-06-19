@@ -10,6 +10,7 @@ import { Modal } from '../components/shared/Modal';
 import type { AllocationRow, AllocationFilterState, CostType } from '../types';
 import {
   applyAllocationFilters,
+  collectActiveYears,
   recalcKeByRate,
   sortAllocationRows,
   splitFteProportional,
@@ -26,7 +27,7 @@ const EMPTY_FILTERS: AllocationFilterState = {
   unresolvedOnly: false,
 };
 
-const ACTIVE_YEARS = ['2025', '2026'];
+const FALLBACK_YEARS = ['2025', '2026'];
 
 function AllocationContent() {
   const can = useRoleStore((s) => s.can);
@@ -44,6 +45,15 @@ function AllocationContent() {
     () => applyAllocationFilters(displayRows, filters),
     [displayRows, filters],
   );
+
+  // Year columns are derived from the data so the grid and the TC popup never disagree
+  // on which years exist (e.g. a row spanning 2026–2027 surfaces a 2027 column).
+  // Derived from displayRows (not filteredRows) on purpose: the column set stays stable
+  // while filters change, avoiding layout shift when the only row for a year is hidden.
+  const activeYears = useMemo(() => {
+    const derived = collectActiveYears(displayRows);
+    return derived.length > 0 ? derived : FALLBACK_YEARS;
+  }, [displayRows]);
 
   // Bulk selection scoped to filteredRows (ALLOC-BR-25)
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -121,17 +131,25 @@ function AllocationContent() {
     const pcts = slots.map((s) => s.percentage);
     const childFteByYear = splitFteProportional(splitTarget.fteByYear, pcts);
     const childKeByYear = splitFteProportional(splitTarget.keByYear, pcts);
-    const children: AllocationRow[] = slots.map((slot, i) => ({
-      ...splitTarget,
-      id: `${splitTarget.id}-split-${i}`,
-      societe: slot.societe || null,
-      percentage: slot.percentage,
-      fteByYear: childFteByYear[i],
-      keByYear: childKeByYear[i],
-      isSplitChild: true,
-      splitParentId: splitTarget.id,
-      isDirty: true,
-    }));
+    const children: AllocationRow[] = slots.map((slot, i) => {
+      // Keep the per-row invariant totalFte === Σ fteByYear so the grid's Total FTE
+      // column always matches the per-year breakdown (instead of the parent's total).
+      const childTotalFte =
+        Math.round(Object.values(childFteByYear[i]).reduce((a, b) => a + b, 0) * 100) / 100;
+      return {
+        ...splitTarget,
+        id: `${splitTarget.id}-split-${i}`,
+        societe: slot.societe || null,
+        percentage: slot.percentage,
+        fte: childTotalFte,
+        totalFte: childTotalFte,
+        fteByYear: childFteByYear[i],
+        keByYear: childKeByYear[i],
+        isSplitChild: true,
+        splitParentId: splitTarget.id,
+        isDirty: true,
+      };
+    });
     setDisplayRows((prev) => {
       const idx = prev.findIndex((r) => r.id === splitTarget.id);
       return [...prev.slice(0, idx), ...children, ...prev.slice(idx + 1)];
@@ -295,14 +313,20 @@ function AllocationContent() {
           onChangeCostType={handleChangeCostType}
           onSplit={(id) => setSplitTarget(displayRows.find((r) => r.id === id) ?? null)}
           onUndoSplit={handleUndoSplit}
-          activeYears={ACTIVE_YEARS}
+          activeYears={activeYears}
           canViewKeuro={can('view:k-euro-rates')}
           onEditTcKe={handleEditTcKe}
         />
       </div>
 
       {tcTarget && (
-        <TCPopup open row={tcTarget} onConfirm={handleTcConfirm} onCancel={handleTcCancel} />
+        <TCPopup
+          open
+          row={tcTarget}
+          activeYears={activeYears}
+          onConfirm={handleTcConfirm}
+          onCancel={handleTcCancel}
+        />
       )}
       {splitTarget && (
         <SplitModal

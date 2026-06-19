@@ -6,12 +6,14 @@ import { Modal } from '../shared/Modal';
 interface TCPopupProps {
   open: boolean;
   row: AllocationRow;
+  /** Year columns shown in the grid; the popup mirrors them so both views agree. */
+  activeYears?: string[];
   onConfirm: (keByYear: Record<string, number>) => void;
   onCancel: () => void;
 }
 
-export function TCPopup({ open, row, onConfirm, onCancel }: TCPopupProps) {
-  const years = Object.keys(row.fteByYear).sort();
+export function TCPopup({ open, row, activeYears, onConfirm, onCancel }: TCPopupProps) {
+  const years = (activeYears ?? Object.keys(row.fteByYear)).slice().sort();
   const initial = () => Object.fromEntries(years.map((y) => [y, row.keByYear[y] ?? 0]));
   const [totalKe, setTotalKe] = useState(0);
   const [yearlyKe, setYearlyKe] = useState<Record<string, number>>(initial);

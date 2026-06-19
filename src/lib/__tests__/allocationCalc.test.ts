@@ -10,6 +10,7 @@ import {
   sortAllocationRows,
   groupRowsByPl,
   recalcKeByRate,
+  collectActiveYears,
 } from '../allocationCalc';
 import type { AllocationRow } from '../../types';
 import type { AllocationFilterState } from '../../types';
@@ -196,6 +197,16 @@ describe('applyAllocationFilters (ALLOC-BR-14, ALLOC-BR-25)', () => {
     const assignedRows = result.filter(r => r.societe !== null);
     expect(assignedRows).toHaveLength(0);
   });
+
+  it('unresolvedOnly also keeps rows whose societe is an empty string', () => {
+    const withEmpty = [
+      makeFilterRow({ id: 'assigned', societe: 'Renault SAS-Paris' }),
+      makeFilterRow({ id: 'empty', societe: '' }),
+      makeFilterRow({ id: 'null', societe: null }),
+    ];
+    const result = applyAllocationFilters(withEmpty, { ...baseFilters, unresolvedOnly: true });
+    expect(result.map(r => r.id).sort()).toEqual(['empty', 'null']);
+  });
 });
 
 describe('sortAllocationRows (ALLOC-BR-19)', () => {
@@ -300,7 +311,26 @@ describe('rowIsUnresolved', () => {
     expect(rowIsUnresolved(row({ societe: null, costType: 'TC' }))).toBe(true);
   });
 
+  it('is true when societe is an empty string (user picked — Unassigned —)', () => {
+    expect(rowIsUnresolved(row({ societe: '', costType: 'FTE' }))).toBe(true);
+    expect(rowIsUnresolved(row({ societe: '', costType: 'TC' }))).toBe(true);
+  });
+
   it('is false when a societe is assigned', () => {
     expect(rowIsUnresolved(row({ societe: 'Oyak Horse', costType: 'FTE' }))).toBe(false);
+  });
+});
+
+describe('collectActiveYears', () => {
+  it('returns the sorted union of all year keys across rows (fte + ke)', () => {
+    const rows = [
+      row({ fteByYear: { '2025': 0.5, '2026': 0.5 }, keByYear: { '2025': 1, '2026': 1 } }),
+      row({ fteByYear: { '2026': 0.5, '2027': 0.3 }, keByYear: { '2026': 1, '2027': 1 } }),
+    ];
+    expect(collectActiveYears(rows)).toEqual(['2025', '2026', '2027']);
+  });
+
+  it('returns an empty array for no rows', () => {
+    expect(collectActiveYears([])).toEqual([]);
   });
 });

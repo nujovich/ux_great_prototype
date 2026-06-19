@@ -108,4 +108,18 @@ describe('AllocationGrid', () => {
     expect(screen.getByText('Split')).toBeDefined();
     expect(screen.queryByText('Undo')).toBeNull();
   });
+
+  it('flags an unassigned FTE row red (row bg + select border)', () => {
+    render(<AllocationGrid {...defaultProps} rows={[row({ societe: null, costType: 'FTE' })]} />);
+    const select = screen.getByLabelText('Société for r1');
+    expect(select.closest('tr')!.className).toMatch(/bg-red-50/);
+    expect(select.className).toMatch(/border-red-400/);
+  });
+
+  it('treats an empty-string societe as unassigned (red)', () => {
+    render(<AllocationGrid {...defaultProps} rows={[row({ societe: '', costType: 'TC' })]} />);
+    const select = screen.getByLabelText('Société for r1');
+    expect(select.closest('tr')!.className).toMatch(/bg-red-50/);
+    expect(select.className).toMatch(/border-red-400/);
+  });
 });
