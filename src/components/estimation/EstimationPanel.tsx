@@ -71,6 +71,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   const bulkSetEstimation = useDataStore((s) => s.bulkSetEstimation);
   const bulkPromote = useDataStore((s) => s.bulkPromote);
   const pushToast = useUIStore((s) => s.pushToast);
+  const clearSelection = useUIStore((s) => s.clearSelection);
 
   const [selections, setSelections] = useState<InductorSelection[]>([]);
   const [customJUs, setCustomJUs] = useState<CustomJU[]>([]);
@@ -293,7 +294,13 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
       bulkSetEstimation(bulkLines.filter((l) => l.id !== line!.id).map((l) => l.id), base);
     }
     setHasDraftedThisSession(true);
-    pushToast(t('panel.toastDraftSaved', { id: line!.id }), 'success');
+    const bulkCount = bulkLines && bulkLines.length > 1 ? bulkLines.length : 0;
+    pushToast(
+      bulkCount
+        ? t('panel.toastDraftSavedBulk', { n: bulkCount })
+        : t('panel.toastDraftSaved', { id: line!.id }),
+      'success',
+    );
     setShowSummary(true);
   }
 
@@ -310,8 +317,17 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
       // lines were already saved as Draft in handleSaveDraft (required before promote).
       bulkPromote(bulkLines.filter((l) => l.id !== line!.id).map((l) => l.id));
     }
-    pushToast(t('panel.toastPromoted', { id: line!.id }), 'success');
+    const bulkCount = bulkLines && bulkLines.length > 1 ? bulkLines.length : 0;
+    pushToast(
+      bulkCount
+        ? t('panel.toastPromotedBulk', { n: bulkCount })
+        : t('panel.toastPromoted', { id: line!.id }),
+      'success',
+    );
     setConfirmPromote(false);
+    // Bug fix: clear the row selection so checkboxes un-stick and the bulk
+    // action bar disappears once the (bulk) promote completes.
+    clearSelection();
     onClose();
   }
 

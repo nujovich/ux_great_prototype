@@ -318,7 +318,9 @@ export interface Translations {
     selectCranWarning: string;
     noWorkloadStandard: string;
     toastDraftSaved: string;
+    toastDraftSavedBulk: string;
     toastPromoted: string;
+    toastPromotedBulk: string;
     clearCran: string;
     totalFTEs: string;
     totalBh: string;
