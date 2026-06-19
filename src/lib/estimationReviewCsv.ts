@@ -61,6 +61,9 @@ export function generateCsv(
 }
 
 export function downloadCsv(csv: string, filename: string): void {
+  // HIW-175 GAP: never trigger a download for an empty CSV (e.g. "Export all
+  // filtered" while the grid has zero rows). generateCsv returns '' in that case.
+  if (!csv) return;
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

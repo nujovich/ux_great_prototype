@@ -12,10 +12,11 @@ import { useT } from '../i18n/useT';
 import { useSortable } from '../lib/useSortable';
 import { deriveGridRow } from '../lib/estimationReviewRows';
 import { generateCsv, downloadCsv } from '../lib/estimationReviewCsv';
-import { groupRowsByProject } from '../lib/estimationReviewGrouping';
+import { groupRowsByPlNumber } from '../lib/estimationReviewGrouping';
+import { FILTER_METIERS } from '../components/grid/filterConstants';
 import { ENGINEERS } from '../fixtures/engineers';
 import { INDUCTORS } from '../fixtures/inductors';
-import type { LineStatus, Metier } from '../types';
+import type { LineStatus } from '../types';
 
 export function EstimationReviewPage() {
   return (
@@ -65,10 +66,10 @@ function ReviewContent() {
   const [filterStatuses, setFilterStatuses] = useState<LineStatus[]>([]);
   const [filterAssignee, setFilterAssignee] = useState('');
 
-  const availableMetiers = useMemo(
-    () => [...new Set(allRows.map((r) => r.metier).filter(Boolean))] as Metier[],
-    [allRows],
-  );
+  // HIW-175 KO: the métier filter must only offer estimable métiers. Non-estimable
+  // métiers (H-NP, H-TESTING, H-PROJECT) are excluded via the shared FILTER_METIERS
+  // constant — they may appear as grid rows but are never filter options.
+  const availableMetiers = FILTER_METIERS;
   const availableStatuses: LineStatus[] = [
     'To do', 'Draft', 'Estimated', 'Sent', 'Approved', 'Modification Requested',
   ];
@@ -115,8 +116,10 @@ function ReviewContent() {
   const { sorted, requestSort, getSortIcon } = useSortable(filteredRows);
 
   // ── Grouping ──────────────────────────────────────────────
+  // One table per PL Number; table order is immutable (sorted by PL Number),
+  // while column sorting only reorders rows within each table.
   const groups = useMemo(
-    () => groupRowsByProject(sorted, cycleYears),
+    () => groupRowsByPlNumber(sorted, cycleYears),
     [sorted, cycleYears],
   );
 
@@ -131,6 +134,11 @@ function ReviewContent() {
   }
 
   function handleExportAllFiltered() {
+    // HIW-175 GAP: nothing in the grid → no CSV is produced.
+    if (filteredRows.length === 0) {
+      pushToast(t('estReview.exportNothingFiltered'), 'info');
+      return;
+    }
     const csv = generateCsv(filteredRows, [], cycleYears);
     downloadCsv(csv, 'estimation-review-all.csv');
   }
@@ -217,7 +225,7 @@ function ReviewContent() {
         </div>
       </div>
 
-      {/* Grid — one subtable per project */}
+      {/* Grid — one subtable per PL Number */}
       {filteredRows.length === 0 ? (
         <EmptyState
           title={hasActiveFilters ? t('estReview.noLinesFiltered') : t('estReview.noLines')}
@@ -225,9 +233,10 @@ function ReviewContent() {
       ) : (
         <div className="space-y-6">
           {groups.map((group) => (
-            <div key={group.projectName} className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <div key={group.plNumber} className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
               <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2">
-                <span className="text-sm font-semibold text-slate-700">{group.projectName}</span>
+                <span className="font-mono text-sm font-semibold text-slate-700">{group.plNumber}</span>
+                <span className="text-sm text-slate-500">{group.plName}</span>
                 <span className="text-xs text-slate-400">
                   {t('estReview.groupLineCount', { n: group.rows.length })}
                 </span>
@@ -280,10 +289,10 @@ function ReviewContent() {
                             className="cursor-pointer"
                           />
                         </td>
-                        <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{row.id}</td>
+                        <td className="px-3 py-2.5 font-mono text-xs text-slate-700">{row.plNumber ?? row.id}</td>
                         <td className="px-3 py-2.5">
-                          <div className="font-medium text-slate-900">{row.lineName}</div>
-                          <div className="text-xs text-slate-500">{row.projectName}</div>
+                          <div className="font-medium text-slate-900">{row.plName ?? row.lineName}</div>
+                          <div className="text-xs text-slate-500">{row.lineName}</div>
                         </td>
                         <td className="px-3 py-2.5 text-slate-600">{row.metier ?? '—'}</td>
                         <td className="px-3 py-2.5"><StatusBadge status={row.status} /></td>
