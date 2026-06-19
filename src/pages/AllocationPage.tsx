@@ -26,8 +26,6 @@ const EMPTY_FILTERS: AllocationFilterState = {
   unresolvedOnly: false,
 };
 
-const ACTIVE_YEARS = ['2025', '2026'];
-
 function AllocationContent() {
   const can = useRoleStore((s) => s.can);
   const allocations = useDataStore((s) => s.allocations);
@@ -41,6 +39,22 @@ function AllocationContent() {
       ...r,
       baseKeByYear: r.baseKeByYear ?? { ...r.keByYear },
     })),
+  );
+
+  // Year columns are derived from the data (union of all rows' FTE/K€ years) so a row
+  // with a year the grid didn't hardcode (e.g. 2027) still shows its FTE/K€ — otherwise
+  // Total FTE wouldn't match the sum of the visible yearly columns.
+  const activeYears = useMemo(
+    () =>
+      [
+        ...new Set(
+          displayRows.flatMap((r) => [
+            ...Object.keys(r.fteByYear),
+            ...Object.keys(r.keByYear),
+          ]),
+        ),
+      ].sort(),
+    [displayRows],
   );
 
   // Filters — preserved across in-page actions, reset on unmount (ALLOC-BR-14)
@@ -136,18 +150,26 @@ function AllocationContent() {
     const pcts = slots.map((s) => s.percentage);
     const childFteByYear = splitFteProportional(splitTarget.fteByYear, pcts);
     const childKeByYear = splitFteProportional(splitTarget.keByYear, pcts);
-    const children: AllocationRow[] = slots.map((slot, i) => ({
-      ...splitTarget,
-      id: `${splitTarget.id}-split-${i}`,
-      societe: slot.societe || null,
-      percentage: slot.percentage,
-      fteByYear: childFteByYear[i],
-      keByYear: childKeByYear[i],
-      baseKeByYear: childKeByYear[i],
-      isSplitChild: true,
-      splitParentId: splitTarget.id,
-      isDirty: true,
-    }));
+    const children: AllocationRow[] = slots.map((slot, i) => {
+      // Total FTE of a split child is its own share (sum of its yearly FTE), not the
+      // parent's total — otherwise the children's Total FTE would sum to N× the JU.
+      const childTotalFte =
+        Math.round(Object.values(childFteByYear[i]).reduce((a, b) => a + b, 0) * 10000) / 10000;
+      return {
+        ...splitTarget,
+        id: `${splitTarget.id}-split-${i}`,
+        societe: slot.societe || null,
+        percentage: slot.percentage,
+        fteByYear: childFteByYear[i],
+        keByYear: childKeByYear[i],
+        baseKeByYear: childKeByYear[i],
+        totalFte: childTotalFte,
+        fte: childTotalFte,
+        isSplitChild: true,
+        splitParentId: splitTarget.id,
+        isDirty: true,
+      };
+    });
     setDisplayRows((prev) => {
       const idx = prev.findIndex((r) => r.id === splitTarget.id);
       return [...prev.slice(0, idx), ...children, ...prev.slice(idx + 1)];
@@ -316,7 +338,7 @@ function AllocationContent() {
           onChangeCostType={handleChangeCostType}
           onSplit={(id) => setSplitTarget(displayRows.find((r) => r.id === id) ?? null)}
           onUndoSplit={handleUndoSplit}
-          activeYears={ACTIVE_YEARS}
+          activeYears={activeYears}
           canViewKeuro={can('view:k-euro-rates')}
           onEditTcKe={handleEditTcKe}
         />
