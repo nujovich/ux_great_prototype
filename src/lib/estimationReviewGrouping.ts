@@ -10,8 +10,9 @@ export interface GroupSubtotal {
   yearlyKEuro: Record<string, number>;
 }
 
-export interface ProjectGroup {
-  projectName: string;
+export interface PlGroup {
+  plNumber: string;
+  plName: string;
   rows: EstimationReviewGridRow[];
   subtotal: GroupSubtotal;
 }
@@ -25,25 +26,33 @@ function emptySubtotal(years: string[]): GroupSubtotal {
 }
 
 /**
- * Group estimation-review rows into one bucket per project (projectName),
- * preserving both intra-group row order and the order each project first appears.
- * Mirrors the allocation grid's plNumber grouping one level up the hierarchy:
- * each estimation-review row is already a project line, so rows are grouped by
- * their parent project.
+ * Group estimation-review rows into one table per PL Number (HIW-175 retest):
+ * each table represents a single PL Number and holds its métier lines.
+ *
+ * Table order is IMMUTABLE — groups are always emitted sorted by PL Number,
+ * independent of any column sort applied to the rows. Column sorting reorders
+ * rows WITHIN a table but never reorders the tables themselves.
+ *
+ * Falls back to the line id / line name when plNumber / plName are absent so
+ * that loose fixtures (and unit-test rows) still group deterministically.
  */
-export function groupRowsByProject(
+export function groupRowsByPlNumber(
   rows: EstimationReviewGridRow[],
   years: string[],
-): ProjectGroup[] {
-  const order: string[] = [];
+): PlGroup[] {
   const buckets = new Map<string, EstimationReviewGridRow[]>();
+  const names = new Map<string, string>();
   for (const r of rows) {
-    const key = r.projectName;
-    if (!buckets.has(key)) { buckets.set(key, []); order.push(key); }
+    const key = r.plNumber ?? r.id;
+    if (!buckets.has(key)) {
+      buckets.set(key, []);
+      names.set(key, r.plName ?? r.lineName);
+    }
     buckets.get(key)!.push(r);
   }
-  return order.map((projectName) => {
-    const groupRows = buckets.get(projectName)!;
+  const orderedKeys = [...buckets.keys()].sort((a, b) => a.localeCompare(b));
+  return orderedKeys.map((plNumber) => {
+    const groupRows = buckets.get(plNumber)!;
     const subtotal = emptySubtotal(years);
     for (const r of groupRows) {
       subtotal.totalFte += r.totalFte;
@@ -56,6 +65,6 @@ export function groupRowsByProject(
         subtotal.yearlyKEuro[y] += r.yearlyKEuro[y] ?? 0;
       }
     }
-    return { projectName, rows: groupRows, subtotal };
+    return { plNumber, plName: names.get(plNumber)!, rows: groupRows, subtotal };
   });
 }

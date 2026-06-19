@@ -98,6 +98,7 @@ export const es: Translations = {
     exportSelected: 'Exportar selección a CSV',
     exportAllFiltered: 'Exportar todo el filtrado a CSV',
     exportNoneSelected: 'Sin filas seleccionadas. Usá los checks para seleccionar.',
+    exportNothingFiltered: 'Nada para exportar: no hay filas en la vista actual.',
     noLines: 'No hay líneas de estimación en el ciclo activo.',
     noLinesFiltered: 'Ninguna línea coincide con los filtros actuales.',
     selectAll: 'Seleccionar todo',

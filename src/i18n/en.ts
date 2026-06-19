@@ -98,6 +98,7 @@ export const en: Translations = {
     exportSelected: 'Export selected to CSV',
     exportAllFiltered: 'Export all filtered to CSV',
     exportNoneSelected: 'No rows selected. Use checkboxes to select rows.',
+    exportNothingFiltered: 'Nothing to export: no rows in the current view.',
     noLines: 'No estimation lines in active cycle.',
     noLinesFiltered: 'No lines match the current filters.',
     selectAll: 'Select all',

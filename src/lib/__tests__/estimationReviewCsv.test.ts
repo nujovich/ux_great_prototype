@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { generateCsv } from '../estimationReviewCsv';
+import { describe, it, expect, vi } from 'vitest';
+import { generateCsv, downloadCsv } from '../estimationReviewCsv';
 import type { EstimationReviewGridRow } from '../estimationReviewRows';
 import type { ProjectLine } from '../../types';
 
@@ -75,5 +75,14 @@ describe('generateCsv', () => {
     const csv = generateCsv(rows, [], cycleYears);
     expect(csv).toContain('PL-001');
     expect(csv).toContain('PL-002');
+  });
+});
+
+describe('downloadCsv', () => {
+  it('does NOT trigger a download for an empty CSV (HIW-175 GAP)', () => {
+    const createEl = vi.spyOn(document, 'createElement');
+    downloadCsv('', 'estimation-review-all.csv');
+    expect(createEl).not.toHaveBeenCalled();
+    createEl.mockRestore();
   });
 });
