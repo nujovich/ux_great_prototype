@@ -1,22 +1,28 @@
 import type { Estimation } from '../types';
 
-export type PanelCopyAction = 'legacy' | 'copy' | 'none';
+export interface PanelCopyButtons {
+  /** Import a legacy (historical-cycle) estimation into the form. */
+  legacy: boolean;
+  /** Copy the current estimation to other compatible project lines. */
+  copy: boolean;
+}
 
 /**
- * Which contextual copy/import button the pre-estimation panel shows.
- * - Unsaved (no persisted estimation) + editable → import a legacy estimation.
- * - Saved draft (persisted estimation exists) → copy from other project lines.
- * - Locked or missing the copy capability → no button.
+ * Which contextual copy/import buttons the pre-estimation panel shows.
+ * The two actions are independent (HIW-174 retest2): importing a legacy
+ * estimation stays available for the whole editing session, even after the
+ * line has been saved as Draft, so it no longer vanishes once `existing` is set.
+ * - legacy import → whenever the panel is editable (and the copy capability is granted).
+ * - copy to other lines → whenever a persisted estimation exists to copy from.
+ * - Locked or missing the copy capability → no buttons.
  */
-export function panelCopyAction(opts: {
+export function panelCopyButtons(opts: {
   existing: Estimation | null | undefined;
   canEdit: boolean;
   canCopy: boolean;
   locked: boolean;
-}): PanelCopyAction {
+}): PanelCopyButtons {
   const { existing, canEdit, canCopy, locked } = opts;
-  if (!canCopy || locked) return 'none';
-  if (existing) return 'copy';
-  if (canEdit) return 'legacy';
-  return 'none';
+  if (!canCopy || locked) return { legacy: false, copy: false };
+  return { legacy: canEdit, copy: !!existing };
 }

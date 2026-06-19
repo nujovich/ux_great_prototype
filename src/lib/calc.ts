@@ -28,7 +28,8 @@ export interface EstimationTotals {
  *   man_day → man-days (→ FTE = man-days / 209), bench_hours → BH, kilometres → KM.
  * Cran-less inductors are skipped (BR-12). The global occurrence multiplies every bucket;
  * a global of 0 yields all-zero output (BR-13). K€ is not computed in Pre-Estimation
- * (SDD §11) — `keuro` is a stub 0. Custom JUs contribute their `days` to man-days.
+ * (SDD §11) — `keuro` is a stub 0. Custom JUs are bucketed by their own `unitType`
+ * exactly like standard JUs (man_day → man-days/FTE, bench_hours, kilometres; kiloeuros ignored).
  */
 export function calcEstimationTotals(
   selections: InductorSelection[],
@@ -60,7 +61,15 @@ export function calcEstimationTotals(
     }
   }
 
-  for (const c of customJUs) manDays += (c.variable ?? 0) * c.occurrence + (c.fixed ?? 0);
+  for (const c of customJUs) {
+    const total = (c.variable ?? 0) * c.occurrence + (c.fixed ?? 0);
+    switch (c.unitType) {
+      case 'bench_hours': benchHours += total; break;
+      case 'kilometres': km += total; break;
+      case 'kiloeuros': break; // ignored in Pre-Estimation (K€ computed in Allocation, §11)
+      default: manDays += total; break; // man_day (and legacy custom JUs without unitType)
+    }
+  }
 
   manDays *= g;
   benchHours *= g;

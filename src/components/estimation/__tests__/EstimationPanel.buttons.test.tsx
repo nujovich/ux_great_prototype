@@ -26,7 +26,7 @@ describe('EstimationPanel — contextual copy/import buttons', () => {
     expect(screen.queryByRole('button', { name: /copy from other project lines/i })).toBeNull();
   });
 
-  it('shows "Copy from other project lines" once a draft exists', () => {
+  it('keeps "Import legacy" available AND adds "Copy to other project lines" once a draft exists (HIW-174 retest2)', () => {
     const data = useDataStore.getState();
     const line = data.lines.find((l) => l.status === 'To do')!;
     // Seed a persisted estimation so `existing` is truthy
@@ -41,9 +41,10 @@ describe('EstimationPanel — contextual copy/import buttons', () => {
       status: 'Draft',
       draftedAt: new Date().toISOString(),
     });
-    // Render with Draft status — still editable (not locked), existing is truthy → 'copy'
+    // Render with Draft status — still editable (not locked), existing is truthy.
+    // The legacy import button must NOT disappear after saving.
     render(<EstimationPanel line={{ ...line, status: 'Draft' }} onClose={() => {}} />);
-    expect(screen.getByRole('button', { name: /copy from other project lines/i })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /import legacy estimation/i })).toBeNull();
+    expect(screen.getByRole('button', { name: /copy to other project lines/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /import legacy estimation/i })).toBeInTheDocument();
   });
 });

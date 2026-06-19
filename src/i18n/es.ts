@@ -272,7 +272,7 @@ export const es: Translations = {
     legendInherits: 'Hereda ocurr. inductor',
     legendLocked: 'Bloqueada 🔒',
     importLegacy: 'Importar estimación legacy',
-    copyFromLines: 'Copiar de otras project lines',
+    copyFromLines: 'Copiar a otras project lines',
     toastLegacyPreloaded: 'Estimación legacy "{label}" cargada en el formulario — revisá y guardá',
     close: 'Cerrar',
     saveDraft: 'Guardar borrador',

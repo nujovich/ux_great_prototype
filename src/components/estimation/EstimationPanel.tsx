@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Lock, Copy, X, ChevronDown, ChevronRight, Trash2, Search, Layers } from 'lucide-react';
-import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran, Estimation } from '../../types';
+import type { InductorSelection, JUOccurrence, CustomJU, ProjectLine, JU, Cran, Estimation, UnitType } from '../../types';
 import { isEstimationDirty } from '../../lib/estimationDirty';
 import { INDUCTORS } from '../../fixtures/inductors';
 import { calcEstimationTotals } from '../../lib/calc';
@@ -24,11 +24,19 @@ import { RelatedLinesBanner } from './RelatedLinesBanner';
 import { useT } from '../../i18n/useT';
 import { canSaveDraft, canPromoteDefinitive } from '../../lib/saveGate';
 import { buildProtoEstimation } from '../../lib/protoPersist';
-import { panelCopyAction } from '../../lib/estimationPanelButtons';
+import { panelCopyButtons } from '../../lib/estimationPanelButtons';
 
 const UNIT_LABEL: Record<string, string> = {
   man_day: 'MD', bench_hours: 'BH', kilometres: 'km', kiloeuros: 'k€',
 };
+
+// Custom JU unit-type dropdown options (HIW-174 retest2). Same set as standard JUs.
+const UNIT_OPTIONS: { value: UnitType; label: string }[] = [
+  { value: 'man_day', label: 'Man Day' },
+  { value: 'bench_hours', label: 'Bench Hours' },
+  { value: 'kilometres', label: 'Kilometres' },
+  { value: 'kiloeuros', label: 'Kiloeuros' },
+];
 
 function formatJuTotal(unit: string | undefined, value: number): string {
   switch (unit) {
@@ -61,6 +69,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   const protoEst = useDataStore((s) => (line ? s.prototypeEstimations[line.id] : undefined));
   const setPrototypeEstimation = useDataStore((s) => s.setPrototypeEstimation);
   const bulkSetEstimation = useDataStore((s) => s.bulkSetEstimation);
+  const bulkPromote = useDataStore((s) => s.bulkPromote);
   const pushToast = useUIStore((s) => s.pushToast);
 
   const [selections, setSelections] = useState<InductorSelection[]>([]);
@@ -71,6 +80,7 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [showManage, setShowManage] = useState(false);
   const [showCopyModal, setShowCopyModal] = useState(false);
+  const [copyMode, setCopyMode] = useState<'legacy' | 'copy'>('legacy');
   const [confirmPromote, setConfirmPromote] = useState(false);
   const [hasDraftedThisSession, setHasDraftedThisSession] = useState<boolean>(false);
   const [showSummary, setShowSummary] = useState(false);
@@ -114,7 +124,8 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
   const canCopy = can('copy:estimation');
   const canEditCustomJU = can('edit:custom-jus') && !locked;
 
-  const copyAction = panelCopyAction({ existing, canEdit, canCopy, locked });
+  const copyButtons = panelCopyButtons({ existing, canEdit, canCopy, locked });
+  const openCopyModal = (mode: 'legacy' | 'copy') => { setCopyMode(mode); setShowCopyModal(true); };
 
   const totals = useMemo(
     () => calcEstimationTotals(selections, INDUCTORS, customJUs, globalOccurrences),
@@ -294,6 +305,11 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
       return;
     }
     persist('Estimated');
+    if (bulkLines && bulkLines.length > 1) {
+      // HIW-174 retest2: promote EVERY selected line, not just the first. The other
+      // lines were already saved as Draft in handleSaveDraft (required before promote).
+      bulkPromote(bulkLines.filter((l) => l.id !== line!.id).map((l) => l.id));
+    }
     pushToast(t('panel.toastPromoted', { id: line!.id }), 'success');
     setConfirmPromote(false);
     onClose();
@@ -540,13 +556,13 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
           {/* Footer */}
           <div className="flex flex-shrink-0 items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-6 py-3">
             <div>
-              {copyAction === 'legacy' && (
-                <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
+              {copyButtons.legacy && (
+                <Button size="sm" variant="secondary" onClick={() => openCopyModal('legacy')}>
                   <Copy size={14} /> {t('panel.importLegacy')}
                 </Button>
               )}
-              {copyAction === 'copy' && (
-                <Button size="sm" variant="secondary" onClick={() => setShowCopyModal(true)}>
+              {copyButtons.copy && (
+                <Button size="sm" variant="secondary" onClick={() => openCopyModal('copy')}>
                   <Copy size={14} /> {t('panel.copyFromLines')}
                 </Button>
               )}
@@ -596,10 +612,10 @@ export function EstimationPanel({ line, onClose, navLines, onSwitchLine, bulkLin
         </ul>
       </Modal>
 
-      {showCopyModal && line && copyAction !== 'none' && (
+      {showCopyModal && line && (copyButtons.legacy || copyButtons.copy) && (
         <CopyEstimationModal
           sourceLine={line}
-          mode={copyAction === 'legacy' ? 'legacy' : 'copy'}
+          mode={copyMode}
           onApplyLegacy={handleApplyLegacy}
           onClose={() => setShowCopyModal(false)}
         />
@@ -957,7 +973,7 @@ function CustomJUSection({
           <Button
             size="sm"
             variant="secondary"
-            onClick={() => onChange((j) => [...j, { id: `ju-${Date.now()}`, name: '', variable: 1, fixed: 0, occurrence: 1 }])}
+            onClick={() => onChange((j) => [...j, { id: `ju-${Date.now()}`, name: '', variable: 1, fixed: 0, occurrence: 1, unitType: 'man_day' }])}
           >
             + Add JU
           </Button>
@@ -971,6 +987,7 @@ function CustomJUSection({
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
             <span className="flex-1">{t('panel.customName')}</span>
+            <span className="w-24 text-left">{t('panel.colUnit')}</span>
             <span className="w-14 text-right">{t('panel.colVar')}</span>
             <span className="w-14 text-right">{t('panel.colFixed')}</span>
             <span className="w-14 text-right">{t('panel.colOcc')}</span>
@@ -982,6 +999,13 @@ function CustomJUSection({
               <input value={ju.name} placeholder={t('panel.customName')} disabled={!canEditCustomJU}
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, name: e.target.value } : x)))}
                 className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs disabled:bg-slate-50" />
+              <select value={ju.unitType} disabled={!canEditCustomJU} title={t('panel.colUnit')}
+                onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, unitType: e.target.value as UnitType } : x)))}
+                className="w-24 rounded border border-slate-300 px-1 py-1 text-xs disabled:bg-slate-50">
+                {UNIT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
               <input type="number" min={0} step={0.5} value={ju.variable} disabled={!canEditCustomJU} title={t('panel.colVar')}
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, variable: Math.max(0, Number(e.target.value) || 0) } : x)))}
                 className="w-14 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50" />
@@ -991,7 +1015,7 @@ function CustomJUSection({
               <input type="number" min={0} value={ju.occurrence} disabled={!canEditCustomJU} title={t('panel.colOcc')}
                 onChange={(e) => onChange((j) => j.map((x, i) => (i === idx ? { ...x, occurrence: Math.max(0, Number(e.target.value) || 0) } : x)))}
                 className="w-14 rounded border border-slate-300 px-2 py-1 text-right text-xs disabled:bg-slate-50" />
-              <span className="w-14 text-right text-[10px] font-mono text-brand-700">{formatDays(juTotal({ variable: ju.variable, fixed: ju.fixed } as JU, ju.occurrence))}</span>
+              <span className="w-14 text-right text-[10px] font-mono text-brand-700">{formatJuTotal(ju.unitType, juTotal({ variable: ju.variable, fixed: ju.fixed } as JU, ju.occurrence))}</span>
               {canEditCustomJU && (
                 <button onClick={() => onChange((j) => j.filter((_, i) => i !== idx))} className="text-slate-300 hover:text-red-500"><Trash2 size={13} /></button>
               )}

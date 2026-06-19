@@ -79,10 +79,33 @@ describe('calcEstimationTotals (HIW-174 §8/§9)', () => {
     expect(t.keuro).toBe(0);
   });
 
-  it('custom JUs contribute (variable × occurrence) + fixed to man-days', () => {
-    const customJUs: CustomJU[] = [{ id: 'c1', name: 'x', variable: 2, fixed: 1, occurrence: 3 }];
+  it('man_day custom JUs contribute (variable × occurrence) + fixed to man-days', () => {
+    const customJUs: CustomJU[] = [{ id: 'c1', name: 'x', variable: 2, fixed: 1, occurrence: 3, unitType: 'man_day' }];
     // (2 × 3) + 1 = 7, × global 2 = 14
     expect(calcEstimationTotals([], [], customJUs, 2).manDays).toBeCloseTo(14);
+  });
+
+  it('buckets custom JUs by their unit type, like standard JUs (HIW-174 retest2)', () => {
+    const customJUs: CustomJU[] = [
+      { id: 'c-md', name: 'md', variable: 50, fixed: 0, occurrence: 1, unitType: 'man_day' },     // 50 MD
+      { id: 'c-bh', name: 'bh', variable: 100, fixed: 0, occurrence: 1, unitType: 'bench_hours' }, // 100 BH
+      { id: 'c-km', name: 'km', variable: 30, fixed: 0, occurrence: 1, unitType: 'kilometres' },   // 30 KM
+    ];
+    const t = calcEstimationTotals([], [], customJUs, 1);
+    expect(t.manDays).toBeCloseTo(50);
+    expect(t.benchHours).toBeCloseTo(100);
+    expect(t.km).toBeCloseTo(30);
+    // 50 Man Day → 50/209 added to Total FTEs (Enrique's example)
+    expect(t.fte).toBeCloseTo(50 / 209, 2);
+  });
+
+  it('ignores kiloeuros custom JUs in Pre-Estimation, mirroring standard JUs (§11)', () => {
+    const customJUs: CustomJU[] = [{ id: 'c-ke', name: 'ke', variable: 100, fixed: 5, occurrence: 2, unitType: 'kiloeuros' }];
+    const t = calcEstimationTotals([], [], customJUs, 1);
+    expect(t.manDays).toBe(0);
+    expect(t.benchHours).toBe(0);
+    expect(t.km).toBe(0);
+    expect(t.keuro).toBe(0);
   });
 
   it('calcTotalDays returns the man-days bucket (backward-compatible)', () => {
