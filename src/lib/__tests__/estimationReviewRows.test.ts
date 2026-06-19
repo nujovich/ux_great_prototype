@@ -22,7 +22,7 @@ const mockLine: ProjectLine = {
 const mockEstimation: Estimation = {
   lineId: 'PL-001',
   inductorSelections: [],
-  customJUs: [{ id: 'cu-1', name: 'Dev', variable: 20, fixed: 0, occurrence: 1 }],
+  customJUs: [{ id: 'cu-1', name: 'Dev', variable: 20, fixed: 0, occurrence: 1, unitType: 'man_day' }],
   globalOccurrences: 1,
   yearlyBreakdown: [25, 25],
   totalDays: 20,

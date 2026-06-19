@@ -26,6 +26,7 @@ export type ProjectLineListResponse = Schema['ProjectLineListResponse'];
 
 // ── Estimation ────────────────────────────────────────────
 export type JU = Schema['JU'];
+export type UnitType = Schema['UnitType'];
 export type Cran = Schema['Cran'];
 export type Inductor = Schema['Inductor'];
 export type EstimationPayload = Schema['EstimationPayload'];
@@ -157,6 +158,10 @@ export interface CustomJU {
   variable: number;
   fixed: number;
   occurrence: number;
+  /** Mandatory unit type (HIW-174 retest2). Drives which total bucket the JU feeds,
+   * exactly like a standard JU's `unit_type` (man_day → FTE, bench_hours, kilometres,
+   * kiloeuros). */
+  unitType: UnitType;
 }
 
 

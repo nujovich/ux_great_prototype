@@ -53,6 +53,7 @@ export function mergeLegacyEstimation(
         variable: h.variable,
         fixed: h.fixed,
         occurrence: h.occurrence,
+        unitType: 'man_day',
       });
       continue;
     }

@@ -4,7 +4,7 @@ import type { Estimation } from '../../types';
 
 const base: Omit<Estimation, 'lineId'> = {
   inductorSelections: [{ inductorId: 'i1', selectedCranId: 'c1', inductorOccurrence: 1, juOccurrences: [{ juId: 'j1', occurrence: 2, locked: false }] }],
-  customJUs: [{ id: 'cu1', name: 'X', variable: 1, fixed: 0, occurrence: 1 }],
+  customJUs: [{ id: 'cu1', name: 'X', variable: 1, fixed: 0, occurrence: 1, unitType: 'man_day' }],
   globalOccurrences: 2,
   yearlyBreakdown: [],
   totalDays: 10,

@@ -14,7 +14,7 @@ describe('isEstimationDirty (HIW-174 §4)', () => {
     expect(isEstimationDirty(empty, { ...empty, globalOccurrences: 2 })).toBe(true);
   });
   it('detects added custom JUs', () => {
-    expect(isEstimationDirty(empty, { ...empty, customJUs: [{ id: 'c1', name: 'x', variable: 1, fixed: 0, occurrence: 2 }] })).toBe(true);
+    expect(isEstimationDirty(empty, { ...empty, customJUs: [{ id: 'c1', name: 'x', variable: 1, fixed: 0, occurrence: 2, unitType: 'man_day' }] })).toBe(true);
   });
   it('detects changed inductor selections', () => {
     const cur: DirtyState = { ...empty, inductorSelections: [{ inductorId: 'i1', selectedCranId: 'c1', inductorOccurrence: 1, juOccurrences: [] }] };
@@ -23,7 +23,7 @@ describe('isEstimationDirty (HIW-174 §4)', () => {
   it('is false when a previously-saved (non-empty) baseline equals the current state', () => {
     const saved: DirtyState = {
       inductorSelections: [{ inductorId: 'i1', selectedCranId: 'c1', inductorOccurrence: 2, juOccurrences: [{ juId: 'j1', occurrence: 2, locked: false }] }],
-      customJUs: [{ id: 'c1', name: 'x', variable: 1, fixed: 0, occurrence: 3 }],
+      customJUs: [{ id: 'c1', name: 'x', variable: 1, fixed: 0, occurrence: 3, unitType: 'man_day' }],
       globalOccurrences: 4,
     };
     expect(isEstimationDirty(saved, { ...saved })).toBe(false);

@@ -19,6 +19,7 @@ interface DataState {
   setEstimation: (lineId: string, est: Estimation) => void;
   copyEstimation: (sourceId: string, targetIds: string[]) => void;
   bulkSetEstimation: (lineIds: string[], base: Omit<Estimation, 'lineId'>) => void;
+  bulkPromote: (lineIds: string[]) => void;
   addComment: (comment: Omit<EstimationComment, 'id' | 'createdAt'>) => void;
   createCycle: (name: string, startDate: string, endDate: string) => void;
   prototypeEstimations: Record<string, PrototypeEstimation>;
@@ -86,6 +87,27 @@ export const useDataStore = create<DataState>((set, get) => ({
               estimatedKEuro: base.totalKEuro,
               lastUpdatedAt: new Date().toISOString(),
             }
+          : l,
+      );
+      return { estimations, lines };
+    }),
+  bulkPromote: (lineIds) =>
+    set((s) => {
+      const now = new Date().toISOString();
+      const eligible = new Set(
+        lineIds.filter((id) => {
+          const line = s.lines.find((l) => l.id === id);
+          return line ? canTransition(line.status, 'Estimated') : false;
+        }),
+      );
+      const estimations = { ...s.estimations };
+      for (const id of eligible) {
+        const est = estimations[id];
+        if (est) estimations[id] = { ...est, status: 'Estimated', estimatedAt: now };
+      }
+      const lines = s.lines.map((l) =>
+        eligible.has(l.id)
+          ? { ...l, status: 'Estimated' as LineStatus, estimatedAt: now, lastUpdatedAt: now }
           : l,
       );
       return { estimations, lines };
