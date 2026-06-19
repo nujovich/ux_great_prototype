@@ -40,5 +40,10 @@ describe('AllocationPage — split K€ is proportional', () => {
     const firstChildRow = screen.getByLabelText('Société for alloc-1-a-split-0').closest('tr')!;
     const cells = within(firstChildRow).getAllByRole('cell').map((c) => c.textContent);
     expect(cells).toContain('255');
+
+    // Total FTE of the child is its own share (1.0 × 0.6 = 0.60), not the parent's 1.00,
+    // so the children's Total FTE sums to the JU total (ALLOC-BR-23).
+    expect(cells).toContain('0.60');
+    expect(cells).not.toContain('1.00');
   });
 });
