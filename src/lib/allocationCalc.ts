@@ -74,7 +74,7 @@ export function applyAllocationFilters(
     if (filters.societe === '__unassigned__' && row.societe) return false;
     if (filters.societe && filters.societe !== '__unassigned__' && row.societe !== filters.societe) return false;
     if (filters.costType && row.costType !== filters.costType) return false;
-    if (filters.unresolvedOnly && row.societe !== null) return false;
+    if (filters.unresolvedOnly && !rowIsUnresolved(row)) return false;
     return true;
   });
 }
@@ -119,10 +119,24 @@ export function sortAllocationRows(rows: AllocationRow[]): AllocationRow[] {
 /**
  * A row is "unresolved" when it has no societe assigned. Used to flag rows on first
  * render: a blocking error for TSA/TC (ALLOC-BR-06/13), a non-blocking warning for FTE
- * (ALLOC-BR-07). Independent of dirty state.
+ * (ALLOC-BR-07). Independent of dirty state. Treats both `null` and `''` (the value the
+ * "— Unassigned —" option emits) as unassigned so every cleared row is flagged.
  */
 export function rowIsUnresolved(row: AllocationRow): boolean {
-  return row.societe == null;
+  return !row.societe;
+}
+
+/**
+ * Sorted union of every year that appears in the rows' FTE or K€ maps. Drives both the
+ * grid year columns and the TC popup inputs so the two never disagree on which years exist.
+ */
+export function collectActiveYears(rows: AllocationRow[]): string[] {
+  const years = new Set<string>();
+  for (const row of rows) {
+    Object.keys(row.fteByYear).forEach(y => years.add(y));
+    Object.keys(row.keByYear).forEach(y => years.add(y));
+  }
+  return [...years].sort();
 }
 
 /**
