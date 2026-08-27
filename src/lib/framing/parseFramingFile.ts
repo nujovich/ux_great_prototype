@@ -171,10 +171,17 @@ export function parseFramingMatrix(
       if (normalized === 'customer') rawCustomer = toText(cell);
       if (normalized === 'client') rawClient = toText(cell);
       if (!field) return;
+      const record = line as unknown as Record<string, unknown>;
       if (NUMERIC_FIELDS.has(field)) {
-        (line as unknown as Record<string, unknown>)[field] = toNumber(cell);
+        const value = toNumber(cell);
+        // Never let an empty cell clobber a value already written by an earlier
+        // duplicate-mapped header (e.g. `sopDate` is aliased from both
+        // `Start of Production (SOP)` and `MA Date (MA/APR3)MA` — an alternate
+        // source, not a positional override).
+        if (value !== null || record[field] == null) record[field] = value;
       } else {
-        (line as unknown as Record<string, unknown>)[field] = toText(cell);
+        const value = toText(cell);
+        if (value !== '' || !record[field]) record[field] = value;
       }
     });
 

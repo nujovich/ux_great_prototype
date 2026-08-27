@@ -101,6 +101,18 @@ describe('parseFramingMatrix (§4.3)', () => {
     expect(out[1].plNumber).not.toBe(out[0].plNumber);
   });
 
+  it('does not let an empty MA Date column erase a real SOP date', () => {
+    const headers = ['PL Number', 'Start of Production (SOP)', 'MA Date (MA/APR3)MA'];
+    const [line] = parseFramingMatrix([headers, ['Z1', '2030-01-01', '']], 'f.xlsx', []);
+    expect(line.sopDate).toBe('2030-01-01');
+  });
+
+  it('falls back to MA Date when SOP is absent', () => {
+    const headers = ['PL Number', 'Start of Production (SOP)', 'MA Date (MA/APR3)MA'];
+    const [line] = parseFramingMatrix([headers, ['Z2', '', '2031-05-01']], 'f.xlsx', []);
+    expect(line.sopDate).toBe('2031-05-01');
+  });
+
   it('classifies each row RFI or RFQ', () => {
     const out = parseFramingMatrix(
       matrix(
