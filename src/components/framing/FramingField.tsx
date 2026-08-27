@@ -102,7 +102,8 @@ export function FramingField({ def, value, parentOptions, onChange }: FieldProps
             onChange(def.key, raw);
             return;
           }
-          onChange(def.key, raw.trim() === '' ? null : Number(raw));
+          const n = Number(raw);
+          onChange(def.key, raw.trim() === '' || Number.isNaN(n) ? null : n);
         }}
       />
     </div>

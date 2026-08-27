@@ -42,6 +42,14 @@ describe('FramingField (§7.2)', () => {
     expect(onChange).toHaveBeenLastCalledWith('protosPfc', null);
   });
 
+  it('reports null rather than NaN for an unparseable numeric entry', async () => {
+    const onChange = vi.fn();
+    field({ def: { key: 'annualVolumeSop', label: 'Annual volume SOP', kind: 'number' }, value: null, onChange });
+    await userEvent.type(screen.getByLabelText('Annual volume SOP'), '1e');
+    expect(onChange).toHaveBeenLastCalledWith('annualVolumeSop', null);
+    expect(onChange.mock.calls.some(([, v]) => Number.isNaN(v))).toBe(false);
+  });
+
   it('renders a dropdown from the reference list, with an empty option', () => {
     field({ def: { key: 'projectRanking', label: 'Project ranking', kind: 'select', refList: 'projectRanking' }, value: 'M', onChange: vi.fn() });
     const select = screen.getByLabelText('Project ranking');
