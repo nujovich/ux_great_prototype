@@ -3,6 +3,10 @@ import type { Role } from '../types';
 export const ROLES: Role[] = ['Engineer', 'PMO', 'Admin', 'RCRC', 'CPO'];
 
 export type Permission =
+  | 'view:framing-file'
+  | 'upload:framing-file'
+  | 'edit:framing-file'
+  | 'save:framing-file'
   | 'view:pre-estimation'
   | 'edit:estimation'
   | 'view:own-lines-only'
@@ -39,6 +43,10 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'export:final-review',
   ],
   PMO: [
+    'view:framing-file',
+    'upload:framing-file',
+    'edit:framing-file',
+    'save:framing-file',
     'view:pre-estimation',
     'view:estimation-review',
     'export:estimation-review',
@@ -51,6 +59,10 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'view:management',
   ],
   Admin: [
+    'view:framing-file',
+    'upload:framing-file',
+    'edit:framing-file',
+    'save:framing-file',
     'view:pre-estimation',
     'edit:estimation',
     'save:draft',
@@ -83,6 +95,10 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'view:management',
   ],
   CPO: [
+    // §2.1: CPO reviews, corrects and saves but never introduces new files.
+    'view:framing-file',
+    'edit:framing-file',
+    'save:framing-file',
     'view:estimation-review',
     'export:estimation-review',
     // ERev-BR-10: CPO cannot approve or reject directly — approval/rejection comes from HVT only

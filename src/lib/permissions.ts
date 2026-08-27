@@ -13,6 +13,7 @@ export interface NavItem {
 }
 
 export const NAV_ITEMS: NavItem[] = [
+  { key: 'framing-file', label: 'Framing File', path: '/framing-file', permission: 'view:framing-file' },
   { key: 'pre-estimation', label: 'Pre-Estimation', path: '/pre-estimation', permission: 'view:pre-estimation' },
   { key: 'estimation-review', label: 'Estimation Review', path: '/estimation-review', permission: 'view:estimation-review' },
   { key: 'allocation', label: 'Allocation', path: '/allocation', permission: 'view:allocation' },

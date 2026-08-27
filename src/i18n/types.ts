@@ -1,6 +1,29 @@
 export type Lang = 'es' | 'en';
 
 export interface Translations {
+  framing: {
+    title: string;
+    desc: string;
+    tab: { rfq: string; rfi: string };
+    section: {
+      plDetails: string;
+      customerRequest: string;
+      vehicleDescription: string;
+      organDescription: string;
+      scheduleMilestones: string;
+      framework: string;
+      prototypeDetails: string;
+      additionalDetails: string;
+      rfiDetails: string;
+    };
+    upload: {
+      label: string; button: string; notXlsx: string;
+      parseError: string; success: string; busy: string;
+    };
+    save: { line: string; all: string; done: string; nothing: string };
+    table: { filterPlaceholder: string; selectRow: string };
+    empty: { title: string; desc: string };
+  };
   nav: {
     home: string;
     views: string;

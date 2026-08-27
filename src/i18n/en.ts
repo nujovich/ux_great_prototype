@@ -1,6 +1,38 @@
 import type { Translations } from './types';
 
 export const en: Translations = {
+  framing: {
+    title: 'Framing File',
+    desc: 'Upload a framing file, review the parsed lines and save your corrections.',
+    tab: { rfq: 'RFQ', rfi: 'RFI' },
+    section: {
+      plDetails: 'PL Details',
+      customerRequest: 'Customer Request',
+      vehicleDescription: 'Vehicle Description',
+      organDescription: 'Organ Description',
+      scheduleMilestones: 'Schedule Milestones',
+      framework: 'Framework',
+      prototypeDetails: 'Prototype Details',
+      additionalDetails: 'Additional Details',
+      rfiDetails: 'RFI Details',
+    },
+    upload: {
+      label: 'File (.xlsx only)',
+      button: 'Upload framing file',
+      notXlsx: 'Only .xlsx files are accepted.',
+      parseError: 'No GWF worksheet found in this file.',
+      success: '{fileName}: {rfq} RFQ and {rfi} RFI lines loaded.',
+      busy: 'Parsing…',
+    },
+    save: {
+      line: 'Save line',
+      all: 'Save all pending',
+      done: '{count} line(s) saved.',
+      nothing: 'No pending changes.',
+    },
+    table: { filterPlaceholder: 'Filter…', selectRow: 'Select a line to review it.' },
+    empty: { title: 'No framing lines', desc: 'Upload a framing file to get started.' },
+  },
   nav: {
     home: 'Home',
     views: 'Views',
