@@ -226,7 +226,7 @@ export function readFramingWorkbook(buffer: ArrayBuffer): {
   const sheetName = selectFramingSheet(wb.SheetNames);
   if (!sheetName) {
     throw new FramingParseError(
-      'No GWF* worksheet found (sheets ending in "old" are excluded)',
+      'No GWF worksheet found (sheets ending in "old" are excluded)',
     );
   }
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[sheetName], {
