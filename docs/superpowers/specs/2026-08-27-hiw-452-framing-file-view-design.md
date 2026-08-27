@@ -105,9 +105,9 @@ models cannot both hold. Resolving it is slice 2's first task, not this one's.
 
 ## Design
 
-### 1. The 63 fields are data, not JSX
+### 1. The 66 fields are data, not JSX
 
-§5.6 defines 8 sections totalling **63 fields** (PL Details 13, Customer Request 20,
+§5.6 defines 8 sections totalling **66 fields** (PL Details 13, Customer Request 23,
 Vehicle Description 7, Organ Description 8, Schedule Milestones 4, Framework 10,
 Prototype Details 0, Additional Details 1). Hand-written that is ~1,500 lines of
 unreviewable form markup.
@@ -266,7 +266,7 @@ Review. That is what §2 mandates.
 ### 8. i18n
 
 Section titles, buttons, toasts, empty states and upload errors go through `en.ts`/`es.ts`
-and the `Translations` interface, under a `framing` namespace. The **63 field labels come
+and the `Translations` interface, under a `framing` namespace. The **66 field labels come
 from the schema** as the PRD's own column names. They are proper nouns of the domain —
 `PIMOF`, `CVC Number`, `HBO/RBO RFQ/CMS`, `3MIS`, `Techno Group` — and translating them
 adds 126 dictionary entries for no reader benefit. Approved 2026-08-27.
@@ -276,7 +276,7 @@ adds 126 dictionary entries for no reader benefit. Approved 2026-08-27.
 New:
 
 ```
-src/types/framing.ts                          FramingLine (63 fields) + FramingTrack discriminator
+src/types/framing.ts                          FramingLine (66 fields) + FramingTrack discriminator
 src/fixtures/framingReference.ts              POC dropdown lists, verbatim
 src/fixtures/framingLines.ts                  seed rows so the page is not empty pre-upload
 src/lib/framing/plNumber.ts                   §5.4
