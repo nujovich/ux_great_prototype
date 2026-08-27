@@ -118,7 +118,20 @@ export const useFramingStore = create<FramingState>((set, get) => ({
         // §15.1 — classification is fixed at upload; a re-upload may reclassify.
         byPl.set(row.plNumber, existing ? { ...existing, ...row, id: existing.id } : row);
       }
-      return { lines: [...byPl.values()] };
+
+      // The upload is authoritative for the rows it carries — any unsaved edit on
+      // one of those pl_numbers is now stale and must be discarded, not merged on
+      // top of the fresh data. Edits on pl_numbers this upload doesn't touch are
+      // untouched, still-legitimate unsaved work.
+      const uploaded = new Set(rows.map((r) => r.plNumber));
+      const edits = { ...s.edits };
+      const dirtyFields = { ...s.dirtyFields };
+      for (const plNumber of uploaded) {
+        delete edits[plNumber];
+        delete dirtyFields[plNumber];
+      }
+
+      return { lines: [...byPl.values()], edits, dirtyFields };
     });
     const summary: UploadSummary = {
       fileName,

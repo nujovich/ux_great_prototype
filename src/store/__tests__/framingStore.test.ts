@@ -144,4 +144,30 @@ describe('framingStore', () => {
       fs.readFile('src/store/framingStore.ts', 'utf8'));
     expect(src).not.toContain('dataStore');
   });
+
+  it('discards unsaved edits for a re-uploaded line (latest upload wins)', () => {
+    const existing = useFramingStore.getState().lines[0];
+    useFramingStore.getState().editField(existing.plNumber, 'cluster', 'STALE-EDIT');
+    expect(dirtyPlNumbers(useFramingStore.getState())).toEqual([existing.plNumber]);
+
+    useFramingStore.getState().ingestRows(
+      [{ ...existing, cluster: 'FROM-REUPLOAD' }],
+      'second.xlsx',
+    );
+
+    const s = useFramingStore.getState();
+    expect(dirtyPlNumbers(s)).toEqual([]);
+    expect(effectiveLine(s, existing.plNumber)!.cluster).toBe('FROM-REUPLOAD');
+  });
+
+  it('keeps unsaved edits on lines the upload does not carry', () => {
+    const [a, b] = useFramingStore.getState().lines;
+    useFramingStore.getState().editField(b.plNumber, 'cluster', 'KEEP-ME');
+
+    useFramingStore.getState().ingestRows([{ ...a, cluster: 'X' }], 'second.xlsx');
+
+    const s = useFramingStore.getState();
+    expect(dirtyPlNumbers(s)).toEqual([b.plNumber]);
+    expect(effectiveLine(s, b.plNumber)!.cluster).toBe('KEEP-ME');
+  });
 });
