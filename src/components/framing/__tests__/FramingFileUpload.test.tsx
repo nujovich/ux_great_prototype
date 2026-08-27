@@ -53,6 +53,7 @@ describe('FramingFileUpload (§4.1, HIW-458)', () => {
     await userEvent.upload(
       screen.getByLabelText(/only/i),
       new File(['a,b'], 'framing.csv', { type: 'text/csv' }),
+      { applyAccept: false },
     );
     expect(await screen.findByText(/only \.xlsx/i)).toBeInTheDocument();
     // Nothing was parsed: the store is untouched and no upload was recorded.

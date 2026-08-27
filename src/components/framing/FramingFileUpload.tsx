@@ -71,6 +71,7 @@ export function FramingFileUpload() {
           <input
             id="framing-file-input"
             type="file"
+            accept=".xlsx"
             disabled={busy}
             onChange={handleSelect}
             className="mt-1 text-sm text-slate-600 file:mr-2 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-700 hover:file:bg-slate-200"
