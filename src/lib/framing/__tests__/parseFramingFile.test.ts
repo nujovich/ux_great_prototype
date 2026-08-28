@@ -176,6 +176,93 @@ describe('parseFramingMatrix (§4.3)', () => {
   });
 });
 
+describe('HEADER_ALIASES — real file headers (conformance P2)', () => {
+  const parseOne = (header: string, value: unknown) => {
+    const [line] = parseFramingMatrix(
+      [['PL Number', header], ['P1', value]],
+      'f.xlsx', [],
+    );
+    return line;
+  };
+
+  it('maps SOP Date Powertrain to sopDate — the SOP milestone the readiness rules depend on', () => {
+    expect(parseOne('SOP Date Powertrain', '2027-03-01').sopDate).toBe('2027-03-01');
+  });
+
+  it('maps Date envoi RFQ to rfqSendDate', () => {
+    expect(parseOne('Date envoi RFQ', '2026-11-01').rfqSendDate).toBe('2026-11-01');
+  });
+
+  it('maps Vehicle \\nRange (embedded newline) to vehicleRange', () => {
+    expect(parseOne('Vehicle \nRange', 'C').vehicleRange).toBe('C');
+  });
+
+  it('maps ICE\\nPower (kW) to icePowerKw', () => {
+    expect(parseOne('ICE\nPower (kW)', '90').icePowerKw).toBe(90);
+  });
+
+  it('maps ICE\\nTorque\\n(N.m) to iceTorqueNm', () => {
+    expect(parseOne('ICE\nTorque\n(N.m)', '250').iceTorqueNm).toBe(250);
+  });
+
+  it('maps Vehicle MA to vehicleMaDate', () => {
+    expect(parseOne('Vehicle MA', '2028-05-01').vehicleMaDate).toBe('2028-05-01');
+  });
+
+  it('maps Veh factory to vehicleFactory', () => {
+    expect(parseOne('Veh factory', 'Douai').vehicleFactory).toBe('Douai');
+  });
+
+  it('maps the long #Protos EP header to protosEp', () => {
+    expect(parseOne('#Protos EP (Engineering Prototypes - LEAP100)', '3').protosEp).toBe(3);
+  });
+
+  it('maps Part factory (lowercase f) to partFactory', () => {
+    expect(parseOne('Part factory', 'Cleon').partFactory).toBe('Cleon');
+  });
+
+  it('prefix-matches the long 3MIS header (with explanatory tail) to threeMis', () => {
+    const header = '3MIS (K‰)\nif different of AnnualQ target sent by RG Quality  to H';
+    expect(parseOne(header, '12.5').threeMis).toBe('12.5');
+  });
+
+  it('prefix-matches the long Guarantee cost header to guaranteeCost', () => {
+    const header = 'Guarantee cost (€/vh\nif different of AnnualQ target sent by RG Quality  to H';
+    expect(parseOne(header, '450').guaranteeCost).toBe('450');
+  });
+
+  it('prefix-matches the long PIMOF header to pimof', () => {
+    const header = 'PIMOF (K‰)\nif different of AnnualQ target sent by RG Quality  to H';
+    expect(parseOne(header, '7.1').pimof).toBe('7.1');
+  });
+
+  it('prefix-matches the long Request description header to requestDescription', () => {
+    const header = 'Request description,\n - to explain content to H\n-  to incl. Vehicle evolutions or main ET  inductors';
+    expect(parseOne(header, 'severisation NOx').requestDescription).toBe('severisation NOx');
+  });
+
+  it('exact aliases still win over the prefix step (existing short-form header)', () => {
+    expect(parseOne('Guarantee cost', '99').guaranteeCost).toBe('99');
+  });
+
+  it.each([
+    ['Annual volume - SOP', 'annualVolumeSop'],
+    ['Annual volume - SOP+1', 'annualVolumeSopPlus1'],
+    ['Annual volume - SOP+2 ', 'annualVolumeSopPlus2'],
+    ['Annual volume - SOP+3', 'annualVolumeSopPlus3'],
+    ['Annual volume - SOP+4', 'annualVolumeSopPlus4'],
+    ['Annual volume - SOP+5', 'annualVolumeSopPlus5'],
+    ['Annual volume - SOP+6', 'annualVolumeSopPlus6'],
+  ] as const)('maps the hyphenated header %j to %s', (header, field) => {
+    const line = parseOne(header, '1000');
+    expect((line as unknown as Record<string, unknown>)[field]).toBe(1000);
+  });
+
+  it('still maps the non-hyphenated Annual volume SOP+2 header (backward compatible)', () => {
+    expect(parseOne('Annual volume SOP+2', '2000').annualVolumeSopPlus2).toBe(2000);
+  });
+});
+
 describe('findHeaderRow (conformance P1)', () => {
   const junkRow = (overrides: Record<number, string> = {}): unknown[] => {
     const cells = HEADERS.map(() => '');

@@ -45,12 +45,23 @@ export function selectFramingSheet(sheetNames: string[]): string | null {
  * Framing header → FramingLine field. Keys are normalizeKey()-folded, so callers
  * get case-, accent- and whitespace-insensitive matching for free.
  *
- * The PRD names ~35 of the file's ~71 columns; the rest are descriptive and
- * unpersisted. When a real framing file appears, this map is the single place to
- * adjust — nothing else in the parser knows a header string.
+ * Built from the PRD's ~35 quoted column names, then extended against the real
+ * file in `poc_great/data/` (conformance report P2) — a real header may use
+ * either spelling, so both stay here. Nothing else in the parser knows a
+ * header string.
  */
 const RAW_HEADER_MAP: Record<string, keyof FramingLine> = {
   'PL Number': 'plNumber',
+  // Real-file spellings (conformance P2) that differ from the PRD's names above.
+  'SOP Date Powertrain': 'sopDate',
+  'Date envoi RFQ': 'rfqSendDate',
+  'Vehicle Range': 'vehicleRange',
+  'ICE Power (kW)': 'icePowerKw',
+  'ICE Torque (N.m)': 'iceTorqueNm',
+  'Vehicle MA': 'vehicleMaDate',
+  'Veh factory': 'vehicleFactory',
+  '#Protos EP (Engineering Prototypes - LEAP100)': 'protosEp',
+  'Part factory': 'partFactory',
   'Request type': 'requestType',
   'Request description': 'requestDescription',
   'Requester comment': 'requesterComment',
@@ -129,12 +140,35 @@ const ANNUAL_VOLUME_FIELDS: (keyof FramingLine)[] = [
   'annualVolumeSopPlus6',
 ];
 
-/** `Annual volume SOP`, `Annual volume SOP+1` … `+6` map positionally (§5.6.2). */
+/**
+ * `Annual volume SOP`, `Annual volume SOP+1` … `+6` map positionally (§5.6.2).
+ * The real file spells this `Annual volume - SOP…` (conformance P2) — the
+ * hyphen is optional so both forms resolve.
+ */
 function annualVolumeField(header: string): keyof FramingLine | null {
-  const m = /^annual volume sop(?:\s*\+\s*(\d))?$/.exec(normalizeKey(header));
+  const m = /^annual volume\s*-?\s*sop(?:\s*\+\s*(\d))?$/.exec(normalizeKey(header));
   if (!m) return null;
   const offset = m[1] ? Number(m[1]) : 0;
   return offset <= 6 ? ANNUAL_VOLUME_FIELDS[offset] : null;
+}
+
+/**
+ * Four real headers (conformance P2) carry a long explanatory tail after an
+ * embedded newline, which normalizeKey collapses into the row rather than
+ * stripping — so they're matched by prefix instead of the full string.
+ * Checked only after the exact-alias lookup misses, so a short-form header
+ * (e.g. plain `Guarantee cost`) is never shadowed by its long-form cousin.
+ */
+const HEADER_PREFIX_ALIASES: readonly (readonly [string, keyof FramingLine])[] = [
+  ['3mis (k', 'threeMis'],
+  ['guarantee cost (', 'guaranteeCost'],
+  ['pimof (k', 'pimof'],
+  ['request description,', 'requestDescription'],
+];
+
+function prefixMatchedField(normalizedHeader: string): keyof FramingLine | null {
+  const hit = HEADER_PREFIX_ALIASES.find(([prefix]) => normalizedHeader.startsWith(prefix));
+  return hit ? hit[1] : null;
 }
 
 function toText(value: unknown): string {
@@ -149,9 +183,17 @@ function toNumber(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Header → field, trying the exact-alias map first, then the annual-volume pattern. */
+/**
+ * Header → field. Exact alias match first, then the prefix step for headers
+ * with a long explanatory tail, then the annual-volume pattern — in that
+ * order, so an exact match always wins.
+ */
 function resolveHeaderField(header: string): keyof FramingLine | undefined {
-  return HEADER_ALIASES[normalizeKey(header)] ?? annualVolumeField(header) ?? undefined;
+  const normalized = normalizeKey(header);
+  return (
+    HEADER_ALIASES[normalized] ?? prefixMatchedField(normalized) ?? annualVolumeField(header)
+    ?? undefined
+  );
 }
 
 const HEADER_ROW_SCAN_LIMIT = 20;
