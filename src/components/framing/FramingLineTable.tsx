@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
+import { Download } from 'lucide-react';
 import type { FramingLine } from '../../types/framing';
 import { useSortable } from '../../lib/useSortable';
 import { useT } from '../../i18n/useT';
+import { Button } from '../shared/Button';
+import { downloadFramingCsv } from '../../lib/framing/framingCsv';
 
 export interface FramingTableColumn {
   key: keyof FramingLine;
@@ -58,56 +61,79 @@ export function FramingLineTable({ lines, selectedPlNumber, onSelect }: Props) {
 
   const { sorted, requestSort, getSortIcon } = useSortable(filtered);
 
+  // Task 7 — visible-vs-total only when a filter is actually narrowing the
+  // set; sorting never changes the count, so `filtered.length` === `sorted.length`.
+  const isFiltered = filtered.length < lines.length;
+
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-      <table className="w-full text-sm">
-        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-          <tr>
-            {FRAMING_TABLE_COLUMNS.map(({ key, label }) => (
-              <th key={String(key)} className="px-3 py-2 text-left font-medium">
-                <button
-                  type="button"
-                  data-testid={`sort-${String(key)}`}
-                  onClick={() => requestSort(key)}
-                  className="flex items-center gap-1 uppercase hover:text-slate-700"
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <p data-testid="framing-table-row-count" className="text-xs text-slate-500">
+          {isFiltered
+            ? t('framing.table.rowCountFiltered', { visible: filtered.length, total: lines.length })
+            : t('framing.table.rowCount', { count: lines.length })}
+        </p>
+        {/* Task 7 — download exactly the currently visible (filtered + sorted) rows. */}
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => downloadFramingCsv(sorted, FRAMING_TABLE_COLUMNS, `framing-file-table-${Date.now()}.csv`)}
+        >
+          <Download size={14} /> {t('framing.table.exportCsv')}
+        </Button>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              {FRAMING_TABLE_COLUMNS.map(({ key, label }) => (
+                <th key={String(key)} className="px-3 py-2 text-left font-medium">
+                  <button
+                    type="button"
+                    data-testid={`sort-${String(key)}`}
+                    onClick={() => requestSort(key)}
+                    className="flex items-center gap-1 uppercase hover:text-slate-700"
+                  >
+                    {label} <span aria-hidden="true">{getSortIcon(key)}</span>
+                  </button>
+                  <input
+                    type="text"
+                    data-testid={`filter-${String(key)}`}
+                    aria-label={`${label} filter`}
+                    placeholder={t('framing.table.filterPlaceholder')}
+                    value={filters[key] ?? ''}
+                    onChange={(e) => setFilters((f) => ({ ...f, [key]: e.target.value }))}
+                    className="mt-1 w-full rounded border border-slate-300 px-1.5 py-1 text-xs font-normal normal-case"
+                  />
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((line) => {
+              const selected = line.plNumber === selectedPlNumber;
+              return (
+                <tr
+                  key={line.id || line.plNumber}
+                  data-testid={`row-${line.plNumber}`}
+                  aria-selected={selected}
+                  onClick={() => onSelect(line.plNumber)}
+                  className={clsx(
+                    'cursor-pointer border-t border-slate-100 hover:bg-slate-50',
+                    selected && 'bg-sky-50',
+                  )}
                 >
-                  {label} <span aria-hidden="true">{getSortIcon(key)}</span>
-                </button>
-                <input
-                  type="text"
-                  data-testid={`filter-${String(key)}`}
-                  aria-label={`${label} filter`}
-                  placeholder={t('framing.table.filterPlaceholder')}
-                  value={filters[key] ?? ''}
-                  onChange={(e) => setFilters((f) => ({ ...f, [key]: e.target.value }))}
-                  className="mt-1 w-full rounded border border-slate-300 px-1.5 py-1 text-xs font-normal normal-case"
-                />
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {sorted.map((line) => {
-            const selected = line.plNumber === selectedPlNumber;
-            return (
-              <tr
-                key={line.id || line.plNumber}
-                data-testid={`row-${line.plNumber}`}
-                aria-selected={selected}
-                onClick={() => onSelect(line.plNumber)}
-                className={clsx(
-                  'cursor-pointer border-t border-slate-100 hover:bg-slate-50',
-                  selected && 'bg-sky-50',
-                )}
-              >
-                {FRAMING_TABLE_COLUMNS.map(({ key }) => (
-                  <td key={String(key)} className="px-3 py-2.5">{cell(line, key)}</td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  {FRAMING_TABLE_COLUMNS.map(({ key }) => (
+                    <td key={String(key)} className="px-3 py-2.5">{cell(line, key)}</td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

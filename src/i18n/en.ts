@@ -33,7 +33,13 @@ export const en: Translations = {
       done: '{count} line(s) saved.',
       nothing: 'No pending changes.',
     },
-    table: { filterPlaceholder: 'Filter…', selectRow: 'Select a line to review it.' },
+    table: {
+      filterPlaceholder: 'Filter…',
+      selectRow: 'Select a line to review it.',
+      exportCsv: 'Download table as CSV',
+      rowCount: '{count} row(s).',
+      rowCountFiltered: 'Showing {visible} of {total} row(s).',
+    },
     empty: { title: 'No framing lines', desc: 'Upload a framing file to get started.' },
     uploads: {
       title: 'Uploaded files',
@@ -45,6 +51,7 @@ export const en: Translations = {
       cancel: 'Cancel',
       confirmDelete: 'Yes, delete',
     },
+    editingHeading: 'Editing PL Number {plNumber} and Project Name {projectName}',
   },
   nav: {
     home: 'Home',

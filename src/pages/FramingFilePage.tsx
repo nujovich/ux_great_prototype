@@ -8,7 +8,7 @@ import { FramingUploadList } from '../components/framing/FramingUploadList';
 import { FramingLineTable } from '../components/framing/FramingLineTable';
 import { FramingDetailForm } from '../components/framing/FramingDetailForm';
 import { SaveControls } from '../components/framing/SaveControls';
-import { useFramingStore, linesForTrack } from '../store/framingStore';
+import { useFramingStore, linesForTrack, effectiveLine } from '../store/framingStore';
 import { useT } from '../i18n/useT';
 
 const TRACKS: FramingTrack[] = ['RFQ', 'RFI'];
@@ -23,12 +23,14 @@ export function FramingFilePage() {
 
 function FramingFileContent() {
   const lines = useFramingStore((s) => s.lines);
+  const edits = useFramingStore((s) => s.edits);
   const t = useT();
 
   const [track, setTrack] = useState<FramingTrack>('RFQ');
   const [selected, setSelected] = useState<string | null>(null);
 
   const visible = useMemo(() => linesForTrack({ lines }, track), [lines, track]);
+  const selectedLine = selected ? effectiveLine({ lines, edits }, selected) : undefined;
 
   // A PL number belongs to exactly one track, so switching tabs drops the selection.
   function switchTrack(next: FramingTrack) {
@@ -86,6 +88,14 @@ function FramingFileContent() {
         <FramingLineTable lines={visible} selectedPlNumber={selected} onSelect={setSelected} />
       )}
 
+      {selected && selectedLine && (
+        <p className="text-sm font-semibold text-slate-800">
+          {t('framing.editingHeading', {
+            plNumber: selectedLine.plNumber,
+            projectName: selectedLine.projectName,
+          })}
+        </p>
+      )}
       {selected && <FramingDetailForm plNumber={selected} />}
     </div>
   );

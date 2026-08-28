@@ -109,4 +109,28 @@ describe('FramingLineTable (§7.1, HIW-460)', () => {
     renderTable({ lines: [] });
     expect(screen.getAllByRole('row')).toHaveLength(1);
   });
+
+  // ── Task 7 (HIW-452 remediation) ────────────────────────────────────────
+
+  it('shows the plain total when no filter narrows the set', () => {
+    renderTable();
+    expect(screen.getByTestId('framing-table-row-count')).toHaveTextContent(String(LINES.length));
+    expect(screen.getByTestId('framing-table-row-count')).not.toHaveTextContent(/of/i);
+  });
+
+  it('switches to visible-of-total once a filter narrows the set, and back once cleared', async () => {
+    renderTable();
+    await userEvent.type(screen.getByTestId('filter-organType'), 'gear');
+    const count = screen.getByTestId('framing-table-row-count');
+    expect(count).toHaveTextContent('2');
+    expect(count).toHaveTextContent(String(LINES.length));
+
+    await userEvent.clear(screen.getByTestId('filter-organType'));
+    expect(screen.getByTestId('framing-table-row-count')).not.toHaveTextContent(/of/i);
+  });
+
+  it('renders a CSV export control over the table', () => {
+    renderTable();
+    expect(screen.getByRole('button', { name: /csv/i })).toBeInTheDocument();
+  });
 });

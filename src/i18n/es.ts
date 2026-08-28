@@ -33,7 +33,13 @@ export const es: Translations = {
       done: 'Se guardaron {count} línea(s).',
       nothing: 'No hay cambios pendientes.',
     },
-    table: { filterPlaceholder: 'Filtrar…', selectRow: 'Seleccione una línea para revisarla.' },
+    table: {
+      filterPlaceholder: 'Filtrar…',
+      selectRow: 'Seleccione una línea para revisarla.',
+      exportCsv: 'Descargar tabla como CSV',
+      rowCount: '{count} línea(s).',
+      rowCountFiltered: 'Mostrando {visible} de {total} línea(s).',
+    },
     empty: { title: 'Sin líneas de framing', desc: 'Suba un framing file para comenzar.' },
     uploads: {
       title: 'Archivos cargados',
@@ -45,6 +51,7 @@ export const es: Translations = {
       cancel: 'Cancelar',
       confirmDelete: 'Sí, eliminar',
     },
+    editingHeading: 'Editando PL Number {plNumber} y Project Name {projectName}',
   },
   nav: {
     home: 'Inicio',

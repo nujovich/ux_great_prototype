@@ -88,6 +88,28 @@ describe('FramingFilePage (§15, ADR-020)', () => {
     expect(screen.queryByText(/not ready/i)).toBeNull();
   });
 
+  // ── Task 7 (HIW-452 remediation) — editing heading ──────────────────────
+
+  it('names the selected line by PL Number and Project Name above the detail form', async () => {
+    renderPage();
+    expect(screen.queryByText(/editing pl number/i)).toBeNull();
+
+    await userEvent.click(screen.getByTestId('row-AA00'));
+    const line = useFramingStore.getState().lines.find((l) => l.plNumber === 'AA00')!;
+    expect(
+      screen.getByText(new RegExp(`Editing PL Number ${line.plNumber}.*${line.projectName}`)),
+    ).toBeInTheDocument();
+  });
+
+  it('clears the heading once the selection is cleared', async () => {
+    renderPage();
+    await userEvent.click(screen.getByTestId('row-AA00'));
+    expect(screen.getByText(/editing pl number/i)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
+    expect(screen.queryByText(/editing pl number/i)).toBeNull();
+  });
+
   // ── Task 6 (HIW-452 remediation) — per-file management ──────────────────
 
   it('renders the uploaded-files list once a file has been ingested', () => {
@@ -99,7 +121,7 @@ describe('FramingFilePage (§15, ADR-020)', () => {
     expect(screen.getByText('fileA.xlsx')).toBeInTheDocument();
   });
 
-  it('clears the selection when its upload is deleted', async () => {
+  it('clears the selection when its upload is deleted, and drops the editing heading with it', async () => {
     useFramingStore.getState().ingestRows(
       [{ ...useFramingStore.getState().lines[0], id: 'ffl-new-1', plNumber: 'ZZ90', track: 'RFQ' }],
       'fileA.xlsx',
@@ -107,12 +129,13 @@ describe('FramingFilePage (§15, ADR-020)', () => {
     renderPage();
 
     await userEvent.click(screen.getByTestId('row-ZZ90'));
-    expect(screen.getByRole('button', { name: /PL Details/i })).toBeInTheDocument();
+    expect(screen.getByText(/editing pl number/i)).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /delete/i }));
     await userEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
 
     expect(screen.queryByTestId('row-ZZ90')).toBeNull();
+    expect(screen.queryByText(/editing pl number/i)).toBeNull();
     expect(screen.queryByRole('button', { name: /PL Details/i })).toBeNull();
   });
 });

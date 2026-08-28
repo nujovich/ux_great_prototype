@@ -22,12 +22,16 @@ export interface Translations {
       success: string; discardedEdits: string; busy: string;
     };
     save: { line: string; all: string; done: string; nothing: string };
-    table: { filterPlaceholder: string; selectRow: string };
+    table: {
+      filterPlaceholder: string; selectRow: string;
+      exportCsv: string; rowCount: string; rowCountFiltered: string;
+    };
     empty: { title: string; desc: string };
     uploads: {
       title: string; rowCount: string; delete: string;
       confirmTitle: string; confirmBody: string; cancel: string; confirmDelete: string;
     };
+    editingHeading: string;
   };
   nav: {
     home: string;
