@@ -10,6 +10,8 @@ export interface UploadSummary {
   fileName: string;
   rfqCount: number;
   rfiCount: number;
+  /** I4 — how many of the uploaded PL numbers had unsaved edits that were discarded. */
+  discardedEditsCount: number;
 }
 
 export interface FramingState {
@@ -111,6 +113,7 @@ export const useFramingStore = create<FramingState>((set, get) => ({
 
   /** §4.1 — uploads accumulate: upsert on pl_number, latest upload wins. */
   ingestRows: (rows, fileName) => {
+    let discardedEditsCount = 0;
     set((s) => {
       const byPl = new Map(s.lines.map((l) => [l.plNumber, l]));
       for (const row of rows) {
@@ -127,6 +130,8 @@ export const useFramingStore = create<FramingState>((set, get) => ({
       const edits = { ...s.edits };
       const dirtyFields = { ...s.dirtyFields };
       for (const plNumber of uploaded) {
+        // I4 — count what's about to be discarded so the caller can tell the user.
+        if ((s.dirtyFields[plNumber] ?? []).length > 0) discardedEditsCount += 1;
         delete edits[plNumber];
         delete dirtyFields[plNumber];
       }
@@ -137,6 +142,7 @@ export const useFramingStore = create<FramingState>((set, get) => ({
       fileName,
       rfqCount: rows.filter((r) => r.track === 'RFQ').length,
       rfiCount: rows.filter((r) => r.track === 'RFI').length,
+      discardedEditsCount,
     };
     set({ lastUpload: summary });
     return summary;

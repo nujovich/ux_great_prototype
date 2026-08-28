@@ -160,6 +160,30 @@ describe('framingStore', () => {
     expect(effectiveLine(s, existing.plNumber)!.cluster).toBe('FROM-REUPLOAD');
   });
 
+  it('reports how many uploaded lines had pending edits discarded — I4', () => {
+    const [a, b] = useFramingStore.getState().lines;
+    useFramingStore.getState().editField(a.plNumber, 'cluster', 'STALE-A');
+    useFramingStore.getState().editField(b.plNumber, 'cluster', 'STALE-B');
+
+    // Only `a` is re-uploaded — its pending edit is discarded, `b`'s is not.
+    const summary = useFramingStore.getState().ingestRows(
+      [{ ...a, cluster: 'FROM-UPLOAD' }],
+      'second.xlsx',
+    );
+
+    expect(summary.discardedEditsCount).toBe(1);
+    expect(dirtyPlNumbers(useFramingStore.getState())).toEqual([b.plNumber]);
+  });
+
+  it('reports zero discarded edits when the uploaded lines had no pending edits', () => {
+    const existing = useFramingStore.getState().lines[0];
+    const summary = useFramingStore.getState().ingestRows(
+      [{ ...existing, cluster: 'FROM-UPLOAD' }],
+      'second.xlsx',
+    );
+    expect(summary.discardedEditsCount).toBe(0);
+  });
+
   it('keeps unsaved edits on lines the upload does not carry', () => {
     const [a, b] = useFramingStore.getState().lines;
     useFramingStore.getState().editField(b.plNumber, 'cluster', 'KEEP-ME');

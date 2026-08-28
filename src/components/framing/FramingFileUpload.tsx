@@ -48,11 +48,15 @@ export function FramingFileUpload() {
       const existingCodes = lines.map((l) => l.plNumber);
       const rows = parseFramingMatrix(matrix, file.name, existingCodes);
       const summary = ingestRows(rows, file.name);
-      setNotice(
-        t('framing.upload.success', {
-          fileName: summary.fileName, rfq: summary.rfqCount, rfi: summary.rfiCount,
-        }),
-      );
+      let message = t('framing.upload.success', {
+        fileName: summary.fileName, rfq: summary.rfqCount, rfi: summary.rfiCount,
+      });
+      // I4 — the upload is authoritative and silently drops any unsaved edit
+      // on the pl_numbers it carries; tell the user how many were lost.
+      if (summary.discardedEditsCount > 0) {
+        message += ` ${t('framing.upload.discardedEdits', { count: summary.discardedEditsCount })}`;
+      }
+      setNotice(message);
       setFile(null);
     } catch (err) {
       // I2 — map the known FramingParseError codes to their own translated

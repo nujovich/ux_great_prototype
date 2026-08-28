@@ -24,6 +24,7 @@ export const es: Translations = {
       noHeaderRowError: 'La hoja de framing no tiene fila de encabezado.',
       genericError: 'No se pudo procesar el archivo. Verifique su formato e intente nuevamente.',
       success: '{fileName}: se cargaron {rfq} líneas RFQ y {rfi} RFI.',
+      discardedEdits: 'Se descartaron {count} línea(s) con cambios sin guardar por esta carga.',
       busy: 'Procesando…',
     },
     save: {

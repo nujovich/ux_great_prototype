@@ -24,6 +24,7 @@ export const en: Translations = {
       noHeaderRowError: 'The framing sheet has no header row.',
       genericError: 'The file could not be processed. Check its format and try again.',
       success: '{fileName}: {rfq} RFQ and {rfi} RFI lines loaded.',
+      discardedEdits: '{count} line(s) with unsaved edits were discarded by this upload.',
       busy: 'Parsing…',
     },
     save: {

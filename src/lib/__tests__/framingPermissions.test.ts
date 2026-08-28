@@ -56,7 +56,7 @@ describe('Framing File i18n', () => {
       'framing.title', 'framing.desc', 'framing.tab.rfq', 'framing.tab.rfi',
       'framing.upload.label', 'framing.upload.button', 'framing.upload.notXlsx',
       'framing.upload.parseError', 'framing.upload.noHeaderRowError',
-      'framing.upload.genericError', 'framing.upload.success',
+      'framing.upload.genericError', 'framing.upload.success', 'framing.upload.discardedEdits',
       'framing.save.line', 'framing.save.all', 'framing.save.done',
       'framing.table.filterPlaceholder', 'framing.empty.title', 'framing.empty.desc',
     ]) {

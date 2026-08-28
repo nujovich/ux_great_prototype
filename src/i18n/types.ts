@@ -19,7 +19,7 @@ export interface Translations {
     upload: {
       label: string; button: string; notXlsx: string;
       parseError: string; noHeaderRowError: string; genericError: string;
-      success: string; busy: string;
+      success: string; discardedEdits: string; busy: string;
     };
     save: { line: string; all: string; done: string; nothing: string };
     table: { filterPlaceholder: string; selectRow: string };

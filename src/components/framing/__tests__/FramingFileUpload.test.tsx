@@ -111,6 +111,32 @@ describe('FramingFileUpload (§4.1, HIW-458)', () => {
     expect(screen.queryByText(/no gwf worksheet/i)).toBeNull();
   });
 
+  it('mentions discarded pending edits in the success notice — I4', async () => {
+    renderUpload();
+    // First upload creates the ZZ50 row.
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+    await waitFor(() => {
+      expect(useFramingStore.getState().lines.some((l) => l.plNumber === 'ZZ50')).toBe(true);
+    });
+
+    // Edit that row, then re-upload the same file — the edit is discarded
+    // and the notice should mention it.
+    useFramingStore.getState().editField('ZZ50', 'cluster', 'STALE-EDIT');
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+
+    expect(await screen.findByText(/discarded/i)).toBeInTheDocument();
+  });
+
+  it('says nothing about discarded edits when there were none — I4', async () => {
+    renderUpload();
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+    await screen.findByText(/loaded/i);
+    expect(screen.queryByText(/discarded/i)).toBeNull();
+  });
+
   it('keeps the button disabled until a valid file is chosen', () => {
     renderUpload();
     expect(screen.getByRole('button', { name: /upload/i })).toBeDisabled();
