@@ -21,6 +21,8 @@ export const es: Translations = {
       button: 'Subir framing file',
       notXlsx: 'Solo se aceptan archivos .xlsx.',
       parseError: 'No se encontró ninguna hoja GWF en este archivo.',
+      noHeaderRowError: 'La hoja de framing no tiene fila de encabezado.',
+      genericError: 'No se pudo procesar el archivo. Verifique su formato e intente nuevamente.',
       success: '{fileName}: se cargaron {rfq} líneas RFQ y {rfi} RFI.',
       busy: 'Procesando…',
     },

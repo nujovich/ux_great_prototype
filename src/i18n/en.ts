@@ -21,6 +21,8 @@ export const en: Translations = {
       button: 'Upload framing file',
       notXlsx: 'Only .xlsx files are accepted.',
       parseError: 'No GWF worksheet found in this file.',
+      noHeaderRowError: 'The framing sheet has no header row.',
+      genericError: 'The file could not be processed. Check its format and try again.',
       success: '{fileName}: {rfq} RFQ and {rfi} RFI lines loaded.',
       busy: 'Parsing…',
     },

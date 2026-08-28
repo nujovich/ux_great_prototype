@@ -55,7 +55,17 @@ export function FramingFileUpload() {
       );
       setFile(null);
     } catch (err) {
-      setError(err instanceof FramingParseError ? err.message : t('framing.upload.parseError'));
+      // I2 — map the known FramingParseError codes to their own translated
+      // message; anything else (corrupt/encrypted workbook, etc.) gets a
+      // distinct generic fallback, never the "no worksheet" text.
+      if (err instanceof FramingParseError) {
+        const key = err.code === 'noWorksheet'
+          ? 'framing.upload.parseError'
+          : 'framing.upload.noHeaderRowError';
+        setError(t(key));
+      } else {
+        setError(t('framing.upload.genericError'));
+      }
     } finally {
       setBusy(false);
     }

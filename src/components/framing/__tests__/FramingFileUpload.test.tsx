@@ -79,6 +79,38 @@ describe('FramingFileUpload (§4.1, HIW-458)', () => {
     expect(await screen.findByText(/no gwf worksheet/i)).toBeInTheDocument();
   });
 
+  it('surfaces the noHeaderRow message, distinct from the no-worksheet one — I2', async () => {
+    renderUpload();
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([]), 'GWF empty');
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+    const file = new File([buf], 'framing.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    await userEvent.upload(screen.getByLabelText(/only/i), file);
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+    expect(await screen.findByText(/header row/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no gwf worksheet/i)).toBeNull();
+  });
+
+  it('surfaces a distinct generic fallback for a non-FramingParseError — I2', async () => {
+    renderUpload();
+    // A "PK" zip signature followed by garbage is not a valid xlsx payload and
+    // is not a FramingParseError case (no GWF sheet / no header row) — SheetJS
+    // throws a plain Error for it, the same shape a corrupt or
+    // password-protected file produces.
+    const bytes = new Uint8Array([...'PK\x03\x04'].map((c) => c.charCodeAt(0)).concat(
+      Array.from({ length: 20 }, () => 0x67),
+    ));
+    const file = new File([bytes], 'framing.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    await userEvent.upload(screen.getByLabelText(/only/i), file);
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+    expect(await screen.findByText(/could not be processed/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no gwf worksheet/i)).toBeNull();
+  });
+
   it('keeps the button disabled until a valid file is chosen', () => {
     renderUpload();
     expect(screen.getByRole('button', { name: /upload/i })).toBeDisabled();

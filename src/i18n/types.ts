@@ -18,7 +18,8 @@ export interface Translations {
     };
     upload: {
       label: string; button: string; notXlsx: string;
-      parseError: string; success: string; busy: string;
+      parseError: string; noHeaderRowError: string; genericError: string;
+      success: string; busy: string;
     };
     save: { line: string; all: string; done: string; nothing: string };
     table: { filterPlaceholder: string; selectRow: string };

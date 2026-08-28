@@ -152,6 +152,16 @@ describe('parseFramingMatrix (§4.3)', () => {
     expect(() => parseFramingMatrix([], 'f.xlsx', [])).toThrow(FramingParseError);
   });
 
+  it('tags a missing header row with the noHeaderRow code — I2', () => {
+    try {
+      parseFramingMatrix([], 'f.xlsx', []);
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toBeInstanceOf(FramingParseError);
+      expect((err as FramingParseError).code).toBe('noHeaderRow');
+    }
+  });
+
   it('does not compute Generate-time fields', () => {
     const [line] = parseFramingMatrix(matrix(row()), 'f.xlsx', []);
     expect(line).not.toHaveProperty('engineering');
@@ -185,5 +195,16 @@ describe('readFramingWorkbook (§4.2)', () => {
   it('throws FramingParseError when no GWF sheet exists', () => {
     const buf = workbook({ 'Data ref': [['x']], GWF_old: matrix(row()) });
     expect(() => readFramingWorkbook(buf)).toThrow(FramingParseError);
+  });
+
+  it('tags a missing GWF sheet with the noWorksheet code — I2', () => {
+    const buf = workbook({ 'Data ref': [['x']], GWF_old: matrix(row()) });
+    try {
+      readFramingWorkbook(buf);
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toBeInstanceOf(FramingParseError);
+      expect((err as FramingParseError).code).toBe('noWorksheet');
+    }
   });
 });

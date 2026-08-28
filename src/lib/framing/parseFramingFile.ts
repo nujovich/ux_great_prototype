@@ -8,10 +8,21 @@ import {
   resolveClient, translateEnergy, translateOrganType,
 } from './derive';
 
+/**
+ * I2 — the two parse failures the UI must tell apart, each with its own i18n
+ * key. Anything else (corrupt/encrypted workbook, etc.) is a plain Error and
+ * gets a distinct generic fallback in the component — never one of these two
+ * translated messages.
+ */
+export type FramingParseErrorCode = 'noWorksheet' | 'noHeaderRow';
+
 export class FramingParseError extends Error {
-  constructor(message: string) {
+  readonly code: FramingParseErrorCode;
+
+  constructor(message: string, code: FramingParseErrorCode) {
     super(message);
     this.name = 'FramingParseError';
+    this.code = code;
   }
 }
 
@@ -150,7 +161,7 @@ export function parseFramingMatrix(
 ): FramingLine[] {
   const headerRow = matrix[0];
   if (!headerRow || headerRow.length === 0) {
-    throw new FramingParseError('Framing sheet has no header row');
+    throw new FramingParseError('Framing sheet has no header row', 'noHeaderRow');
   }
 
   const columns = headerRow.map((raw) => {
@@ -227,6 +238,7 @@ export function readFramingWorkbook(buffer: ArrayBuffer): {
   if (!sheetName) {
     throw new FramingParseError(
       'No GWF worksheet found (sheets ending in "old" are excluded)',
+      'noWorksheet',
     );
   }
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[sheetName], {
