@@ -4,6 +4,9 @@ import {
   selectFramingSheet, parseFramingMatrix, readFramingWorkbook,
   isXlsxFileName, FramingParseError, findHeaderRow,
 } from '../parseFramingFile';
+import {
+  REAL_SHAPE_MATRIX, realShapeWorkbookBuffer,
+} from './realShapeFixture';
 
 const HEADERS = [
   'PL Number', 'Request type', 'Customer', 'Client', 'Part type', 'Fuel',
@@ -318,6 +321,57 @@ describe('findHeaderRow (conformance P1)', () => {
       junkRow({ 0: 'HORSE IF NEW PL', 1: 'NEW', 2: 'NEW' }),
     ];
     expect(() => parseFramingMatrix(onlyInstructions, 'f.xlsx', [])).toThrow(FramingParseError);
+  });
+});
+
+describe('real-shape fixture (conformance P1/P2 regression guard, Task 3)', () => {
+  const ANNUAL_VOLUME_FIELDS = [
+    'annualVolumeSop', 'annualVolumeSopPlus1', 'annualVolumeSopPlus2',
+    'annualVolumeSopPlus3', 'annualVolumeSopPlus4', 'annualVolumeSopPlus5',
+    'annualVolumeSopPlus6',
+  ] as const;
+  const NON_FIELD_KEYS = new Set(['id', 'track', 'createdByFile', 'lastUpdatedByFile']);
+
+  function countNonEmptyMappedFields(line: Record<string, unknown>): number {
+    return Object.entries(line).filter(
+      ([key, value]) => !NON_FIELD_KEYS.has(key) && value !== '' && value !== null,
+    ).length;
+  }
+
+  it('locates the real header row at index 8, buried behind 8 instruction rows', () => {
+    expect(findHeaderRow(REAL_SHAPE_MATRIX as unknown[][])).toBe(8);
+  });
+
+  it('parses both synthetic data rows into 2 lines', () => {
+    const out = parseFramingMatrix(REAL_SHAPE_MATRIX as unknown[][], 'real-shape.xlsx', []);
+    expect(out).toHaveLength(2);
+    expect(out.map((l) => l.plNumber)).toEqual(['ZZ01', 'ZZ02']);
+  });
+
+  it('populates sopDate from SOP Date Powertrain — the P2 fix this fixture guards', () => {
+    const [line] = parseFramingMatrix(REAL_SHAPE_MATRIX as unknown[][], 'real-shape.xlsx', []);
+    expect(line.sopDate).toBe('2028-09-01');
+  });
+
+  it('populates all 7 annual volume fields', () => {
+    const [line] = parseFramingMatrix(REAL_SHAPE_MATRIX as unknown[][], 'real-shape.xlsx', []);
+    ANNUAL_VOLUME_FIELDS.forEach((field) => {
+      expect((line as unknown as Record<string, unknown>)[field]).not.toBeNull();
+    });
+  });
+
+  it('resolves at least 40 mapped fields to non-empty values for a real-shaped row', () => {
+    const [line] = parseFramingMatrix(REAL_SHAPE_MATRIX as unknown[][], 'real-shape.xlsx', []);
+    expect(countNonEmptyMappedFields(line as unknown as Record<string, unknown>))
+      .toBeGreaterThanOrEqual(40);
+  });
+
+  it('round-trips through readFramingWorkbook + parseFramingMatrix from a real xlsx buffer', () => {
+    const buffer = realShapeWorkbookBuffer();
+    const { matrix } = readFramingWorkbook(buffer);
+    const out = parseFramingMatrix(matrix, 'real-shape.xlsx', []);
+    expect(out).toHaveLength(2);
+    expect(out[0].sopDate).toBe('2028-09-01');
   });
 });
 
