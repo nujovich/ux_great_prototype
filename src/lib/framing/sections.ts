@@ -168,10 +168,3 @@ export function sectionsForTrack(track: FramingTrack): FramingSectionDef[] {
 export function allFieldDefs(): FramingFieldDef[] {
   return FRAMING_SECTIONS.flatMap((section) => section.fields);
 }
-
-/** §5.3 — editing any of these recomposes PL Name live. */
-export const PL_NAME_COMPONENT_FIELDS = new Set<keyof FramingLine>([
-  'plNumber', 'activityType', 'allianceCode', 'secondaryOrgan', 'thirdOrgan',
-  'fourthOrgan', 'standardEmissions', 'vehicleCode', 'otherSpecifications',
-  'drivetrain', 'vehiclePhase', 'projectRanking',
-]);

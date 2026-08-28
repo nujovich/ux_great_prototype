@@ -109,13 +109,3 @@ describe('sectionsForTrack (§15.3)', () => {
     expect(rfi[8].fields).toEqual([]);
   });
 });
-
-describe('PL_NAME_COMPONENT_FIELDS (§5.3)', () => {
-  it('lists every field that triggers a live PL Name recompose', () => {
-    expect([...PL_NAME_COMPONENT_FIELDS].sort()).toEqual([
-      'activityType', 'allianceCode', 'drivetrain', 'fourthOrgan',
-      'otherSpecifications', 'plNumber', 'projectRanking', 'secondaryOrgan',
-      'standardEmissions', 'thirdOrgan', 'vehicleCode', 'vehiclePhase',
-    ]);
-  });
-});
