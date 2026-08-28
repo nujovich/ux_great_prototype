@@ -10,16 +10,21 @@ const line = (over: Partial<FramingLine>): FramingLine => ({
   ...EMPTY_FRAMING_LINE, ...over,
 });
 
+// M9 — insertion order is deliberately neither ascending nor descending by
+// plNumber, so the sort test's three states (asc/desc/off) are each a
+// distinguishable sequence. With the old AA01/AA02/AB00 order, "off" (which
+// returns to insertion order) coincided with "asc", so a broken third click
+// could not have failed that test.
 const LINES = [
-  line({ id: '1', plNumber: 'AA01', plName: 'AA01 Alpha', organType: 'Gearbox',
-         energy: 'Diesel', projectRanking: 'M', client: 'RG', ownerN2: 'H-DESIGN',
-         spDate: '2027-01-11', pcDate: '2027-03-01', coDate: '2027-06-01', sopDate: '2028-09-01' }),
   line({ id: '2', plNumber: 'AA02', plName: 'AA02 Beta', organType: 'Battery',
          energy: 'Electric', projectRanking: 'C93W', client: 'Nissan', ownerN2: 'H-SOFTWARE',
          spDate: '2027-02-01', pcDate: '', coDate: '2027-07-01', sopDate: '2028-11-01' }),
   line({ id: '3', plNumber: 'AB00', plName: 'AB00 Gamma', organType: 'Gearbox',
          energy: 'Gasoline', projectRanking: 'B', client: 'Dacia', ownerN2: 'H-TUNING',
          spDate: '2027-03-01', pcDate: '2027-04-01', coDate: '2027-08-01', sopDate: '2029-01-01' }),
+  line({ id: '1', plNumber: 'AA01', plName: 'AA01 Alpha', organType: 'Gearbox',
+         energy: 'Diesel', projectRanking: 'M', client: 'RG', ownerN2: 'H-DESIGN',
+         spDate: '2027-01-11', pcDate: '2027-03-01', coDate: '2027-06-01', sopDate: '2028-09-01' }),
 ];
 
 const renderTable = (props: Partial<Parameters<typeof FramingLineTable>[0]> = {}) =>
@@ -89,7 +94,9 @@ describe('FramingLineTable (§7.1, HIW-460)', () => {
     await userEvent.click(header);
     expect(order()).toEqual(['AB00', 'AA02', 'AA01']);
     await userEvent.click(header);
-    expect(order()).toEqual(['AA01', 'AA02', 'AB00']);
+    // Off returns to insertion order (AA02, AB00, AA01) — distinct from both
+    // the ascending and descending sequences above.
+    expect(order()).toEqual(['AA02', 'AB00', 'AA01']);
   });
 
   it('marks the selected row', () => {
