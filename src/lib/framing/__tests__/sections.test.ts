@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FRAMING_SECTIONS, sectionsForTrack, allFieldDefs, PL_NAME_COMPONENT_FIELDS } from '../sections';
+import { FRAMING_SECTIONS, sectionsForTrack, allFieldDefs } from '../sections';
 import { FRAMING_REFERENCE } from '../../../fixtures/framingReference';
 import { EMPTY_FRAMING_LINE, FRAMING_FORM_FIELD_COUNT } from '../../../types/framing';
 
@@ -64,6 +64,11 @@ describe('FRAMING_SECTIONS (§5.6)', () => {
 
   it('marks expectedEcoOutput read-only (§15.1)', () => {
     const f = allFieldDefs().find((x) => x.key === 'expectedEcoOutput')!;
+    expect(f.readOnly).toBe(true);
+  });
+
+  it('marks plNumber read-only — it is the store primary key (C1)', () => {
+    const f = allFieldDefs().find((x) => x.key === 'plNumber')!;
     expect(f.readOnly).toBe(true);
   });
 

@@ -36,7 +36,11 @@ export const FRAMING_SECTIONS: FramingSectionDef[] = [
     id: 'plDetails',
     labelKey: 'framing.section.plDetails',
     fields: [
-      t('plNumber', 'PL Number'),
+      // C1 — plNumber keys `edits`, `dirtyFields`, the upload upsert map and
+      // parent references. A file-carried PL Number is kept verbatim and an
+      // empty one is auto-generated (§4.3/§5.4); nothing asks a user to type
+      // one, so it is read-only rather than re-keyable from the form.
+      { key: 'plNumber', label: 'PL Number', kind: 'text', readOnly: true },
       derived('plName', 'PL Name'),
       t('client', 'Customer'),
       { key: 'parentPlNumber', label: 'Parent Prog. Line', kind: 'parentRef' },

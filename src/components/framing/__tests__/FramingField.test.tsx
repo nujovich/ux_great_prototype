@@ -74,6 +74,17 @@ describe('FramingField (§7.2)', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('disables the real PL Number field and never reports a change — it is the store primary key (C1)', async () => {
+    const onChange = vi.fn();
+    const def = FRAMING_SECTIONS.find((s) => s.id === 'plDetails')!.fields
+      .find((f) => f.key === 'plNumber')!;
+    field({ def, value: 'AA00', onChange });
+    const input = screen.getByLabelText('PL Number');
+    expect(input).toBeDisabled();
+    await userEvent.type(input, 'X');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('renders no error indicator for any field — HIW-463 AC#9', () => {
     const { container } = field({ def: { key: 'cluster', label: 'Cluster', kind: 'text' }, value: '', onChange: vi.fn() });
     expect(container.querySelector('[data-testid="field-error"]')).toBeNull();
