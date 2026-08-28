@@ -11,6 +11,13 @@ export interface FramingFieldDef {
   refList?: RefListKey;
   /** §15.1 — expectedEcoOutput is read-only in both tracks. */
   readOnly?: boolean;
+  /**
+   * Conditional visibility (demo_list.py:27 — "Only show if 'part type' is
+   * 'battery'"). Omitted for every field except battery capacity, which
+   * always shows. The component only asks the question via this predicate;
+   * it holds no field-specific knowledge of its own.
+   */
+  showWhen?: (line: FramingLine) => boolean;
 }
 
 export interface FramingSectionDef {
@@ -116,7 +123,11 @@ export const FRAMING_SECTIONS: FramingSectionDef[] = [
       s('standardEmissions', 'Standard emissions', 'standardEmissions'),
       n('icePowerKw', 'ICE Power kW'),
       n('iceTorqueNm', 'ICE Torque Nm'),
-      n('batteryCapacity', 'Battery capacity'),
+      {
+        key: 'batteryCapacity', label: 'Battery capacity', kind: 'number',
+        // demo_list.py:27 — "Only show if 'part type' is 'battery'".
+        showWhen: (line) => line.organType.trim().toLowerCase() === 'battery',
+      },
       s('eeArchitecture', 'EE Architecture', 'eeArchitecture'),
     ],
   },

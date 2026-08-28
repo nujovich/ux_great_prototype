@@ -35,15 +35,17 @@ export function FramingFormSection({ section, line, parentOptions, onChange, def
       </button>
       {open && section.fields.length > 0 && (
         <div className="grid grid-cols-1 gap-3 border-t border-slate-100 p-4 sm:grid-cols-2 lg:grid-cols-3">
-          {section.fields.map((def) => (
-            <FramingField
-              key={String(def.key)}
-              def={def}
-              value={line[def.key]}
-              parentOptions={parentOptions}
-              onChange={onChange}
-            />
-          ))}
+          {section.fields
+            .filter((def) => !def.showWhen || def.showWhen(line))
+            .map((def) => (
+              <FramingField
+                key={String(def.key)}
+                def={def}
+                value={line[def.key]}
+                parentOptions={parentOptions}
+                onChange={onChange}
+              />
+            ))}
         </div>
       )}
     </section>

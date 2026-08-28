@@ -162,3 +162,51 @@ describe('FramingFormSection (§7.2)', () => {
     expect(container.querySelector('[data-testid="section-error"]')).toBeNull();
   });
 });
+
+describe('FramingFormSection — conditional visibility (demo_list.py:27)', () => {
+  const organDescription = FRAMING_SECTIONS.find((s) => s.id === 'organDescription')!;
+
+  const renderOrgan = (organType: string) =>
+    render(
+      <LangProvider>
+        <FramingFormSection
+          section={organDescription}
+          line={{ ...EMPTY_FRAMING_LINE, organType }}
+          parentOptions={[]}
+          onChange={vi.fn()}
+          defaultOpen
+        />
+      </LangProvider>,
+    );
+
+  it('shows Battery capacity when organ type is Battery', () => {
+    renderOrgan('Battery');
+    expect(screen.getByLabelText('Battery capacity')).toBeInTheDocument();
+  });
+
+  it('matches organ type case-insensitively', () => {
+    renderOrgan('battery');
+    expect(screen.getByLabelText('Battery capacity')).toBeInTheDocument();
+  });
+
+  it('hides Battery capacity — genuinely absent from the DOM, not merely styled away — when organ type is not Battery', () => {
+    const { container } = renderOrgan('Gearbox');
+    expect(screen.queryByLabelText('Battery capacity')).toBeNull();
+    expect(container.querySelector('#framing-field-batteryCapacity')).toBeNull();
+  });
+
+  it('hides Battery capacity when organ type is empty', () => {
+    renderOrgan('');
+    expect(screen.queryByLabelText('Battery capacity')).toBeNull();
+  });
+
+  it('leaves every other Organ Description field unaffected when Battery capacity is hidden', () => {
+    renderOrgan('Gearbox');
+    for (const label of [
+      'Part type', 'Alliance code', 'Fuel', 'Standard emissions',
+      'ICE Power kW', 'ICE Torque Nm', 'EE Architecture',
+    ]) {
+      expect(screen.getByLabelText(label)).toBeInTheDocument();
+    }
+  });
+});

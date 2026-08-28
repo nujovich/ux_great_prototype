@@ -120,6 +120,21 @@ describe('FRAMING_SECTIONS (§5.6)', () => {
     expect(client.refList).toBe('client');
     expect(FRAMING_REFERENCE.client).toEqual(['RG', 'Other']);
   });
+
+  it('gates Battery capacity behind organ type, case-insensitively — demo_list.py:27', () => {
+    const battery = allFieldDefs().find((f) => f.key === 'batteryCapacity')!;
+    expect(battery.showWhen).toBeTypeOf('function');
+    expect(battery.showWhen!({ ...EMPTY_FRAMING_LINE, organType: 'Battery' })).toBe(true);
+    expect(battery.showWhen!({ ...EMPTY_FRAMING_LINE, organType: 'battery' })).toBe(true);
+    expect(battery.showWhen!({ ...EMPTY_FRAMING_LINE, organType: 'BATTERY' })).toBe(true);
+    expect(battery.showWhen!({ ...EMPTY_FRAMING_LINE, organType: 'Gearbox' })).toBe(false);
+    expect(battery.showWhen!({ ...EMPTY_FRAMING_LINE, organType: '' })).toBe(false);
+  });
+
+  it('leaves showWhen undefined for every field except Battery capacity', () => {
+    const gated = allFieldDefs().filter((f) => f.showWhen !== undefined).map((f) => f.key);
+    expect(gated).toEqual(['batteryCapacity']);
+  });
 });
 
 describe('sectionsForTrack (§15.3)', () => {
