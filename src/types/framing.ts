@@ -26,7 +26,8 @@ export type RefListKey =
   | 'eeArchitecture'
   | 'countryCluster'
   | 'cpo'
-  | 'cpa';
+  | 'cpa'
+  | 'client';
 
 export interface FramingLine {
   // ── identity & provenance (not form fields) ──────────────

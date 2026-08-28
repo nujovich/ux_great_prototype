@@ -81,6 +81,15 @@ describe('FramingField (§7.2)', () => {
     expect(screen.getByRole('option', { name: 'Z. NotInList' })).toBeInTheDocument();
   });
 
+  it('shows an off-list Customer value instead of blanking it, and preserves it — real files may carry any customer string', () => {
+    field({ def: { key: 'client', label: 'Customer', kind: 'select', refList: 'client' }, value: 'Nissan', onChange: vi.fn() });
+    const select = screen.getByLabelText('Customer') as HTMLSelectElement;
+    expect(select).toHaveValue('Nissan');
+    expect(screen.getByRole('option', { name: 'Nissan' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'RG' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Other' })).toBeInTheDocument();
+  });
+
   it('renders exactly one blank option when the reference list itself starts empty — M8 (Techno Group)', () => {
     field({ def: { key: 'technoGroup', label: 'Techno Group', kind: 'select', refList: 'technoGroup' }, value: 'Diesel PWT', onChange: vi.fn() });
     const select = screen.getByLabelText('Techno Group') as HTMLSelectElement;

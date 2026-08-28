@@ -108,4 +108,6 @@ export const FRAMING_REFERENCE: Record<RefListKey, readonly string[]> = {
   // Prototype substitution for Graph API CPO-role resolution (§4.2).
   cpo: ['B. Hernandez', 'C. Canteli', 'D. Ceola', 'F. Istrate', 'I. Petcu'],
   cpa: ['K. Shway', 'G. Diaz', 'B. Popescu', 'M. Pruna', 'P. Zan'],
+  // demo_list.py:148-150 — the POC renders Customer as a dropdown.
+  client: ['RG', 'Other'],
 };

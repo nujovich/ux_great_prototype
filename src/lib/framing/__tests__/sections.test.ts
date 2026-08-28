@@ -95,6 +95,31 @@ describe('FRAMING_SECTIONS (§5.6)', () => {
     expect(volumes).toHaveLength(7);
     expect(volumes.every((f) => f.kind === 'number')).toBe(true);
   });
+
+  it('orders PL Details per the legacy POC layout — demo_list.py:3-6 (group_1)', () => {
+    const plDetails = FRAMING_SECTIONS.find((s) => s.id === 'plDetails')!;
+    expect(plDetails.fields.map((f) => f.key)).toEqual([
+      'plNumber', 'projectName', 'cpo', 'cpa', 'cpoDepartment',
+      'parentPlNumber', 'parentRanking', 'client', 'secondaryOrgan',
+      'thirdOrgan', 'fourthOrgan', 'otherSpecifications', 'plName',
+    ]);
+  });
+
+  it('orders Framework per the legacy POC layout — demo_list.py:38-42 (group_6)', () => {
+    const framework = FRAMING_SECTIONS.find((s) => s.id === 'framework')!;
+    expect(framework.fields.map((f) => f.key)).toEqual([
+      'projectRanking', 'frameworkComment', 'protosPfc', 'protosVc',
+      'protosOrganPt', 'protosOrganUm', 'protosEp', 'partFactory',
+      'cluster', 'technoGroup',
+    ]);
+  });
+
+  it('renders Customer as a select over the POC dropdown values — demo_list.py:148-150', () => {
+    const client = allFieldDefs().find((f) => f.key === 'client')!;
+    expect(client.kind).toBe('select');
+    expect(client.refList).toBe('client');
+    expect(FRAMING_REFERENCE.client).toEqual(['RG', 'Other']);
+  });
 });
 
 describe('sectionsForTrack (§15.3)', () => {

@@ -30,29 +30,36 @@ const s = (key: keyof FramingLine, label: string, refList: RefListKey): FramingF
 const derived = (key: keyof FramingLine, label: string): FramingFieldDef =>
   ({ key, label, kind: 'derived' });
 
-/** PRD §5.6 — the wp5 layout, section order and field order preserved. */
+/**
+ * Section/field order follows the legacy POC layout (demo_list.py's
+ * `group_1`..`group_7`), not PRD §5.6 — the PRD claims wp5 fidelity it does
+ * not have (conformance report, Part 2). Field membership stays exactly
+ * §5.6's 66 fields; only order and the Customer control type diverge.
+ */
 export const FRAMING_SECTIONS: FramingSectionDef[] = [
   {
     id: 'plDetails',
     labelKey: 'framing.section.plDetails',
+    // demo_list.py:3-6 (group_1).
     fields: [
       // C1 — plNumber keys `edits`, `dirtyFields`, the upload upsert map and
       // parent references. A file-carried PL Number is kept verbatim and an
       // empty one is auto-generated (§4.3/§5.4); nothing asks a user to type
       // one, so it is read-only rather than re-keyable from the form.
       { key: 'plNumber', label: 'PL Number', kind: 'text', readOnly: true },
-      derived('plName', 'PL Name'),
-      t('client', 'Customer'),
-      { key: 'parentPlNumber', label: 'Parent Prog. Line', kind: 'parentRef' },
-      derived('parentRanking', 'Parent Ranking'),
       t('projectName', 'Project Name'),
       s('cpo', 'CPO', 'cpo'),
       s('cpa', 'CPA', 'cpa'),
       s('cpoDepartment', 'CPO Department', 'cpoDepartment'),
+      { key: 'parentPlNumber', label: 'Parent Prog. Line', kind: 'parentRef' },
+      derived('parentRanking', 'Parent Ranking'),
+      // demo_list.py:148-150 — POC renders Customer as a dropdown (RG/Other).
+      s('client', 'Customer', 'client'),
       t('secondaryOrgan', 'Secondary Organ'),
       t('thirdOrgan', '3rd Organ'),
       t('fourthOrgan', '4th Organ'),
       t('otherSpecifications', 'Other Specifications'),
+      derived('plName', 'PL Name'),
     ],
   },
   {
@@ -126,17 +133,19 @@ export const FRAMING_SECTIONS: FramingSectionDef[] = [
   {
     id: 'framework',
     labelKey: 'framing.section.framework',
+    // demo_list.py:38-42 (group_6) — the #Protos counts come before
+    // Part factory / Cluster / Techno Group.
     fields: [
       s('projectRanking', 'Project ranking', 'projectRanking'),
       t('frameworkComment', 'Framework comment'),
-      t('partFactory', 'Part Factory'),
-      t('cluster', 'Cluster'),
-      s('technoGroup', 'Techno Group', 'technoGroup'),
       n('protosPfc', '#Protos PFC'),
       n('protosVc', '#Protos VC'),
       n('protosOrganPt', '#Protos Organ PT'),
       n('protosOrganUm', '#Protos Organ UM'),
       n('protosEp', '#Protos EP'),
+      t('partFactory', 'Part Factory'),
+      t('cluster', 'Cluster'),
+      s('technoGroup', 'Techno Group', 'technoGroup'),
     ],
   },
   {
