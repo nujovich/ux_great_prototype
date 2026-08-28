@@ -149,27 +149,74 @@ function toNumber(value: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/** Header → field, trying the exact-alias map first, then the annual-volume pattern. */
+function resolveHeaderField(header: string): keyof FramingLine | undefined {
+  return HEADER_ALIASES[normalizeKey(header)] ?? annualVolumeField(header) ?? undefined;
+}
+
+const HEADER_ROW_SCAN_LIMIT = 20;
+const HEADER_ROW_MATCH_THRESHOLD = 5;
+
+function countHeaderMatches(row: unknown[] | undefined): number {
+  if (!row) return 0;
+  return row.reduce<number>(
+    (count, raw) => (resolveHeaderField(toText(raw)) ? count + 1 : count),
+    0,
+  );
+}
+
 /**
- * §4.3 — pure parse-and-normalize over a 2-D matrix (row 0 = headers).
- * Runs ONLY the upload-time transforms; `engineering`, `estimateType`,
- * `injectionSystem` and `market` belong to Generate and GPMF export.
+ * P1 — real framing sheets bury the header row behind rows of instructions to
+ * whoever fills the file in; `matrix[0]` is not a safe assumption. Scans the
+ * first 20 rows and returns the first one with at least
+ * HEADER_ROW_MATCH_THRESHOLD cells resolving to a known field.
+ *
+ * A row narrower than the threshold — a hand-built fixture, never a real ~70
+ * column sheet — can mathematically never reach it, so among *those* rows the
+ * best nonzero-scoring one in range is accepted instead. A realistic-width
+ * row (>= the threshold) never qualifies for that exception, so it does not
+ * weaken the guard against a real file's instruction rows.
+ */
+export function findHeaderRow(matrix: unknown[][]): number {
+  const limit = Math.min(matrix.length, HEADER_ROW_SCAN_LIMIT);
+  let bestIndex = -1;
+  let bestScore = 0;
+  for (let i = 0; i < limit; i += 1) {
+    const candidate = matrix[i];
+    const score = countHeaderMatches(candidate);
+    if (score >= HEADER_ROW_MATCH_THRESHOLD) return i;
+    if (candidate && candidate.length < HEADER_ROW_MATCH_THRESHOLD && score > bestScore) {
+      bestScore = score;
+      bestIndex = i;
+    }
+  }
+  return bestIndex;
+}
+
+/**
+ * §4.3 — pure parse-and-normalize over a 2-D matrix. The header row is
+ * located by `findHeaderRow` rather than assumed to be row 0 (P1) — real
+ * sheets bury it behind instruction rows. Runs ONLY the upload-time
+ * transforms; `engineering`, `estimateType`, `injectionSystem` and `market`
+ * belong to Generate and GPMF export.
  */
 export function parseFramingMatrix(
   matrix: unknown[][],
   fileName: string,
   existingCodes: readonly string[],
 ): FramingLine[] {
-  const headerRow = matrix[0];
-  if (!headerRow || headerRow.length === 0) {
+  const headerRowIndex = findHeaderRow(matrix);
+  if (headerRowIndex === -1) {
     throw new FramingParseError('Framing sheet has no header row', 'noHeaderRow');
   }
+  const headerRow = matrix[headerRowIndex];
 
   const columns = headerRow.map((raw) => {
     const header = toText(raw);
-    return { header, field: HEADER_ALIASES[normalizeKey(header)] ?? annualVolumeField(header) };
+    return { header, field: resolveHeaderField(header) };
   });
 
-  const staged = matrix.slice(1).flatMap((cells, index) => {
+  const staged = matrix.slice(headerRowIndex + 1).flatMap((cells, index) => {
     if (!cells || cells.every((c) => toText(c) === '')) return [];
 
     const line: FramingLine = { ...EMPTY_FRAMING_LINE };

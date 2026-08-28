@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as XLSX from 'xlsx';
 import {
   selectFramingSheet, parseFramingMatrix, readFramingWorkbook,
-  isXlsxFileName, FramingParseError,
+  isXlsxFileName, FramingParseError, findHeaderRow,
 } from '../parseFramingFile';
 
 const HEADERS = [
@@ -173,6 +173,64 @@ describe('parseFramingMatrix (§4.3)', () => {
   it('assigns a unique id per parsed line', () => {
     const out = parseFramingMatrix(matrix(row({ 'PL Number': 'A' }), row({ 'PL Number': 'B' })), 'f.xlsx', []);
     expect(new Set(out.map((l) => l.id)).size).toBe(2);
+  });
+});
+
+describe('findHeaderRow (conformance P1)', () => {
+  const junkRow = (overrides: Record<number, string> = {}): unknown[] => {
+    const cells = HEADERS.map(() => '');
+    Object.entries(overrides).forEach(([i, v]) => { cells[Number(i)] = v; });
+    return cells;
+  };
+
+  it('locates the header row at index 0 when there is no leading junk', () => {
+    expect(findHeaderRow(matrix(row()))).toBe(0);
+  });
+
+  it('locates a header row buried behind 8 leading instruction rows', () => {
+    const buried = [
+      junkRow(),
+      junkRow({ 0: 'For a proper estimation, all fields are mandatory.' }),
+      junkRow({ 0: 'If any field is not relevant, use N/A (Not applicable).' }),
+      junkRow({ 0: 'Do not insert or delete columns.' }),
+      junkRow({ 0: 'Merged cells are not allowed.' }),
+      junkRow(),
+      junkRow({ 0: 'HORSE IF NEW PL', 1: 'NEW', 2: 'NEW' }),
+      junkRow({ 0: 'Contact the PMO with questions.', 1: 'See the guide tab.' }),
+      HEADERS,
+      row({ 'PL Number': 'BUR01' }),
+    ];
+    expect(findHeaderRow(buried)).toBe(8);
+    const [line] = parseFramingMatrix(buried, 'f.xlsx', []);
+    expect(line.plNumber).toBe('BUR01');
+  });
+
+  it('does not false-positive on a row whose prose happens to include a couple of header-like words', () => {
+    const withDecoy = [
+      junkRow({ 0: 'PL Number', 1: 'Request type' }),
+      HEADERS,
+      row(),
+    ];
+    expect(findHeaderRow(withDecoy)).toBe(1);
+  });
+
+  it('returns -1 when no row has enough matches', () => {
+    const noHeader = [
+      junkRow(),
+      junkRow({ 0: 'For a proper estimation, all fields are mandatory.' }),
+      junkRow({ 0: 'HORSE IF NEW PL', 1: 'NEW', 2: 'NEW' }),
+    ];
+    expect(findHeaderRow(noHeader)).toBe(-1);
+  });
+
+  it('throws instead of yielding generated-PL garbage when only instruction rows are present — the regression this task exists for', () => {
+    const onlyInstructions = [
+      junkRow(),
+      junkRow({ 0: 'For a proper estimation, all fields are mandatory.' }),
+      junkRow({ 0: 'If any field is not relevant, use N/A (Not applicable).' }),
+      junkRow({ 0: 'HORSE IF NEW PL', 1: 'NEW', 2: 'NEW' }),
+    ];
+    expect(() => parseFramingMatrix(onlyInstructions, 'f.xlsx', [])).toThrow(FramingParseError);
   });
 });
 
