@@ -4,6 +4,7 @@ import type { FramingTrack } from '../types/framing';
 import { RoleGate } from '../components/shared/RoleGate';
 import { EmptyState } from '../components/shared/EmptyState';
 import { FramingFileUpload } from '../components/framing/FramingFileUpload';
+import { FramingUploadList } from '../components/framing/FramingUploadList';
 import { FramingLineTable } from '../components/framing/FramingLineTable';
 import { FramingDetailForm } from '../components/framing/FramingDetailForm';
 import { SaveControls } from '../components/framing/SaveControls';
@@ -35,6 +36,17 @@ function FramingFileContent() {
     setSelected(null);
   }
 
+  // Task 6 — a deleted upload can take the selected row with it (only the
+  // rows it exclusively supplied; see framingStore's deleteUpload). Drop a
+  // selection that no longer points at a live row. Adjusted during render
+  // (React's documented pattern for reacting to a changed prop/store value)
+  // rather than in an effect, so it never causes an extra render pass.
+  const [prevLines, setPrevLines] = useState(lines);
+  if (lines !== prevLines) {
+    setPrevLines(lines);
+    if (selected && !lines.some((l) => l.plNumber === selected)) setSelected(null);
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between">
@@ -46,6 +58,7 @@ function FramingFileContent() {
       </div>
 
       <FramingFileUpload />
+      <FramingUploadList />
 
       <div role="tablist" aria-label={t('framing.title')} className="flex gap-1 border-b border-slate-200">
         {TRACKS.map((candidate) => (

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { FramingLine, FramingTrack } from '../types/framing';
+import type { FramingLine, FramingTrack, FramingUpload } from '../types/framing';
 import { FRAMING_LINES } from '../fixtures/framingLines';
 import { composePlName } from '../lib/framing/plName';
 
@@ -17,6 +17,8 @@ export interface UploadSummary {
 export interface FramingState {
   /** Persisted rows — the prototype's framing_file_line + rfi_line. */
   lines: FramingLine[];
+  /** Task 6 — one entry per upload, in upload order, so a bad upload can be undone. */
+  uploads: FramingUpload[];
   /** ADR-008 — page state, keyed by pl_number. Not persisted until Save. */
   edits: Record<string, FramingEdits>;
   /** ADR-022 — field-granular dirty tracking, so a Save payload carries exactly the changes. */
@@ -28,6 +30,7 @@ export interface FramingState {
   resetLine(plNumber: string): void;
   saveLine(plNumber: string): void;
   saveAll(): void;
+  deleteUpload(uploadId: string): void;
 }
 
 /** Fields the user never edits directly — recomputed by effectiveLine. */
@@ -103,6 +106,7 @@ export function linesForTrack(
 
 const initialState = {
   lines: structuredClone(FRAMING_LINES),
+  uploads: [] as FramingUpload[],
   edits: {} as Record<string, FramingEdits>,
   dirtyFields: {} as Record<string, FramingFieldKey[]>,
   lastUpload: null as UploadSummary | null,
@@ -114,6 +118,15 @@ export const useFramingStore = create<FramingState>((set, get) => ({
   /** §4.1 — uploads accumulate: upsert on pl_number, latest upload wins. */
   ingestRows: (rows, fileName) => {
     let discardedEditsCount = 0;
+    // Task 6 — one FramingUpload entry records this call's provenance so a
+    // later deleteUpload can identify exactly which rows it carried.
+    const upload: FramingUpload = {
+      id: `upl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      fileName,
+      uploadedAt: new Date().toISOString(),
+      plNumbers: [...new Set(rows.map((r) => r.plNumber))],
+    };
+
     set((s) => {
       const byPl = new Map(s.lines.map((l) => [l.plNumber, l]));
       for (const row of rows) {
@@ -136,7 +149,7 @@ export const useFramingStore = create<FramingState>((set, get) => ({
         delete dirtyFields[plNumber];
       }
 
-      return { lines: [...byPl.values()], edits, dirtyFields };
+      return { lines: [...byPl.values()], edits, dirtyFields, uploads: [...s.uploads, upload] };
     });
     const summary: UploadSummary = {
       fileName,
@@ -219,4 +232,45 @@ export const useFramingStore = create<FramingState>((set, get) => ({
   saveAll: () => {
     for (const plNumber of dirtyPlNumbers(get())) get().saveLine(plNumber);
   },
+
+  /**
+   * Task 6 — removing an upload deletes only the rows it *exclusively*
+   * supplied. A PL number re-supplied by a later upload now belongs to that
+   * later upload, so it must survive deleting the earlier one. "Later" is
+   * array order: ingestRows only ever appends, so an upload's index in
+   * `uploads` is its chronology, and the check is always against the
+   * *current* uploads list (not a fixed record from upload time) so an
+   * already-deleted later upload no longer counts as a claimant.
+   *
+   * This is one-directional: deleting a PL number's current (most recent, or
+   * only) upload removes that row outright, even if a still-earlier upload
+   * once supplied it too — ingestRows upserts on PL number, so the row's
+   * live field values already came from the later upload and there is no
+   * per-upload historical snapshot to fall back to.
+   *
+   * Also clears page-state edits/dirty flags for every row actually removed
+   * (ADR-008: a deleted row cannot have pending page state).
+   */
+  deleteUpload: (uploadId) =>
+    set((s) => {
+      const idx = s.uploads.findIndex((u) => u.id === uploadId);
+      if (idx === -1) return s;
+      const target = s.uploads[idx];
+      const laterPlNumbers = new Set(s.uploads.slice(idx + 1).flatMap((u) => u.plNumbers));
+      const toRemove = new Set(target.plNumbers.filter((pl) => !laterPlNumbers.has(pl)));
+
+      const edits = { ...s.edits };
+      const dirtyFields = { ...s.dirtyFields };
+      for (const plNumber of toRemove) {
+        delete edits[plNumber];
+        delete dirtyFields[plNumber];
+      }
+
+      return {
+        lines: s.lines.filter((l) => !toRemove.has(l.plNumber)),
+        uploads: s.uploads.filter((u) => u.id !== uploadId),
+        edits,
+        dirtyFields,
+      };
+    }),
 }));

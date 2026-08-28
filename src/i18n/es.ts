@@ -35,6 +35,16 @@ export const es: Translations = {
     },
     table: { filterPlaceholder: 'Filtrar…', selectRow: 'Seleccione una línea para revisarla.' },
     empty: { title: 'Sin líneas de framing', desc: 'Suba un framing file para comenzar.' },
+    uploads: {
+      title: 'Archivos cargados',
+      rowCount: '{count} línea(s)',
+      delete: 'Eliminar {fileName}',
+      confirmTitle: '¿Eliminar esta carga?',
+      confirmBody:
+        '¿Eliminar "{fileName}"? Se eliminarán todas las líneas que solo esta carga aportó y la acción no se puede deshacer.',
+      cancel: 'Cancelar',
+      confirmDelete: 'Sí, eliminar',
+    },
   },
   nav: {
     home: 'Inicio',

@@ -87,4 +87,32 @@ describe('FramingFilePage (§15, ADR-020)', () => {
     renderPage();
     expect(screen.queryByText(/not ready/i)).toBeNull();
   });
+
+  // ── Task 6 (HIW-452 remediation) — per-file management ──────────────────
+
+  it('renders the uploaded-files list once a file has been ingested', () => {
+    useFramingStore.getState().ingestRows(
+      [{ ...useFramingStore.getState().lines[0], id: 'ffl-new-1', plNumber: 'ZZ90' }],
+      'fileA.xlsx',
+    );
+    renderPage();
+    expect(screen.getByText('fileA.xlsx')).toBeInTheDocument();
+  });
+
+  it('clears the selection when its upload is deleted', async () => {
+    useFramingStore.getState().ingestRows(
+      [{ ...useFramingStore.getState().lines[0], id: 'ffl-new-1', plNumber: 'ZZ90', track: 'RFQ' }],
+      'fileA.xlsx',
+    );
+    renderPage();
+
+    await userEvent.click(screen.getByTestId('row-ZZ90'));
+    expect(screen.getByRole('button', { name: /PL Details/i })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await userEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+
+    expect(screen.queryByTestId('row-ZZ90')).toBeNull();
+    expect(screen.queryByRole('button', { name: /PL Details/i })).toBeNull();
+  });
 });

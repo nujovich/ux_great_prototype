@@ -24,6 +24,10 @@ export interface Translations {
     save: { line: string; all: string; done: string; nothing: string };
     table: { filterPlaceholder: string; selectRow: string };
     empty: { title: string; desc: string };
+    uploads: {
+      title: string; rowCount: string; delete: string;
+      confirmTitle: string; confirmBody: string; cancel: string; confirmDelete: string;
+    };
   };
   nav: {
     home: string;

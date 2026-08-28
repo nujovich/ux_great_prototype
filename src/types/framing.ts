@@ -5,6 +5,21 @@
 
 export type FramingTrack = 'RFQ' | 'RFI';
 
+/**
+ * Task 6 (HIW-452 remediation) — one entry per upload, so a bad upload can be
+ * identified and undone. Mirrors the POC's file list
+ * (1_Framing_File_Review.py:58-136), which our flat `lines` array otherwise
+ * has no equivalent for.
+ */
+export interface FramingUpload {
+  id: string;
+  fileName: string;
+  /** ISO timestamp. */
+  uploadedAt: string;
+  /** PL numbers this upload carried, as parsed — the store's ownership record. */
+  plNumbers: string[];
+}
+
 /** Keys into FRAMING_REFERENCE (src/fixtures/framingReference.ts). */
 export type RefListKey =
   | 'whyThisRequest'

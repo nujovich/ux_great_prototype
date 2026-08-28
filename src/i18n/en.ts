@@ -35,6 +35,16 @@ export const en: Translations = {
     },
     table: { filterPlaceholder: 'Filter…', selectRow: 'Select a line to review it.' },
     empty: { title: 'No framing lines', desc: 'Upload a framing file to get started.' },
+    uploads: {
+      title: 'Uploaded files',
+      rowCount: '{count} line(s)',
+      delete: 'Delete {fileName}',
+      confirmTitle: 'Delete this upload?',
+      confirmBody:
+        'Delete "{fileName}"? This will remove every line it exclusively carries and cannot be undone.',
+      cancel: 'Cancel',
+      confirmDelete: 'Yes, delete',
+    },
   },
   nav: {
     home: 'Home',

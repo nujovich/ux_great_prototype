@@ -215,4 +215,107 @@ describe('framingStore', () => {
     expect(dirtyPlNumbers(s)).toEqual([b.plNumber]);
     expect(effectiveLine(s, b.plNumber)!.cluster).toBe('KEEP-ME');
   });
+
+  describe('per-file management — Task 6 (HIW-452 remediation)', () => {
+    it('records one upload entry per ingestRows call, in order', () => {
+      const template = useFramingStore.getState().lines[0];
+      useFramingStore.getState().ingestRows([{ ...template, plNumber: 'ZZ90' }], 'fileA.xlsx');
+      useFramingStore.getState().ingestRows([{ ...template, plNumber: 'ZZ91' }], 'fileB.xlsx');
+
+      const { uploads } = useFramingStore.getState();
+      expect(uploads).toHaveLength(2);
+      expect(uploads[0]).toMatchObject({ fileName: 'fileA.xlsx', plNumbers: ['ZZ90'] });
+      expect(uploads[1]).toMatchObject({ fileName: 'fileB.xlsx', plNumbers: ['ZZ91'] });
+      expect(uploads[0].id).not.toBe(uploads[1].id);
+    });
+
+    it('deleting an upload removes only the rows it exclusively supplied', () => {
+      const template = useFramingStore.getState().lines[0];
+      useFramingStore.getState().ingestRows(
+        [{ ...template, plNumber: 'ZZ90' }, { ...template, plNumber: 'ZZ91' }],
+        'fileA.xlsx',
+      );
+      // fileB re-supplies only ZZ91 — it now belongs to fileB, not fileA.
+      useFramingStore.getState().ingestRows(
+        [{ ...template, plNumber: 'ZZ91', cluster: 'FROM-B' }],
+        'fileB.xlsx',
+      );
+
+      const [uploadA] = useFramingStore.getState().uploads;
+      useFramingStore.getState().deleteUpload(uploadA.id);
+
+      const s = useFramingStore.getState();
+      expect(s.lines.some((l) => l.plNumber === 'ZZ90')).toBe(false); // exclusive to fileA — gone
+      expect(s.lines.some((l) => l.plNumber === 'ZZ91')).toBe(true); // re-supplied by fileB — survives
+      expect(s.lines.find((l) => l.plNumber === 'ZZ91')!.cluster).toBe('FROM-B');
+      expect(s.uploads.map((u) => u.fileName)).toEqual(['fileB.xlsx']);
+    });
+
+    it('a PL number re-supplied by a later upload survives deleting the earlier one', () => {
+      const template = useFramingStore.getState().lines[0];
+      useFramingStore.getState().ingestRows([{ ...template, plNumber: 'ZZ95' }], 'fileA.xlsx');
+      useFramingStore.getState().ingestRows(
+        [{ ...template, plNumber: 'ZZ95', cluster: 'LATEST' }],
+        'fileB.xlsx',
+      );
+
+      const [uploadA] = useFramingStore.getState().uploads;
+      useFramingStore.getState().deleteUpload(uploadA.id);
+
+      const line = useFramingStore.getState().lines.find((l) => l.plNumber === 'ZZ95');
+      expect(line).toBeDefined();
+      expect(line!.cluster).toBe('LATEST');
+    });
+
+    it('deleting an upload clears page-state edits and dirty flags for the rows it removes', () => {
+      const template = useFramingStore.getState().lines[0];
+      useFramingStore.getState().ingestRows([{ ...template, plNumber: 'ZZ96' }], 'fileA.xlsx');
+      useFramingStore.getState().editField('ZZ96', 'cluster', 'EDITED');
+      expect(dirtyPlNumbers(useFramingStore.getState())).toContain('ZZ96');
+
+      const [uploadA] = useFramingStore.getState().uploads;
+      useFramingStore.getState().deleteUpload(uploadA.id);
+
+      const s = useFramingStore.getState();
+      expect(s.edits['ZZ96']).toBeUndefined();
+      expect(s.dirtyFields['ZZ96']).toBeUndefined();
+      expect(dirtyPlNumbers(s)).not.toContain('ZZ96');
+    });
+
+    it('leaves edits and dirty flags for unrelated rows untouched', () => {
+      const template = useFramingStore.getState().lines[0];
+      useFramingStore.getState().ingestRows([{ ...template, plNumber: 'ZZ97' }], 'fileA.xlsx');
+      useFramingStore.getState().editField('AA00', 'cluster', 'KEEP-ME');
+
+      const [uploadA] = useFramingStore.getState().uploads;
+      useFramingStore.getState().deleteUpload(uploadA.id);
+
+      expect(dirtyPlNumbers(useFramingStore.getState())).toEqual(['AA00']);
+    });
+
+    it('deleting an unknown upload id is a no-op', () => {
+      const before = useFramingStore.getState();
+      useFramingStore.getState().deleteUpload('does-not-exist');
+      const after = useFramingStore.getState();
+      expect(after.lines).toEqual(before.lines);
+      expect(after.uploads).toEqual(before.uploads);
+    });
+
+    it('deleting the current (most recent) upload of a PL number removes it outright, even though an earlier upload once supplied it too', () => {
+      // ingestRows upserts on PL number, so once fileB re-supplies ZZ98 the
+      // row's live values are fileB's — there is no per-upload snapshot to
+      // fall back to, so deleting fileB (nothing later reclaims ZZ98) simply
+      // removes the row rather than reverting to fileA's superseded data.
+      const template = useFramingStore.getState().lines[0];
+      useFramingStore.getState().ingestRows([{ ...template, plNumber: 'ZZ98' }], 'fileA.xlsx');
+      useFramingStore.getState().ingestRows(
+        [{ ...template, plNumber: 'ZZ98', cluster: 'FROM-B' }],
+        'fileB.xlsx',
+      );
+      const [, uploadB] = useFramingStore.getState().uploads;
+
+      useFramingStore.getState().deleteUpload(uploadB.id);
+      expect(useFramingStore.getState().lines.some((l) => l.plNumber === 'ZZ98')).toBe(false);
+    });
+  });
 });
