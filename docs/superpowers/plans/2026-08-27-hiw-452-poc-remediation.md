@@ -172,3 +172,32 @@ Three small POC affordances with no counterpart.
 1 → 2 → 3 are the blocking parser chain and must land in that order. 4, 5, 6, 7 are independent of each other and of the parser chain.
 
 Each task ends green on suite, typecheck, lint and build.
+
+---
+
+## Task 8 — Parse the date formats real files actually use (CRITICAL, found during review)
+
+**Files:** `src/lib/framing/dates.ts` (new), `src/lib/framing/parseFramingFile.ts`, tests
+
+The review of Tasks 1–3 ran the fixed parser against the real file and found `sopDate` comes out as **`"CW2736"`**. Real framing files express milestones as **calendar-week codes**, not ISO dates. The real data row's milestones read `CW2520`, `CW2545`, `CW2610`, `CW2635`, `CW2710`, `CW2736`.
+
+We store them verbatim and render them in `<input type="date">`, which only accepts `yyyy-mm-dd`. So **all four milestone fields display blank** on a real file while the store holds the week code — the same failure class as the off-list select value, and it defeats the milestones that the readiness rules depend on.
+
+PRD §5.1 already requires this: every milestone is "Parsed to date (**week-code** / dd-mm-yyyy tolerant)". It was never implemented.
+
+**Reproduce the POC's `parse_custom_date`** (`poc_great/src/backend/framing_file_functions.py:749-822`, called from `transform_dates`). Its rules, in order:
+
+1. Empty, or one of `n/a`, `non défini`, `not defined`, `none` (case-insensitive) → null.
+2. `^W\d{4}$` — e.g. `W2431`: year `20` + first two digits, week = last two → the **Monday of that week**.
+3. `^cw\d{4}$` — e.g. `cw2730`: year `20` + digits 1–2, week = digits 3–4 → Monday of that week. Case-insensitive, so `CW2736` matches.
+4. A month range, `^(Jan|…|Dec)\s*-\s*(Jan|…|Dec)\s+(\d{4})$` — e.g. `Jan - Feb 2025` → the **first** month, day 1 of that year.
+5. Explicit formats, tried in this order: `yyyy-mm-dd`, `dd/mm/yyyy`, `dd-mm-yyyy`, `dd/mm/yy`, `dd-mm-yy`. The POC tries these before any loose parse specifically to stop ambiguous dates flipping day and month — keep that ordering.
+6. Anything else → null. Do **not** fall back to a permissive `new Date(value)`: it would silently read `03/04/2025` as March 4th, which is the bug step 5 exists to prevent.
+
+**Output ISO `yyyy-mm-dd`**, not the POC's `dd-mm-yyyy`. Our fields feed `<input type="date">`, which requires ISO, and the seed fixture already uses it.
+
+Apply it in the parser to every date-typed field, and note the POC's own date-column list (`framing_file_functions.py:731-742`) includes `Vehicle MA`, `SOP Date Powertrain`, `ABVC Date`, `ABPT Date` and three spellings of the contract date — confirming the aliases added in Task 2.
+
+**Flagged assumption:** Python's `%W` (Monday-first week-of-year) and ISO-8601 weeks disagree by up to a few days around year boundaries. Reproduce "Monday of week N of year 20YY" and state the convention in a comment; if a milestone ever lands a few days off at a year boundary, this is why.
+
+**Tests:** each of the six rules; the real values `CW2520` → `2025-…` and `CW2736` → `2027-…` in ascending order; `W2431`; `Jan - Feb 2025` → `2025-01-01`; `03/04/2025` → 3 April, not 4 March; `non défini` and `N/A` → null; and an end-to-end assertion that parsing the real-shape fixture with week-code milestones yields ISO dates an `<input type="date">` can display.
