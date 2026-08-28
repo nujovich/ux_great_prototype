@@ -67,6 +67,14 @@ export function FramingField({ def, value, parentOptions, onChange }: FieldProps
 
   if (def.kind === 'select') {
     const options = def.refList ? FRAMING_REFERENCE[def.refList] : [];
+    // M8 — the Techno Group list already starts with an empty entry
+    // (verbatim from the source system); adding our own static blank on top
+    // of it would render two identical blank options.
+    const listStartsEmpty = options[0] === '';
+    // I3 — a value that parsed fine but isn't on the reference list (e.g. the
+    // cpo/cpa fixture standing in for a directory lookup) must still be shown
+    // and preserved, not blanked out.
+    const showOffListOption = text !== '' && !options.includes(text);
     return (
       <div className="flex flex-col">
         {label}
@@ -77,7 +85,8 @@ export function FramingField({ def, value, parentOptions, onChange }: FieldProps
           disabled={def.readOnly}
           onChange={(e) => onChange(def.key, e.target.value)}
         >
-          <option value="" />
+          {!listStartsEmpty && <option value="" />}
+          {showOffListOption && <option value={text}>{text}</option>}
           {options.map((option) => (
             <option key={option} value={option}>{option}</option>
           ))}

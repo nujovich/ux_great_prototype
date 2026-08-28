@@ -74,6 +74,20 @@ describe('FramingField (§7.2)', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('shows an off-list value instead of blanking it, and preserves it — I3', () => {
+    field({ def: { key: 'cpo', label: 'CPO', kind: 'select', refList: 'cpo' }, value: 'Z. NotInList', onChange: vi.fn() });
+    const select = screen.getByLabelText('CPO') as HTMLSelectElement;
+    expect(select).toHaveValue('Z. NotInList');
+    expect(screen.getByRole('option', { name: 'Z. NotInList' })).toBeInTheDocument();
+  });
+
+  it('renders exactly one blank option when the reference list itself starts empty — M8 (Techno Group)', () => {
+    field({ def: { key: 'technoGroup', label: 'Techno Group', kind: 'select', refList: 'technoGroup' }, value: 'Diesel PWT', onChange: vi.fn() });
+    const select = screen.getByLabelText('Techno Group') as HTMLSelectElement;
+    const blanks = Array.from(select.querySelectorAll('option')).filter((o) => o.value === '');
+    expect(blanks).toHaveLength(1);
+  });
+
   it('disables the real PL Number field and never reports a change — it is the store primary key (C1)', async () => {
     const onChange = vi.fn();
     const def = FRAMING_SECTIONS.find((s) => s.id === 'plDetails')!.fields
