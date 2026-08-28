@@ -51,6 +51,17 @@ describe('parseCustomDate (PRD §5.1, POC parse_custom_date parity)', () => {
       expect(parseCustomDate('cw2736')).toBe(parseCustomDate('CW2736'));
     });
 
+    it('rejects a week number above 53, matching the POC', () => {
+      expect(parseCustomDate('CW2554')).toBeNull();
+      expect(parseCustomDate('CW2799')).toBeNull();
+      expect(parseCustomDate('W2554')).toBeNull();
+    });
+
+    it('still accepts week 53 and week 00', () => {
+      expect(parseCustomDate('CW2553')).not.toBeNull();
+      expect(parseCustomDate('CW2500')).not.toBeNull();
+    });
+
     it('the real file\'s six milestone codes are all parseable and chronological', () => {
       const codes = ['CW2520', 'CW2545', 'CW2610', 'CW2635', 'CW2710', 'CW2736'];
       const parsed = codes.map((c) => parseCustomDate(c));

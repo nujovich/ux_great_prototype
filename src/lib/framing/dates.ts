@@ -56,8 +56,16 @@ function isValidDate(year: number, month: number, day: number): boolean {
  * codes were themselves produced by the POC's `%W`-based logic — so a
  * milestone landing a few days off right at a year boundary is this
  * divergence, not a parsing bug.
+ *
+ * Week is bounded to 0-53 inclusive: Python's `strptime('%Y-W%W-%w')` raises
+ * for week >= 54, and the POC's `parse_custom_date` catches that exception
+ * and returns NaT (null here) rather than a date — so a malformed code like
+ * `CW2799` must be rejected, not silently rolled into the following year.
+ * Week 0 stays valid (both implementations roll it to the prior year
+ * identically); only >= 54 is out of range.
  */
-function mondayOfWeek(year: number, week: number): { year: number; month: number; day: number } {
+function mondayOfWeek(year: number, week: number): { year: number; month: number; day: number } | null {
+  if (week < 0 || week > 53) return null;
   const jan1Weekday = new Date(Date.UTC(year, 0, 1)).getUTCDay(); // 0=Sun..6=Sat
   const daysToFirstMonday = jan1Weekday === 1 ? 0 : (8 - jan1Weekday) % 7;
   const monday = new Date(Date.UTC(year, 0, 1 + daysToFirstMonday + (week - 1) * 7));
@@ -133,16 +141,16 @@ export function parseCustomDate(raw: unknown): string | null {
   if (WEEK_CODE_RE.test(value)) {
     const year = Number(`20${value.slice(1, 3)}`);
     const week = Number(value.slice(3, 5));
-    const { year: y, month, day } = mondayOfWeek(year, week);
-    return toIso(y, month, day);
+    const monday = mondayOfWeek(year, week);
+    return monday ? toIso(monday.year, monday.month, monday.day) : null;
   }
 
   // cw2730 — year 20 + digits 1-2, week = digits 3-4 (case-insensitive).
   if (CW_CODE_RE.test(value)) {
     const year = Number(`20${value.slice(2, 4)}`);
     const week = Number(value.slice(4, 6));
-    const { year: y, month, day } = mondayOfWeek(year, week);
-    return toIso(y, month, day);
+    const monday = mondayOfWeek(year, week);
+    return monday ? toIso(monday.year, monday.month, monday.day) : null;
   }
 
   // "Jan - Feb 2025" — first month, day 1 of that year.
