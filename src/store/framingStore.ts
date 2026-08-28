@@ -181,7 +181,17 @@ export const useFramingStore = create<FramingState>((set, get) => ({
       return { edits, dirtyFields };
     }),
 
-  /** §8 — lenient: completeness never blocks Save; §6 gates Generate instead. */
+  /**
+   * §8 — lenient: completeness never blocks Save; §6 gates Generate instead.
+   *
+   * I5 — the patch is built by buildSavePayload, the single encoding of
+   * ADR-022's partial-field rule (only dirty fields, plus parentRanking when
+   * parentPlNumber itself was submitted). plName is the one exception: it's
+   * derived alongside the payload, not inside it, because the table renders
+   * straight from the persisted rows rather than re-deriving on read — if it
+   * stopped being persisted here, the table would show a stale name after a
+   * save. buildSavePayload's own contract (which keys it emits) is untouched.
+   */
   saveLine: (plNumber) =>
     set((s) => {
       const changed = s.dirtyFields[plNumber] ?? [];
@@ -189,12 +199,10 @@ export const useFramingStore = create<FramingState>((set, get) => ({
       const merged = effectiveLine(s, plNumber);
       if (!merged) return s;
 
-      const patch: Partial<FramingLine> = {};
-      for (const field of changed) {
-        (patch as Record<string, unknown>)[field as string] = merged[field];
-      }
-      if (changed.includes('parentPlNumber')) patch.parentRanking = merged.parentRanking;
-      patch.plName = merged.plName;
+      const patch: Partial<FramingLine> = {
+        ...buildSavePayload(s, plNumber),
+        plName: merged.plName,
+      };
 
       const edits = { ...s.edits };
       const dirtyFields = { ...s.dirtyFields };

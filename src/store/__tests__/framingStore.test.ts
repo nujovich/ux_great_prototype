@@ -79,6 +79,27 @@ describe('framingStore', () => {
     expect(line.partFactory).toBe('BARI (Getrag)');
   });
 
+  it('leaves a non-dirty field untouched even when the merged view recomputes a different value — I5 partial-write guard', () => {
+    // AA01 is seeded with parentPlNumber 'AA00' and a stored parentRanking of
+    // 'M' — consistent with AA00's fixture projectRanking. Change AA00's
+    // projectRanking directly on the stored rows (no edit/save involved) so
+    // AA01's stored parentRanking is now stale relative to what effectiveLine
+    // would recompute from the live parent. parentPlNumber itself stays
+    // non-dirty, so a correct partial-field save must leave parentRanking
+    // alone — a full-row write (spreading the whole merged view) would
+    // silently overwrite it with the recomputed value instead.
+    useFramingStore.setState((s) => ({
+      lines: s.lines.map((l) => (l.plNumber === 'AA00' ? { ...l, projectRanking: 'GM' } : l)),
+    }));
+
+    useFramingStore.getState().editField('AA01', 'cluster', 'CL-99');
+    useFramingStore.getState().saveLine('AA01');
+
+    const line = useFramingStore.getState().lines.find((l) => l.plNumber === 'AA01')!;
+    expect(line.cluster).toBe('CL-99');
+    expect(line.parentRanking).toBe('M');
+  });
+
   it('keeps per-line payloads separate on global save — HIW-463 AC#12', () => {
     const store = useFramingStore.getState();
     store.editField('AA00', 'cluster', 'CL-A');
