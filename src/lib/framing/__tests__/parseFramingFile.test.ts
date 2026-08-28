@@ -5,7 +5,7 @@ import {
   isXlsxFileName, FramingParseError, findHeaderRow,
 } from '../parseFramingFile';
 import {
-  REAL_SHAPE_MATRIX, realShapeWorkbookBuffer,
+  REAL_SHAPE_MATRIX, REAL_SHAPE_MATRIX_WEEK_CODES, realShapeWorkbookBuffer,
 } from './realShapeFixture';
 
 const HEADERS = [
@@ -372,6 +372,43 @@ describe('real-shape fixture (conformance P1/P2 regression guard, Task 3)', () =
     const out = parseFramingMatrix(matrix, 'real-shape.xlsx', []);
     expect(out).toHaveLength(2);
     expect(out[0].sopDate).toBe('2028-09-01');
+  });
+});
+
+describe('date parsing on a real-shaped row with week-code milestones (Task 8)', () => {
+  const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+  const DATE_FIELDS = [
+    'requestDate', 'rfqSendDate', 'vehicleMaDate', 'spDate', 'pcDate', 'coDate', 'sopDate',
+  ] as const;
+
+  it('parses every date-typed field to an ISO value an <input type="date"> can display', () => {
+    const [line] = parseFramingMatrix(
+      REAL_SHAPE_MATRIX_WEEK_CODES as unknown[][], 'real-shape-week-codes.xlsx', [],
+    );
+    DATE_FIELDS.forEach((field) => {
+      expect(line[field]).toMatch(ISO_DATE_RE);
+    });
+  });
+
+  it('resolves the week-code milestones in ascending order, matching the real file', () => {
+    const [line] = parseFramingMatrix(
+      REAL_SHAPE_MATRIX_WEEK_CODES as unknown[][], 'real-shape-week-codes.xlsx', [],
+    );
+    // requestDate=CW2520, rfqSendDate=CW2545, vehicleMaDate=CW2610,
+    // sopDate=CW2635, spDate=CW2710, pcDate=CW2736 — assigned left to right
+    // across the fixture's milestone columns in this ascending order.
+    expect(line.requestDate < line.rfqSendDate).toBe(true);
+    expect(line.rfqSendDate < line.vehicleMaDate).toBe(true);
+    expect(line.vehicleMaDate < line.sopDate).toBe(true);
+    expect(line.sopDate < line.spDate).toBe(true);
+    expect(line.spDate < line.pcDate).toBe(true);
+  });
+
+  it('also parses the explicit dd-mm-yyyy contract date on the same row', () => {
+    const [line] = parseFramingMatrix(
+      REAL_SHAPE_MATRIX_WEEK_CODES as unknown[][], 'real-shape-week-codes.xlsx', [],
+    );
+    expect(line.coDate).toBe('2027-11-15');
   });
 });
 

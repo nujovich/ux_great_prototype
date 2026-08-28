@@ -3,6 +3,8 @@ import { EMPTY_FRAMING_LINE, type FramingLine } from '../../types/framing';
 import { assignPlNumbers } from './plNumber';
 import { composePlName } from './plName';
 import { classifyLine } from './classify';
+import { allFieldDefs } from './sections';
+import { parseCustomDate } from './dates';
 import {
   isDroppedRequestType, normalizeDrivetrain, normalizeKey,
   resolveClient, translateEnergy, translateOrganType,
@@ -133,6 +135,15 @@ const NUMERIC_FIELDS = new Set<keyof FramingLine>([
   'annualVolumeSopPlus6', 'icePowerKw', 'iceTorqueNm', 'batteryCapacity',
   'protosPfc', 'protosVc', 'protosOrganPt', 'protosOrganUm', 'protosEp',
 ]);
+
+/**
+ * §5.1 — every milestone is "Parsed to date (week-code / dd-mm-yyyy
+ * tolerant)". Derived from sections.ts's own `kind: 'date'` fields rather
+ * than duplicated here, so the two can't drift.
+ */
+const DATE_FIELDS = new Set<keyof FramingLine>(
+  allFieldDefs().filter((def) => def.kind === 'date').map((def) => def.key),
+);
 
 const ANNUAL_VOLUME_FIELDS: (keyof FramingLine)[] = [
   'annualVolumeSop', 'annualVolumeSopPlus1', 'annualVolumeSopPlus2',
@@ -279,6 +290,11 @@ export function parseFramingMatrix(
         // `Start of Production (SOP)` and `MA Date (MA/APR3)MA` — an alternate
         // source, not a positional override).
         if (value !== null || record[field] == null) record[field] = value;
+      } else if (DATE_FIELDS.has(field)) {
+        // Same anti-clobber rule as NUMERIC_FIELDS above, applied to dates —
+        // `sopDate` in particular is aliased from two headers.
+        const parsed = parseCustomDate(cell);
+        if (parsed !== null || !record[field]) record[field] = parsed ?? '';
       } else {
         const value = toText(cell);
         if (value !== '' || !record[field]) record[field] = value;

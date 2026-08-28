@@ -297,6 +297,103 @@ export const REAL_SHAPE_MATRIX: unknown[][] = [
   [...REAL_SHAPE_DATA_ROW_2],
 ];
 
+/**
+ * Week-code variant (remediation plan Task 8) — REAL_SHAPE_DATA_ROW_1/2
+ * above carry milestone dates already in ISO, so they exercise only rule 5's
+ * pass-through. This row carries the real file's own milestone shape —
+ * calendar-week codes, e.g. `CW2736` — across the milestone columns, so the
+ * week-code parsing path is genuinely exercised end to end. Codes are the
+ * six the conformance review found in the real file's data row, assigned
+ * left to right across the milestone columns in ascending order, matching
+ * their chronological progression there. `Contract date` uses a `dd-mm-yyyy`
+ * value instead, so this one row also exercises the explicit-format branch.
+ */
+export const REAL_SHAPE_DATA_ROW_WEEK_CODES: readonly unknown[] = dataRow({
+  0: 'GWF',
+  1: 'CW2520', // Request date
+  2: 'W. Example',
+  3: 'ZZ03',
+  4: 'Synthetic Project Gamma',
+  5: 'GPS-GAMMA',
+  6: 'Synthetic request description for the week-code fixture row.',
+  7: 'Regulation',
+  8: 'Synthetic requester comment.',
+  9: 'M',
+  10: 'Creation',
+  11: 'ZZ97',
+  12: 'P',
+  13: "Ph1'",
+  14: 'W. Fixture',
+  15: 'CW2545', // Date envoi RFQ
+  16: 'RFQ',
+  17: 'ECO1',
+  18: 'ECO2',
+  19: 'ZZ00',
+  20: 'MBTP',
+  21: 'C',
+  22: 'Moteur thermique',
+  23: 'ZZ12TESTG3',
+  24: 'SO-3',
+  25: 'TO-3',
+  26: 'FO-3',
+  27: 'None',
+  28: '4x4',
+  29: 'ZZ01',
+  30: 'Essence',
+  31: '',
+  32: '90',
+  33: '250',
+  34: 'TST-PLATFORM-3',
+  35: 'TST-ARCH-3',
+  36: 'CE01B - Europe Western & German Speaking',
+  37: '',
+  38: '',
+  39: '',
+  40: 'Synthetic Factory Three',
+  41: 'CW2610', // Vehicle MA
+  42: 'CW2635', // SOP Date Powertrain
+  43: '1000',
+  44: '1200',
+  45: '1300',
+  46: '1400',
+  47: '1500',
+  48: '1600',
+  49: '1700',
+  50: 'W. CpoExample',
+  51: 'X. CpaExample',
+  52: 'CW2710', // Start of Project (SP)
+  53: 'CW2736', // Pre-contract date (PC)
+  54: '15-11-2027', // Contract date (CO/APR2) CO — exercises the explicit dd-mm-yyyy branch
+  55: '',
+  56: '',
+  57: '', // MA Date left blank — sopDate traces to SOP Date Powertrain, as in row 1
+  58: 'Synthetic framework comment for the week-code fixture row.',
+  59: '',
+  60: '',
+  61: '2',
+  62: '3',
+  63: '1',
+  64: '1',
+  65: '1',
+  66: '',
+  67: '',
+  68: '12.5',
+  69: '450',
+  70: '7.1',
+  71: '',
+});
+
+/**
+ * The header row, instruction rows and a single week-code data row —
+ * a smaller, purpose-built matrix for the date-parsing end-to-end test so it
+ * doesn't have to share REAL_SHAPE_MATRIX's fixed 2-row expectations.
+ */
+export const REAL_SHAPE_MATRIX_WEEK_CODES: unknown[][] = [
+  ...REAL_SHAPE_INSTRUCTION_ROWS.map((r) => [...r]),
+  [...REAL_SHAPE_HEADER_ROW],
+  [...REAL_SHAPE_DATA_ROW_WEEK_CODES],
+];
+
 /** Wraps REAL_SHAPE_MATRIX into a one-sheet .xlsx workbook buffer for readFramingWorkbook. */
 export function realShapeWorkbookBuffer(sheetName = 'GWF2504'): ArrayBuffer {
   const wb = XLSX.utils.book_new();
