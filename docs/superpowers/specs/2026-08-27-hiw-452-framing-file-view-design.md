@@ -35,7 +35,7 @@ HIW-452 itself carries no description, no acceptance criteria and no comments; i
 standalone task outside epic HIW-468. The PRD and the epic's FE subtasks are therefore the
 only requirement source.
 
-## Three deviations from the older Confluence PRD, called out
+## Four deviations from the older Confluence PRD, called out
 
 Anyone comparing this implementation to the Confluence page will see these as bugs. They
 are not.
@@ -49,6 +49,26 @@ are not.
    `expected_eco_output`; the Confluence version has a single table.
 3. **Save is a partial-field PATCH** (§8, ADR-022), not a full-row upsert — a concurrency
    guard, since Admin/PMO/CPO can all hold the same line open.
+4. **Upload reassigns every PL Number from a Starting PL Number** (§5.4, added 2026-08-31),
+   rather than keeping a file-provided code verbatim and generating only for empty cells.
+   §5.4 assumed a line with no code yet leaves the cell empty. Real files write free text
+   into it instead, repeated down the column — `to be open` ×52 and `to open` ×8 in
+   `GWF2504 Framing 20250227.xlsx`, `XXXX` ×11 in `01.- Framing File from Customer.xlsx`,
+   `New` in the GWF2509 file a reviewer uploaded. Ingest upserts on PL Number, so every row
+   sharing a placeholder collapsed into one line and the upload silently dropped the rest:
+   73 rows became 15. The POC never had this bug because it never trusts the column —
+   `framing_file_functions.fill_xxxx_pl_numbers` renumbers every row from a code the user
+   supplies on the upload form. We now do the same, with two departures from the POC:
+   - The §5.4 two-family split survives. The starting code seeds its own family; the other
+     continues from the global max, as `assignPlNumbers` would. Every real file seen so far
+     is all-Renault, so those behave exactly like the POC's single counter.
+   - A file name already uploaded is refused, because reassignment hands out fresh codes:
+     a re-upload would duplicate the rows it created rather than upsert onto them. The POC
+     declines to re-ingest a known file name too. The way back in is deleting the earlier
+     upload.
+
+   `assignPlNumbers` keeps §5.4's generate-only path for callers that pass no starting code,
+   and `familyOf` is now the single authority on whether a string is a PL Number at all.
 
 ## Scope — slice 1 of 4
 
