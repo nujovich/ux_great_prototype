@@ -35,7 +35,7 @@ HIW-452 itself carries no description, no acceptance criteria and no comments; i
 standalone task outside epic HIW-468. The PRD and the epic's FE subtasks are therefore the
 only requirement source.
 
-## Four deviations from the older Confluence PRD, called out
+## Five deviations from the older Confluence PRD, called out
 
 Anyone comparing this implementation to the Confluence page will see these as bugs. They
 are not.
@@ -69,6 +69,27 @@ are not.
 
    `assignPlNumbers` keeps §5.4's generate-only path for callers that pass no starting code,
    and `familyOf` is now the single authority on whether a string is a PL Number at all.
+5. **The RFQ tab sends selected lines to Pre-Estimation, and the bulk control replaced §8.1's
+   global Save** (added 2026-08-31, reviewer request). Three sub-deviations, each deliberate:
+   - **§9 Generate is partly in slice 1 now.** Slice 1 was scoped to touch no `project_line`
+     precisely to avoid the status-model contradiction below. This send does not resolve it
+     and does not need to: `framingLineToProjectLine` only ever produces `To do`, the one
+     status both models hold, and nothing here touches a transition below it. The rest of §9
+     — validation as the gate (§6), Framing Change (§10), GPMF (§11) — stays out.
+   - **§8.1's global Save is gone from the UI.** The bulk selection control took its place in
+     the header. `framingStore.saveAll` survives with its own store test, so the capability
+     is intact, but several edited lines must now be saved one at a time.
+   - **Métier is no longer a table column** (HIW-460 AC#2 lists it). It stays in the CSV
+     export, which now has its own column list — it is the field that decides which
+     `project_id` a line lands on, so losing it from the hand-off artefact as a side effect
+     of a display change was not acceptable. It is deliberately NOT added to the detail form.
+
+   One framing line becomes ONE project line, at the métier its `ownerN2` names —
+   `project_id` = `pl_number + metier`, the composition `pev.ts` documents. The PRD's real
+   answer is §16.3's `metier_scope` (multi-métier), which is not in the type yet; when it
+   arrives, the mapping is the single place that changes. A line already sent, or one whose
+   Owner N2 names no métier, is shown unavailable rather than skipped in silence, and the
+   toast counts created and skipped separately.
 
 ## Scope — slice 1 of 4
 
@@ -80,7 +101,7 @@ partial-field Save.
 
 | Out of scope | PRD | Reason |
 |---|---|---|
-| Generate project lines | §9 | Writes `project_line`; forces resolving the status-model conflict below |
+| Generate project lines | §9 | Writes `project_line`; forces resolving the status-model conflict below. **Partly landed 2026-08-31** — see deviation 5; the `To do` send does not trip the conflict |
 | Framing Change | §10 | Depends on Generate; a 6th `project_line.status` |
 | GPMF export | §11 | Decoupled from ingestion by definition |
 | RFI Send | §15.5 | Target system contract undefined (FF-10) |
@@ -306,7 +327,9 @@ src/lib/framing/classify.ts                   §15.1
 src/lib/framing/parseFramingFile.ts           §4.2
 src/lib/framing/sections.ts                   §5.6 — the 8-section schema
 src/store/framingStore.ts                     ADR-008 page state + ADR-022 partial save
-src/pages/FramingFilePage.tsx                 tabs, RoleGate
+src/lib/framing/toProjectLine.ts              §9 — framing line → project line (To do)
+src/components/framing/FramingBulkBar.tsx     §9 — header bulk selection, replaced global Save
+src/pages/FramingFilePage.tsx                 tabs, RoleGate, RFQ selection + send
 src/components/framing/FramingFileUpload.tsx  §4.1, Admin/PMO only
 src/components/framing/FramingLineTable.tsx   §7.1 + ADR-011
 src/components/framing/FramingDetailForm.tsx  §7.2
