@@ -55,6 +55,13 @@ export const es: Translations = {
       cancel: 'Cancelar',
       confirmDelete: 'Sí, eliminar',
     },
+    bulk: {
+      selectAll: 'Seleccionar todas las líneas visibles',
+      selectRow: 'Seleccionar {plNumber}',
+      send: 'Enviar a Pre-Estimation',
+      sent: 'Se enviaron {created} línea(s) a Pre-Estimation.',
+      skipped: 'Se saltearon {skipped} — ya enviadas, o sin métier al que enviarlas.',
+    },
     editingHeading: 'Editando PL Number {plNumber} y Project Name {projectName}',
   },
   nav: {

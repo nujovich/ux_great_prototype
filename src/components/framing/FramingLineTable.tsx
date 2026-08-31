@@ -49,10 +49,25 @@ export const FRAMING_CSV_COLUMNS: FramingTableColumn[] = [
   ...FRAMING_TABLE_COLUMNS.slice(6),
 ];
 
+/**
+ * Row selection, for sending RFQ lines to Pre-Estimation. Optional on purpose:
+ * the RFI tab passes nothing and gets NO selection column at all, rather than a
+ * disabled one — the same conditional-render rule the upload control follows for
+ * CPO. `isDisabled` lets the caller veto a row (already sent, unmappable métier)
+ * without the table having to know why.
+ */
+export interface FramingTableSelection {
+  checked: string[];
+  onToggle(plNumber: string): void;
+  onToggleAll(plNumbers: string[], checked: boolean): void;
+  isDisabled?(line: FramingLine): boolean;
+}
+
 interface Props {
   lines: FramingLine[];
   selectedPlNumber: string | null;
   onSelect(plNumber: string): void;
+  selection?: FramingTableSelection;
 }
 
 const cell = (line: FramingLine, key: keyof FramingLine): string => String(line[key] ?? '');
@@ -64,7 +79,7 @@ const cell = (line: FramingLine, key: keyof FramingLine): string => String(line[
  * Filter/sort state is local to this component, so navigating away unmounts and
  * resets it — ADR-011's session + route scope, for free.
  */
-export function FramingLineTable({ lines, selectedPlNumber, onSelect }: Props) {
+export function FramingLineTable({ lines, selectedPlNumber, onSelect, selection }: Props) {
   const t = useT();
   const [filters, setFilters] = useState<Partial<Record<keyof FramingLine, string>>>({});
 
@@ -84,6 +99,15 @@ export function FramingLineTable({ lines, selectedPlNumber, onSelect }: Props) {
   // Task 7 — visible-vs-total only when a filter is actually narrowing the
   // set; sorting never changes the count, so `filtered.length` === `sorted.length`.
   const isFiltered = filtered.length < lines.length;
+
+  // Select-all acts on exactly the rows on screen (filtered + sorted), the same
+  // rule the CSV export follows — and never on a row the caller vetoed.
+  const selectableVisible = selection
+    ? sorted.filter((line) => !selection.isDisabled?.(line)).map((l) => l.plNumber)
+    : [];
+  const checkedSet = new Set(selection?.checked ?? []);
+  const allVisibleChecked = selectableVisible.length > 0
+    && selectableVisible.every((pl) => checkedSet.has(pl));
 
   return (
     <div className="space-y-2">
@@ -108,6 +132,18 @@ export function FramingLineTable({ lines, selectedPlNumber, onSelect }: Props) {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
+              {selection && (
+                <th data-selection-cell className="w-10 px-3 py-2 text-left align-top">
+                  <input
+                    type="checkbox"
+                    aria-label={t('framing.bulk.selectAll')}
+                    checked={allVisibleChecked}
+                    disabled={selectableVisible.length === 0}
+                    onChange={() => selection.onToggleAll(selectableVisible, !allVisibleChecked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300"
+                  />
+                </th>
+              )}
               {FRAMING_TABLE_COLUMNS.map(({ key, label }) => (
                 <th key={String(key)} className="px-3 py-2 text-left font-medium">
                   <button
@@ -145,6 +181,21 @@ export function FramingLineTable({ lines, selectedPlNumber, onSelect }: Props) {
                     selected && 'bg-sky-50',
                   )}
                 >
+                  {selection && (
+                    <td data-selection-cell className="px-3 py-2.5">
+                      <input
+                        type="checkbox"
+                        aria-label={t('framing.bulk.selectRow', { plNumber: line.plNumber })}
+                        checked={checkedSet.has(line.plNumber)}
+                        disabled={selection.isDisabled?.(line) ?? false}
+                        // The row's own click opens the detail form; ticking a box
+                        // must not also do that.
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => selection.onToggle(line.plNumber)}
+                        className="h-4 w-4 rounded border-slate-300"
+                      />
+                    </td>
+                  )}
                   {FRAMING_TABLE_COLUMNS.map(({ key }) => (
                     <td key={String(key)} className="px-3 py-2.5">{cell(line, key)}</td>
                   ))}

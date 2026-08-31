@@ -33,6 +33,10 @@ export interface Translations {
       title: string; rowCount: string; delete: string;
       confirmTitle: string; confirmBody: string; cancel: string; confirmDelete: string;
     };
+    bulk: {
+      selectAll: string; selectRow: string; send: string;
+      sent: string; skipped: string;
+    };
     editingHeading: string;
   };
   nav: {
