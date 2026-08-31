@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import { EMPTY_FRAMING_LINE, type FramingLine } from '../../types/framing';
-import { assignPlNumbers } from './plNumber';
+import { assertStartingPlNumber, assignPlNumbers, reassignPlNumbers } from './plNumber';
 import { composePlName } from './plName';
 import { classifyLine } from './classify';
 import { allFieldDefs } from './sections';
@@ -252,12 +252,20 @@ export function findHeaderRow(matrix: unknown[][]): number {
  * sheets bury it behind instruction rows. Runs ONLY the upload-time
  * transforms; `engineering`, `estimateType`, `injectionSystem` and `market`
  * belong to Generate and GPMF export.
+ *
+ * `startingCode` selects the PL Number strategy. With one (the POC's
+ * "Starting PL Number", what the upload UI always supplies) every row is
+ * reassigned from it; without one, §5.4's generate-only rule applies. The
+ * validity check runs before any row is parsed, so a bad code costs nothing.
  */
 export function parseFramingMatrix(
   matrix: unknown[][],
   fileName: string,
   existingCodes: readonly string[],
+  startingCode?: string,
 ): FramingLine[] {
+  // Fail before parsing — an invalid starting code must not half-ingest a file.
+  if (startingCode !== undefined) assertStartingPlNumber(startingCode);
   const headerRowIndex = findHeaderRow(matrix);
   if (headerRowIndex === -1) {
     throw new FramingParseError('Framing sheet has no header row', 'noHeaderRow');
@@ -327,7 +335,10 @@ export function parseFramingMatrix(
     ...existingCodes,
     ...staged.map((r) => r.plNumber).filter((c) => c !== ''),
   ];
-  return assignPlNumbers(staged, knownCodes).map((line) => ({
+  const coded = startingCode === undefined
+    ? assignPlNumbers(staged, knownCodes)
+    : reassignPlNumbers(staged, startingCode, existingCodes);
+  return coded.map((line) => ({
     ...line,
     plName: composePlName(line),
   }));

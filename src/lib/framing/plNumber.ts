@@ -38,6 +38,20 @@ function letterOrdinal(a: string, b: string): number {
   return l1 * 26 + l2;
 }
 
+/**
+ * The family `code` belongs to, or null when it is not a PL Number at all.
+ *
+ * The two grammars are mutually exclusive (letter-letter-digit-digit vs
+ * digit-digit-letter-letter), so at most one can match. This is the single
+ * authority on "is this string a PL Number?" — real framing files put free
+ * text in the column (`New`, `XXXX`, `to be open`), and that is not a code.
+ */
+export function familyOf(code: string): PlNumberFamily | null {
+  if (decode(code, 'LLNN') !== null) return 'LLNN';
+  if (decode(code, 'NNLL') !== null) return 'NNLL';
+  return null;
+}
+
 /** Returns the ordinal of `code` within `family`, or null when it is not a member. */
 export function decode(code: string, family: PlNumberFamily): number | null {
   const raw = (code ?? '').trim();
@@ -95,4 +109,65 @@ export function assignPlNumbers<T extends { plNumber: string; client: string }>(
     next[family] += 1;
     return { ...row, plNumber };
   });
+}
+
+/** Thrown when the upload's starting PL Number is not a code of either family. */
+export class InvalidStartingPlNumberError extends Error {
+  constructor(code: string) {
+    super(`"${code}" is not a PL Number (expected LLNN like IF65, or NNLL like 07AB)`);
+    this.name = 'InvalidStartingPlNumberError';
+  }
+}
+
+/**
+ * POC parity — `framing_file_functions.fill_xxxx_pl_numbers`.
+ *
+ * Every row is reassigned from `startingCode`, overwriting whatever the file
+ * carried (a real code, a placeholder like `New`/`XXXX`/`to be open`, or
+ * nothing). That overwrite is the point: upload upserts on PL Number, so any
+ * value repeated down the column silently collapses those rows into one. The
+ * POC sidesteps that by never trusting the column, and so do we.
+ *
+ * Unlike the POC's single counter, the §5.4 two-family split is preserved:
+ * `startingCode` seeds its own family, and the other family continues from the
+ * global max as `assignPlNumbers` would. A file of Renault rows — every real
+ * framing file seen so far — behaves exactly like the POC.
+ */
+export function reassignPlNumbers<T extends { plNumber: string; client: string }>(
+  rows: T[],
+  startingCode: string,
+  existingCodes: readonly string[],
+): T[] {
+  const startFamily = familyOf(startingCode);
+  if (startFamily === null) throw new InvalidStartingPlNumberError(startingCode);
+
+  const other: PlNumberFamily = startFamily === 'LLNN' ? 'NNLL' : 'LLNN';
+  const next: Record<PlNumberFamily, number> = {
+    [startFamily]: decode(startingCode, startFamily) as number,
+    [other]: (maxOrdinal(existingCodes, other) ?? -1) + 1,
+  } as Record<PlNumberFamily, number>;
+
+  return rows.map((row) => {
+    const family = familyFor(row.client);
+    const plNumber = encode(next[family], family);
+    next[family] += 1;
+    return { ...row, plNumber };
+  });
+}
+
+/** Guard for the upload's starting code, so callers need not know the grammar. */
+export function assertStartingPlNumber(code: string): void {
+  if (familyOf(code) === null) throw new InvalidStartingPlNumberError(code);
+}
+
+/**
+ * The code `assignPlNumbers` would hand out next for `family` — what the upload
+ * pre-fills its Starting PL Number with, so the default already respects
+ * §5.4's global max and the user only types when overriding it.
+ */
+export function nextPlNumber(
+  existingCodes: readonly string[],
+  family: PlNumberFamily = 'LLNN',
+): string {
+  return encode((maxOrdinal(existingCodes, family) ?? -1) + 1, family);
 }

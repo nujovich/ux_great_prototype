@@ -20,6 +20,8 @@ export interface Translations {
       label: string; button: string; notXlsx: string;
       parseError: string; noHeaderRowError: string; genericError: string;
       success: string; discardedEdits: string; busy: string;
+      startingCode: string; startingCodeHelp: string; invalidStartingCode: string;
+      duplicateFile: string;
     };
     save: { line: string; all: string; done: string; nothing: string };
     table: {

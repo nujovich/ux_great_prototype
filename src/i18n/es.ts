@@ -26,6 +26,10 @@ export const es: Translations = {
       success: '{fileName}: se cargaron {rfq} líneas RFQ y {rfi} RFI.',
       discardedEdits: 'Se descartaron {count} línea(s) con cambios sin guardar por esta carga.',
       busy: 'Procesando…',
+      startingCode: 'Starting PL Number',
+      startingCodeHelp: 'Todas las líneas se numeran desde aquí: {example}, {next}, …',
+      duplicateFile: '"{fileName}" ya fue cargado. Elimine esa carga para volver a subirlo.',
+      invalidStartingCode: '"{code}" no es un PL Number válido (por ejemplo IF65 o 07AB).',
     },
     save: {
       line: 'Guardar línea',

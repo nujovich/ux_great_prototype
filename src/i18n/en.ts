@@ -26,6 +26,10 @@ export const en: Translations = {
       success: '{fileName}: {rfq} RFQ and {rfi} RFI lines loaded.',
       discardedEdits: '{count} line(s) with unsaved edits were discarded by this upload.',
       busy: 'Parsing…',
+      startingCode: 'Starting PL Number',
+      startingCodeHelp: 'Every line is numbered from here: {example}, {next}, …',
+      duplicateFile: '"{fileName}" has already been uploaded. Delete that upload first to load it again.',
+      invalidStartingCode: '"{code}" is not a valid PL Number (e.g. IF65 or 07AB).',
     },
     save: {
       line: 'Save line',

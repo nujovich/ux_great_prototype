@@ -7,6 +7,7 @@ import {
 import {
   REAL_SHAPE_MATRIX, REAL_SHAPE_MATRIX_WEEK_CODES, realShapeWorkbookBuffer,
 } from './realShapeFixture';
+import { InvalidStartingPlNumberError } from '../plNumber';
 
 const HEADERS = [
   'PL Number', 'Request type', 'Customer', 'Client', 'Part type', 'Fuel',
@@ -442,5 +443,40 @@ describe('readFramingWorkbook (§4.2)', () => {
       expect(err).toBeInstanceOf(FramingParseError);
       expect((err as FramingParseError).code).toBe('noWorksheet');
     }
+  });
+});
+
+describe('parseFramingMatrix + startingCode (POC fill_xxxx_pl_numbers)', () => {
+  it('gives every placeholder row its own code instead of collapsing them', () => {
+    const rows = Array.from({ length: 5 }, () => row({ 'PL Number': 'to be open' }));
+    const out = parseFramingMatrix(matrix(...rows), 'f.xlsx', [], 'IF01');
+    expect(out.map((l) => l.plNumber)).toEqual(['IF01', 'IF02', 'IF03', 'IF04', 'IF05']);
+  });
+
+  it('overwrites codes the file already carried', () => {
+    const out = parseFramingMatrix(
+      matrix(row({ 'PL Number': 'IE59' }), row({ 'PL Number': 'New' })),
+      'f.xlsx', [], 'IF01',
+    );
+    expect(out.map((l) => l.plNumber)).toEqual(['IF01', 'IF02']);
+  });
+
+  it('composes PL Name from the reassigned code, not the placeholder', () => {
+    const [line] = parseFramingMatrix(matrix(row({ 'PL Number': 'New' })), 'f.xlsx', [], 'IF01');
+    expect(line.plName.startsWith('IF01 ')).toBe(true);
+    expect(line.plName).not.toContain('New');
+  });
+
+  it('rejects an invalid starting code before writing anything', () => {
+    expect(() => parseFramingMatrix(matrix(row()), 'f.xlsx', [], 'New'))
+      .toThrow(InvalidStartingPlNumberError);
+  });
+
+  it('keeps the §5.4 generate-only behaviour when no starting code is given', () => {
+    const out = parseFramingMatrix(
+      matrix(row({ 'PL Number': 'IE59' }), row({ 'PL Number': '' })),
+      'f.xlsx', ['AA04'],
+    );
+    expect(out.map((l) => l.plNumber)).toEqual(['IE59', 'IE60']);
   });
 });

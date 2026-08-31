@@ -29,6 +29,26 @@ function xlsxFile(sheetName: string, name = 'framing.xlsx'): File {
   });
 }
 
+/**
+ * A file shaped like the real ones: three rows whose PL Number column carries
+ * the placeholder text that used to collapse them into a single row.
+ */
+function placeholderFile(name = 'framing.xlsx'): File {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.aoa_to_sheet([
+      ['PL Number', 'EXPECTED ECO OUTPUT'],
+      ['New', 'ECO2'], ['New', 'ECO2'], ['to be open', 'ECO2'],
+    ]),
+    'GWF 2026',
+  );
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  return new File([buf], name, {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+}
+
 describe('FramingFileUpload (§4.1, HIW-458)', () => {
   beforeEach(() => {
     useFramingStore.setState(useFramingStore.getInitialState(), true);
@@ -66,8 +86,9 @@ describe('FramingFileUpload (§4.1, HIW-458)', () => {
     await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
     await userEvent.click(screen.getByRole('button', { name: /upload/i }));
 
+    // AA03 — the pre-filled starting code, one past the fixtures' AA02.
     await waitFor(() => {
-      expect(useFramingStore.getState().lines.some((l) => l.plNumber === 'ZZ50')).toBe(true);
+      expect(useFramingStore.getState().lines.some((l) => l.plNumber === 'AA03')).toBe(true);
     });
     expect(useFramingStore.getState().lastUpload?.fileName).toBe('framing.xlsx');
   });
@@ -113,20 +134,49 @@ describe('FramingFileUpload (§4.1, HIW-458)', () => {
 
   it('mentions discarded pending edits in the success notice — I4', async () => {
     renderUpload();
-    // First upload creates the ZZ50 row.
+    // First upload numbers its row AA03 (one past the fixtures).
     await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
     await userEvent.click(screen.getByRole('button', { name: /upload/i }));
     await waitFor(() => {
-      expect(useFramingStore.getState().lines.some((l) => l.plNumber === 'ZZ50')).toBe(true);
+      expect(useFramingStore.getState().lines.some((l) => l.plNumber === 'AA03')).toBe(true);
     });
 
-    // Edit that row, then re-upload the same file — the edit is discarded
-    // and the notice should mention it.
-    useFramingStore.getState().editField('ZZ50', 'cluster', 'STALE-EDIT');
-    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+    // Edit that row, then upload another file numbered from AA03 on purpose:
+    // reassignment always hands out fresh codes, so a collision now takes a
+    // deliberate starting code rather than a re-upload of the same file.
+    useFramingStore.getState().editField('AA03', 'cluster', 'STALE-EDIT');
+    const startInput = screen.getByLabelText(/starting pl number/i);
+    await userEvent.clear(startInput);
+    await userEvent.type(startInput, 'AA03');
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026', 'second.xlsx'));
     await userEvent.click(screen.getByRole('button', { name: /upload/i }));
 
     expect(await screen.findByText(/discarded/i)).toBeInTheDocument();
+  });
+
+  it('refuses a file name already uploaded, so re-upload cannot duplicate rows', async () => {
+    renderUpload();
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+    await waitFor(() => expect(useFramingStore.getState().uploads).toHaveLength(1));
+    const lineCount = useFramingStore.getState().lines.length;
+
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+    expect(await screen.findByText(/already been uploaded/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /upload/i })).toBeDisabled();
+    expect(useFramingStore.getState().lines).toHaveLength(lineCount);
+    expect(useFramingStore.getState().uploads).toHaveLength(1);
+  });
+
+  it('accepts the same content under a different file name', async () => {
+    renderUpload();
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+    await waitFor(() => expect(useFramingStore.getState().uploads).toHaveLength(1));
+
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026', 'other.xlsx'));
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+    await waitFor(() => expect(useFramingStore.getState().uploads).toHaveLength(2));
   });
 
   it('says nothing about discarded edits when there were none — I4', async () => {
@@ -135,6 +185,52 @@ describe('FramingFileUpload (§4.1, HIW-458)', () => {
     await userEvent.click(screen.getByRole('button', { name: /upload/i }));
     await screen.findByText(/loaded/i);
     expect(screen.queryByText(/discarded/i)).toBeNull();
+  });
+
+  it('pre-fills the starting PL Number with the next free code (§5.4 global max)', () => {
+    renderUpload();
+    // Fixtures top out at AA02 / 02AA, so the LLNN suggestion is AA03.
+    expect(screen.getByLabelText(/starting pl number/i)).toHaveValue('AA03');
+  });
+
+  it('reassigns every row from the starting code, placeholders included', async () => {
+    renderUpload();
+    const startInput = screen.getByLabelText(/starting pl number/i);
+    await userEvent.clear(startInput);
+    await userEvent.type(startInput, 'IF01');
+    await userEvent.upload(screen.getByLabelText(/only/i), placeholderFile());
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+
+    await waitFor(() => {
+      const codes = useFramingStore.getState().lines.map((l) => l.plNumber);
+      expect(codes).toContain('IF01');
+      expect(codes).toContain('IF02');
+      expect(codes).toContain('IF03');
+    });
+    // The placeholder never becomes a PL Number, and no row was lost to a collapse.
+    expect(useFramingStore.getState().lines.map((l) => l.plNumber)).not.toContain('New');
+    expect(useFramingStore.getState().lastUpload?.rfqCount).toBe(3);
+  });
+
+  it('re-suggests the next free code after a successful upload', async () => {
+    renderUpload();
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+    await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/starting pl number/i)).toHaveValue('AA04');
+    });
+  });
+
+  it('rejects an invalid starting code inline and never parses the file', async () => {
+    renderUpload();
+    const startInput = screen.getByLabelText(/starting pl number/i);
+    await userEvent.clear(startInput);
+    await userEvent.type(startInput, 'New');
+    await userEvent.upload(screen.getByLabelText(/only/i), xlsxFile('GWF 2026'));
+
+    expect(await screen.findByText(/not a valid pl number/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /upload/i })).toBeDisabled();
+    expect(useFramingStore.getState().lastUpload).toBeNull();
   });
 
   it('keeps the button disabled until a valid file is chosen', () => {
