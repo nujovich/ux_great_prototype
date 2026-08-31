@@ -344,6 +344,42 @@ export function parseFramingMatrix(
   }));
 }
 
+/**
+ * How many rows of `ws` actually carry a cell.
+ *
+ * Every real framing file declares its sheet as the whole 1,048,576-row grid
+ * while holding a few hundred cells, and `sheet_to_json` with `defval: ''`
+ * honours the declaration — 40-60 seconds per file to materialize a million
+ * rows of empty strings, which in the browser is a frozen tab on every upload.
+ * Scanning the cell keys is O(cells), not O(declared rows).
+ *
+ * The bound is the last row with a *cell*, not the last with a value: a
+ * trailing style-only cell costs one skipped row, whereas guessing wrong about
+ * emptiness could drop a real one. `parseFramingMatrix` discards blank rows.
+ */
+export function usedRowCount(ws: XLSX.WorkSheet): number {
+  let lastRow = -1;
+  for (const key of Object.keys(ws)) {
+    if (key.startsWith('!')) continue;
+    const { r } = XLSX.utils.decode_cell(key);
+    if (r > lastRow) lastRow = r;
+  }
+  return lastRow + 1;
+}
+
+/**
+ * `sheet_to_json` options that clamp its row range to `usedRowCount`, or none
+ * when there is nothing to clamp (no declared range, or an empty sheet — where
+ * the default already does the right thing).
+ */
+function boundedRange(ws: XLSX.WorkSheet): { range?: XLSX.Range } {
+  const declared = ws['!ref'];
+  const rowCount = usedRowCount(ws);
+  if (declared === undefined || rowCount === 0) return {};
+  const range = XLSX.utils.decode_range(declared);
+  return { range: { ...range, e: { ...range.e, r: Math.min(range.e.r, rowCount - 1) } } };
+}
+
 /** §4.2 — the only function here that touches SheetJS. */
 export function readFramingWorkbook(buffer: ArrayBuffer): {
   sheetName: string;
@@ -357,10 +393,12 @@ export function readFramingWorkbook(buffer: ArrayBuffer): {
       'noWorksheet',
     );
   }
-  const matrix = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[sheetName], {
+  const sheet = wb.Sheets[sheetName];
+  const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
     header: 1,
     raw: false,
     defval: '',
+    ...boundedRange(sheet),
   });
   return { sheetName, matrix };
 }

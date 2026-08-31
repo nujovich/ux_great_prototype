@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as XLSX from 'xlsx';
 import {
   selectFramingSheet, parseFramingMatrix, readFramingWorkbook,
-  isXlsxFileName, FramingParseError, findHeaderRow,
+  isXlsxFileName, FramingParseError, findHeaderRow, usedRowCount,
 } from '../parseFramingFile';
 import {
   REAL_SHAPE_MATRIX, REAL_SHAPE_MATRIX_WEEK_CODES, realShapeWorkbookBuffer,
@@ -478,5 +478,43 @@ describe('parseFramingMatrix + startingCode (POC fill_xxxx_pl_numbers)', () => {
       'f.xlsx', ['AA04'],
     );
     expect(out.map((l) => l.plNumber)).toEqual(['IE59', 'IE60']);
+  });
+});
+
+describe('readFramingWorkbook row bounding', () => {
+  /**
+   * Every real framing file declares its sheet as the full 1,048,576-row grid
+   * while carrying a few hundred cells. Expanding that range cost 40-60s per
+   * file and produced a million rows of empty strings — a frozen tab on upload.
+   */
+  function hugeDeclaredRangeSheet(): XLSX.WorkSheet {
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['PL Number', 'EXPECTED ECO OUTPUT'],
+      ['AA00', 'ECO2'],
+    ]);
+    ws['!ref'] = 'A1:B1048576';
+    return ws;
+  }
+
+  it('stops at the last row carrying a cell', () => {
+    expect(usedRowCount(hugeDeclaredRangeSheet())).toBe(2);
+  });
+
+  it('leaves an honest range alone', () => {
+    const ws = XLSX.utils.aoa_to_sheet([['a'], ['b'], ['c']]);
+    expect(usedRowCount(ws)).toBe(3);
+  });
+
+  it('survives a sheet with no cells at all', () => {
+    expect(usedRowCount(XLSX.utils.aoa_to_sheet([]))).toBe(0);
+  });
+
+  it('yields a matrix of the real rows, not the declared grid', () => {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, hugeDeclaredRangeSheet(), 'GWF 2026');
+    // book_append_sheet keeps the sheet object, so the inflated ref survives.
+    const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+    const { matrix } = readFramingWorkbook(buf);
+    expect(matrix).toHaveLength(2);
   });
 });
