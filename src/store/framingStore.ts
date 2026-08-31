@@ -8,6 +8,11 @@ export type FramingEdits = Partial<Record<FramingFieldKey, unknown>>;
 
 export interface UploadSummary {
   fileName: string;
+  /**
+   * Lines this upload actually put in the store, not rows it was handed.
+   * Upsert on pl_number means the two can differ, and the notice these feed
+   * ("N RFQ and M RFI lines loaded") must never claim more than the table shows.
+   */
   rfqCount: number;
   rfiCount: number;
   /** I4 — how many of the uploaded PL numbers had unsaved edits that were discarded. */
@@ -118,13 +123,16 @@ export const useFramingStore = create<FramingState>((set, get) => ({
   /** §4.1 — uploads accumulate: upsert on pl_number, latest upload wins. */
   ingestRows: (rows, fileName) => {
     let discardedEditsCount = 0;
+    // The rows as the store will hold them: last row wins per pl_number, which
+    // is what both the upload record and the counts below have to describe.
+    const deduped = [...new Map(rows.map((r) => [r.plNumber, r])).values()];
     // Task 6 — one FramingUpload entry records this call's provenance so a
     // later deleteUpload can identify exactly which rows it carried.
     const upload: FramingUpload = {
       id: `upl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       fileName,
       uploadedAt: new Date().toISOString(),
-      plNumbers: [...new Set(rows.map((r) => r.plNumber))],
+      plNumbers: deduped.map((r) => r.plNumber),
     };
 
     set((s) => {
@@ -153,8 +161,8 @@ export const useFramingStore = create<FramingState>((set, get) => ({
     });
     const summary: UploadSummary = {
       fileName,
-      rfqCount: rows.filter((r) => r.track === 'RFQ').length,
-      rfiCount: rows.filter((r) => r.track === 'RFI').length,
+      rfqCount: deduped.filter((r) => r.track === 'RFQ').length,
+      rfiCount: deduped.filter((r) => r.track === 'RFI').length,
       discardedEditsCount,
     };
     set({ lastUpload: summary });

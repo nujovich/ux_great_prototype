@@ -196,6 +196,36 @@ describe('framingStore', () => {
     expect(dirtyPlNumbers(useFramingStore.getState())).toEqual([b.plNumber]);
   });
 
+  it('counts lines that landed, not lines that were handed in', () => {
+    const [a] = useFramingStore.getState().lines;
+    // Three input rows, one PL number: upsert keeps the last one. The summary
+    // drives the "N RFQ and M RFI lines loaded" notice, so it has to report
+    // what the store actually holds — a count of input rows would have hidden
+    // the HIW-452 collapse behind a number the user could not reconcile with
+    // the table.
+    const summary = useFramingStore.getState().ingestRows(
+      [
+        { ...a, track: 'RFQ' as const, cluster: 'ONE' },
+        { ...a, track: 'RFQ' as const, cluster: 'TWO' },
+        { ...a, track: 'RFQ' as const, cluster: 'THREE' },
+      ],
+      'second.xlsx',
+    );
+    expect(summary.rfqCount).toBe(1);
+    expect(summary.rfiCount).toBe(0);
+  });
+
+  it('counts the surviving track when a duplicate pl_number changes it', () => {
+    const [a] = useFramingStore.getState().lines;
+    // Last row wins the upsert, so it also wins the classification.
+    const summary = useFramingStore.getState().ingestRows(
+      [{ ...a, track: 'RFQ' as const }, { ...a, track: 'RFI' as const }],
+      'second.xlsx',
+    );
+    expect(summary.rfqCount).toBe(0);
+    expect(summary.rfiCount).toBe(1);
+  });
+
   it('reports zero discarded edits when the uploaded lines had no pending edits', () => {
     const existing = useFramingStore.getState().lines[0];
     const summary = useFramingStore.getState().ingestRows(
