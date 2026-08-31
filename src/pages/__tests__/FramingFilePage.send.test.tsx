@@ -27,6 +27,31 @@ describe('FramingFilePage — send RFQ lines to Pre-Estimation (§9)', () => {
     expect(screen.getByLabelText('Select AA00')).toBeInTheDocument();
   });
 
+  it('shows the send control before anything is ticked, disabled', () => {
+    renderPage();
+    const send = screen.getByRole('button', { name: /send to pre-estimation/i });
+    expect(send).toBeInTheDocument();
+    expect(send).toBeDisabled();
+  });
+
+  it('enables it once a line is ticked', async () => {
+    renderPage();
+    await userEvent.click(screen.getByLabelText('Select AA00'));
+    expect(screen.getByRole('button', { name: /send to pre-estimation/i })).toBeEnabled();
+  });
+
+  it('shows no send control at all on RFI — the send is RFQ only', async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
+    expect(screen.queryByRole('button', { name: /send to pre-estimation/i })).toBeNull();
+  });
+
+  it('shows no send control to a role that cannot send', () => {
+    useRoleStore.setState({ currentRole: 'CPO' });
+    renderPage();
+    expect(screen.queryByRole('button', { name: /send to pre-estimation/i })).toBeNull();
+  });
+
   it('offers none on RFI — the send is RFQ only', async () => {
     renderPage();
     await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
@@ -57,7 +82,8 @@ describe('FramingFilePage — send RFQ lines to Pre-Estimation (§9)', () => {
     renderPage();
     await userEvent.click(screen.getByLabelText('Select AA00'));
     await userEvent.click(screen.getByRole('button', { name: /send to pre-estimation/i }));
-    expect(screen.queryByRole('button', { name: /send to pre-estimation/i })).toBeNull();
+    // The control stays put; it goes back to disabled with nothing selected.
+    expect(screen.getByRole('button', { name: /send to pre-estimation/i })).toBeDisabled();
     expect(screen.getByLabelText('Select AA00')).not.toBeChecked();
   });
 
@@ -96,9 +122,9 @@ describe('FramingFilePage — send RFQ lines to Pre-Estimation (§9)', () => {
   it('drops the selection when switching tabs', async () => {
     renderPage();
     await userEvent.click(screen.getByLabelText('Select AA00'));
-    expect(screen.getByRole('button', { name: /send to pre-estimation/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /send to pre-estimation/i })).toBeEnabled();
     await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
     await userEvent.click(screen.getByRole('tab', { name: 'RFQ' }));
-    expect(screen.queryByRole('button', { name: /send to pre-estimation/i })).toBeNull();
+    expect(screen.getByRole('button', { name: /send to pre-estimation/i })).toBeDisabled();
   });
 });

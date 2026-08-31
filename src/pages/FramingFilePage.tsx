@@ -129,11 +129,16 @@ function FramingFileContent() {
           <p className="text-sm text-slate-600">{t('framing.desc')}</p>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <FramingBulkBar
-            count={checked.length}
-            onSend={sendToPreEstimation}
-            onClear={() => setChecked([])}
-          />
+          {/* Exactly where the selection column is: RFQ, and a role that may
+              send. The bar itself stays put once mounted, disabling its actions
+              on an empty selection rather than vanishing. */}
+          {selection && (
+            <FramingBulkBar
+              count={checked.length}
+              onSend={sendToPreEstimation}
+              onClear={() => setChecked([])}
+            />
+          )}
           <SaveControls plNumber={selected} />
         </div>
       </div>
