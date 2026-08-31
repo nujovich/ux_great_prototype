@@ -13,7 +13,16 @@ export interface FramingTableColumn {
   label: string;
 }
 
-/** HIW-460 AC#2 — the minimum column set. */
+const METIER_COLUMN: FramingTableColumn = { key: 'ownerN2', label: 'Métier' };
+
+/**
+ * HIW-460 AC#2's minimum column set, less Métier.
+ *
+ * AC#2 lists Métier; the reviewer asked for it out of the grid (2026-08-31).
+ * It is still the field that decides which `project_id` a line lands on when
+ * it is sent to Pre-Estimation, so it stays in the export rather than
+ * disappearing from the view altogether — see FRAMING_CSV_COLUMNS.
+ */
 // eslint-disable-next-line react-refresh/only-export-components -- schema constant intentionally co-located with the table it defines
 export const FRAMING_TABLE_COLUMNS: FramingTableColumn[] = [
   { key: 'plNumber', label: 'PL Number' },
@@ -22,11 +31,22 @@ export const FRAMING_TABLE_COLUMNS: FramingTableColumn[] = [
   { key: 'energy', label: 'Energy' },
   { key: 'projectRanking', label: 'Project Ranking' },
   { key: 'client', label: 'Client' },
-  { key: 'ownerN2', label: 'Métier' },
   { key: 'spDate', label: 'SP' },
   { key: 'pcDate', label: 'PC' },
   { key: 'coDate', label: 'CO' },
   { key: 'sopDate', label: 'SOP' },
+];
+
+/**
+ * What the CSV download carries: the rendered columns plus Métier, back in its
+ * AC#2 position. The export is the hand-off artefact — dropping a field from it
+ * as a side effect of a display change is how data quietly goes missing.
+ */
+// eslint-disable-next-line react-refresh/only-export-components -- schema constant intentionally co-located with the table it defines
+export const FRAMING_CSV_COLUMNS: FramingTableColumn[] = [
+  ...FRAMING_TABLE_COLUMNS.slice(0, 6),
+  METIER_COLUMN,
+  ...FRAMING_TABLE_COLUMNS.slice(6),
 ];
 
 interface Props {
@@ -78,7 +98,7 @@ export function FramingLineTable({ lines, selectedPlNumber, onSelect }: Props) {
           type="button"
           variant="secondary"
           size="sm"
-          onClick={() => downloadFramingCsv(sorted, FRAMING_TABLE_COLUMNS, `framing-file-table-${Date.now()}.csv`)}
+          onClick={() => downloadFramingCsv(sorted, FRAMING_CSV_COLUMNS, `framing-file-table-${Date.now()}.csv`)}
         >
           <Download size={14} /> {t('framing.table.exportCsv')}
         </Button>

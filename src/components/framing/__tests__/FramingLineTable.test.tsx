@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
-import { FramingLineTable, FRAMING_TABLE_COLUMNS } from '../FramingLineTable';
+import { FramingLineTable, FRAMING_TABLE_COLUMNS, FRAMING_CSV_COLUMNS } from '../FramingLineTable';
 import { LangProvider } from '../../../i18n/LangContext';
 import { EMPTY_FRAMING_LINE, type FramingLine } from '../../../types/framing';
 
@@ -35,8 +35,23 @@ const renderTable = (props: Partial<Parameters<typeof FramingLineTable>[0]> = {}
   );
 
 describe('FramingLineTable (§7.1, HIW-460)', () => {
-  it('renders the AC#2 minimum columns', () => {
+  // Deviates from HIW-460 AC#2, which lists Métier among the minimum columns:
+  // the reviewer asked for it out of the grid (2026-08-31). It stays in the CSV
+  // export, which keeps its own column list.
+  it('renders the AC#2 minimum columns, less Métier', () => {
     expect(FRAMING_TABLE_COLUMNS.map((c) => c.key)).toEqual([
+      'plNumber', 'plName', 'organType', 'energy', 'projectRanking',
+      'client', 'spDate', 'pcDate', 'coDate', 'sopDate',
+    ]);
+  });
+
+  it('renders no Métier header', () => {
+    renderTable();
+    expect(screen.queryByText(/métier/i)).toBeNull();
+  });
+
+  it('keeps Métier in the CSV column list, in its AC#2 position', () => {
+    expect(FRAMING_CSV_COLUMNS.map((c) => c.key)).toEqual([
       'plNumber', 'plName', 'organType', 'energy', 'projectRanking',
       'client', 'ownerN2', 'spDate', 'pcDate', 'coDate', 'sopDate',
     ]);
