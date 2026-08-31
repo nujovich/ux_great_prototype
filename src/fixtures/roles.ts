@@ -7,6 +7,8 @@ export type Permission =
   | 'upload:framing-file'
   | 'edit:framing-file'
   | 'save:framing-file'
+  /** §9 — send RFQ framing lines to Pre-Estimation as project lines. */
+  | 'generate:project-lines'
   | 'view:pre-estimation'
   | 'edit:estimation'
   | 'view:own-lines-only'
@@ -47,6 +49,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'upload:framing-file',
     'edit:framing-file',
     'save:framing-file',
+    'generate:project-lines',
     'view:pre-estimation',
     'view:estimation-review',
     'export:estimation-review',
@@ -63,6 +66,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     'upload:framing-file',
     'edit:framing-file',
     'save:framing-file',
+    'generate:project-lines',
     'view:pre-estimation',
     'edit:estimation',
     'save:draft',

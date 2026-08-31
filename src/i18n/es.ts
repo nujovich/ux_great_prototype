@@ -33,7 +33,6 @@ export const es: Translations = {
     },
     save: {
       line: 'Guardar línea',
-      all: 'Guardar cambios pendientes',
       done: 'Se guardaron {count} línea(s).',
       nothing: 'No hay cambios pendientes.',
     },

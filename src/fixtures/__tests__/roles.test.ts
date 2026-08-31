@@ -157,3 +157,13 @@ describe('HIW-175 permission removals', () => {
     }
   });
 });
+
+describe('generate:project-lines (§9 send to Pre-Estimation)', () => {
+  it.each(['Admin', 'PMO'] as const)('grants %s the send', (role) => {
+    expect(ROLE_PERMISSIONS[role]).toContain('generate:project-lines');
+  });
+
+  it.each(['CPO', 'Engineer', 'RCRC'] as const)('withholds it from %s', (role) => {
+    expect(ROLE_PERMISSIONS[role]).not.toContain('generate:project-lines');
+  });
+});

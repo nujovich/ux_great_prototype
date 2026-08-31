@@ -57,7 +57,9 @@ describe('Framing File i18n', () => {
       'framing.upload.label', 'framing.upload.button', 'framing.upload.notXlsx',
       'framing.upload.parseError', 'framing.upload.noHeaderRowError',
       'framing.upload.genericError', 'framing.upload.success', 'framing.upload.discardedEdits',
-      'framing.save.line', 'framing.save.all', 'framing.save.done',
+      'framing.save.line', 'framing.save.done',
+      'framing.bulk.selectAll', 'framing.bulk.selectRow', 'framing.bulk.send',
+      'framing.bulk.sent', 'framing.bulk.skipped',
       'framing.table.filterPlaceholder', 'framing.empty.title', 'framing.empty.desc',
     ]) {
       expect(t(key)).not.toBe(key);

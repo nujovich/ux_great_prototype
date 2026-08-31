@@ -16,11 +16,18 @@ describe('SaveControls (§8.1, HIW-463)', () => {
     useRoleStore.setState({ currentRole: 'PMO' });
   });
 
-  it.each(['Admin', 'PMO', 'CPO'] as const)('shows both controls to %s — AC#17', (role) => {
+  it.each(['Admin', 'PMO', 'CPO'] as const)('shows the per-line control to %s — AC#17', (role) => {
     useRoleStore.setState({ currentRole: role });
     renderControls();
     expect(screen.getByRole('button', { name: /save line/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /save all/i })).toBeInTheDocument();
+  });
+
+  // §8.1's global Save was removed from the UI on reviewer request (2026-08-31);
+  // the bulk selection control took its place in the header. The store still has
+  // saveAll, covered by framingStore's own test.
+  it('no longer offers a global save — replaced by the bulk selection control', () => {
+    renderControls();
+    expect(screen.queryByRole('button', { name: /save all/i })).toBeNull();
   });
 
   it('saves only the selected line — AC#11', async () => {
@@ -34,15 +41,6 @@ describe('SaveControls (§8.1, HIW-463)', () => {
     expect(after.lines.find((l) => l.plNumber === 'AA00')!.cluster).toBe('CL-99');
     expect(after.lines.find((l) => l.plNumber === 'AA01')!.cluster).not.toBe('CL-88');
     expect(dirtyPlNumbers(after)).toEqual(['AA01']);
-  });
-
-  it('saves every pending line on global save — AC#12', async () => {
-    const store = useFramingStore.getState();
-    store.editField('AA00', 'cluster', 'CL-99');
-    store.editField('AA01', 'cluster', 'CL-88');
-    renderControls('AA00');
-    await userEvent.click(screen.getByRole('button', { name: /save all/i }));
-    expect(dirtyPlNumbers(useFramingStore.getState())).toEqual([]);
   });
 
   it('is never disabled by any readiness state — AC#15', async () => {

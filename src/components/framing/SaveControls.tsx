@@ -9,15 +9,20 @@ interface Props {
 }
 
 /**
- * §8.1 — individual and global Save. Available to Admin, PMO and CPO; never
- * gated on any readiness state (Save is lenient, §8), and never shows an
+ * §8.1 — per-line Save. Available to Admin, PMO and CPO; never gated on any
+ * readiness state (Save is lenient, §8), and never shows an
  * estimation-consequence dialog (HIW-463 AC#18).
+ *
+ * §8.1's global Save was removed from the header on reviewer request
+ * (2026-08-31); the bulk selection control took its place. The store keeps
+ * `saveAll`, covered by framingStore's own test, so the capability is intact —
+ * only the affordance is gone. The dirty count stays: AC#16 asks for it
+ * independently of how many controls sit next to it.
  */
 export function SaveControls({ plNumber }: Props) {
   const canSave = useRoleStore((s) => s.can('save:framing-file'));
   const dirtyFields = useFramingStore((s) => s.dirtyFields);
   const saveLine = useFramingStore((s) => s.saveLine);
-  const saveAll = useFramingStore((s) => s.saveAll);
   const t = useT();
 
   if (!canSave) return null;
@@ -29,9 +34,6 @@ export function SaveControls({ plNumber }: Props) {
     <div className="flex flex-wrap items-center gap-2">
       <Button size="sm" disabled={!lineIsDirty} onClick={() => plNumber && saveLine(plNumber)}>
         <Save size={14} /> {t('framing.save.line')}
-      </Button>
-      <Button size="sm" variant="secondary" disabled={dirty.length === 0} onClick={saveAll}>
-        <Save size={14} /> {t('framing.save.all')}
       </Button>
       <span data-testid="framing-dirty-count" className="text-xs text-slate-500">
         {dirty.length}
