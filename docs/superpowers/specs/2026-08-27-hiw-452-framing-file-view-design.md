@@ -76,9 +76,13 @@ are not.
      and does not need to: `framingLineToProjectLine` only ever produces `To do`, the one
      status both models hold, and nothing here touches a transition below it. The rest of §9
      — validation as the gate (§6), Framing Change (§10), GPMF (§11) — stays out.
-   - **§8.1's global Save is gone from the UI.** The bulk selection control took its place in
-     the header. `framingStore.saveAll` survives with its own store test, so the capability
-     is intact, but several edited lines must now be saved one at a time.
+   - **§8.1's *always-on* global Save is gone from the UI.** The bulk selection control took
+     its place in the header. Amended 2026-09-01: the removal stranded every dirty line but
+     the one the form had open — `saveAll` still existed in the store, with no way to reach
+     it, so the dirty count could read "2" next to a control that saves one. Save all is back
+     as a **contextual** control, rendered only from the second dirty line onwards. The
+     header still carries no permanently-disabled button, which is what the removal was for,
+     and AC#12 is reachable again.
    - **Métier is no longer a table column** (HIW-460 AC#2 lists it). It stays in the CSV
      export, which now has its own column list — it is the field that decides which
      `project_id` a line lands on, so losing it from the hand-off artefact as a side effect

@@ -1,11 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom';
 import { FramingFilePage } from '../FramingFilePage';
 import { LangProvider } from '../../i18n/LangContext';
 import { useFramingStore } from '../../store/framingStore';
 import { useRoleStore } from '../../store/roleStore';
+import { useUIStore } from '../../store/uiStore';
 
 const renderPage = () => render(<LangProvider><FramingFilePage /></LangProvider>);
 
@@ -13,6 +14,7 @@ describe('FramingFilePage (§15, ADR-020)', () => {
   beforeEach(() => {
     useFramingStore.setState(useFramingStore.getInitialState(), true);
     useRoleStore.setState({ currentRole: 'PMO' });
+    useUIStore.setState({ toasts: [] });
   });
 
   it.each(['Admin', 'PMO', 'CPO'] as const)('renders the page for %s', (role) => {
@@ -57,6 +59,53 @@ describe('FramingFilePage (§15, ADR-020)', () => {
     expect(screen.getByRole('button', { name: /PL Details/i })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
     expect(screen.queryByRole('button', { name: /PL Details/i })).toBeNull();
+  });
+
+  // ── Unsaved edits across a tab switch ───────────────────────────────────
+  // Switching tabs closes the detail form, so an unsaved line stops being
+  // visible without stopping being unsaved. The edits survive in page state
+  // (they are keyed by PL Number, not by track), so this warns rather than
+  // blocks — nothing is lost, but the user has to be told it is still pending.
+
+  it('warns about unsaved edits when switching tabs', async () => {
+    renderPage();
+    act(() => useFramingStore.getState().editField('AA00', 'cluster', 'CL-99'));
+    await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
+    expect(useUIStore.getState().toasts.map((t) => t.text)).toEqual([
+      expect.stringContaining('1'),
+    ]);
+  });
+
+  it('counts every unsaved line in the warning, not just the open one', async () => {
+    renderPage();
+    const store = useFramingStore.getState();
+    act(() => {
+      store.editField('AA00', 'cluster', 'CL-99');
+      store.editField('AA01', 'cluster', 'CL-88');
+    });
+    await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
+    expect(useUIStore.getState().toasts[0].text).toContain('2');
+  });
+
+  it('stays silent when switching tabs with nothing unsaved', async () => {
+    renderPage();
+    await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
+    expect(useUIStore.getState().toasts).toEqual([]);
+  });
+
+  it('stays silent when clicking the tab already open', async () => {
+    renderPage();
+    act(() => useFramingStore.getState().editField('AA00', 'cluster', 'CL-99'));
+    await userEvent.click(screen.getByRole('tab', { name: 'RFQ' }));
+    expect(useUIStore.getState().toasts).toEqual([]);
+  });
+
+  it('keeps the unsaved edits themselves across the switch', async () => {
+    renderPage();
+    act(() => useFramingStore.getState().editField('AA00', 'cluster', 'CL-99'));
+    await userEvent.click(screen.getByRole('tab', { name: 'RFI' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'RFQ' }));
+    expect(useFramingStore.getState().edits.AA00).toEqual({ cluster: 'CL-99' });
   });
 
   it('shows the upload control to PMO and hides it from CPO', () => {

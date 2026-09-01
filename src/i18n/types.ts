@@ -23,7 +23,7 @@ export interface Translations {
       startingCode: string; startingCodeHelp: string; invalidStartingCode: string;
       duplicateFile: string;
     };
-    save: { line: string; done: string; nothing: string };
+    save: { line: string; all: string; done: string; nothing: string; unsaved: string };
     table: {
       filterPlaceholder: string; selectRow: string;
       exportCsv: string; rowCount: string; rowCountFiltered: string;
