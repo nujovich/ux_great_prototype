@@ -10,7 +10,7 @@ import { FramingLineTable, type FramingTableSelection } from '../components/fram
 import { FramingDetailForm } from '../components/framing/FramingDetailForm';
 import { FramingBulkBar } from '../components/framing/FramingBulkBar';
 import { SaveControls } from '../components/framing/SaveControls';
-import { useFramingStore, linesForTrack, effectiveLine } from '../store/framingStore';
+import { useFramingStore, linesForTrack, effectiveLine, dirtyPlNumbers } from '../store/framingStore';
 import { useDataStore } from '../store/dataStore';
 import { useRoleStore } from '../store/roleStore';
 import { useUIStore } from '../store/uiStore';
@@ -30,6 +30,7 @@ export function FramingFilePage() {
 function FramingFileContent() {
   const lines = useFramingStore((s) => s.lines);
   const edits = useFramingStore((s) => s.edits);
+  const dirtyFields = useFramingStore((s) => s.dirtyFields);
   const t = useT();
 
   // §9 — the send writes project lines, so it needs the target store, the
@@ -66,7 +67,18 @@ function FramingFileContent() {
 
   // A PL number belongs to exactly one track, so switching tabs drops both
   // the open row and the ticked set.
+  //
+  // Dropping the open row is what makes this worth announcing: an edited line
+  // stops being *visible* without stopping being *unsaved*, and the row it
+  // belongs to is now behind the other tab. The edits themselves survive —
+  // page state is keyed by PL Number, not by track (ADR-008) — so nothing is
+  // lost and there is nothing to confirm. It warns; it does not block.
   function switchTrack(next: FramingTrack) {
+    if (next === track) return;
+    const unsaved = dirtyPlNumbers({ dirtyFields });
+    if (unsaved.length > 0) {
+      pushToast(t('framing.save.unsaved', { count: unsaved.length }), 'info');
+    }
     setTrack(next);
     setSelected(null);
     setChecked([]);

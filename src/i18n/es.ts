@@ -33,8 +33,10 @@ export const es: Translations = {
     },
     save: {
       line: 'Guardar línea',
+      all: 'Guardar todo ({count})',
       done: 'Se guardaron {count} línea(s).',
       nothing: 'No hay cambios pendientes.',
+      unsaved: 'Hay {count} línea(s) con cambios sin guardar.',
     },
     table: {
       filterPlaceholder: 'Filtrar…',

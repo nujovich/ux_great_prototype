@@ -33,8 +33,10 @@ export const en: Translations = {
     },
     save: {
       line: 'Save line',
+      all: 'Save all ({count})',
       done: '{count} line(s) saved.',
       nothing: 'No pending changes.',
+      unsaved: '{count} line(s) still have unsaved changes.',
     },
     table: {
       filterPlaceholder: 'Filter…',
