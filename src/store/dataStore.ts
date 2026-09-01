@@ -20,6 +20,7 @@ interface DataState {
   copyEstimation: (sourceId: string, targetIds: string[]) => void;
   bulkSetEstimation: (lineIds: string[], base: Omit<Estimation, 'lineId'>) => void;
   bulkPromote: (lineIds: string[]) => void;
+  addProjectLines: (lines: ProjectLine[]) => { created: number; skipped: number };
   addComment: (comment: Omit<EstimationComment, 'id' | 'createdAt'>) => void;
   createCycle: (name: string, startDate: string, endDate: string) => void;
   prototypeEstimations: Record<string, PrototypeEstimation>;
@@ -38,6 +39,32 @@ export const useDataStore = create<DataState>((set, get) => ({
   cycles: structuredClone(CYCLES),
   timeline: structuredClone(TIMELINE_SNAPSHOTS),
   prototypeEstimations: {},
+  /**
+   * §9 Generate — appends project lines produced from framing lines.
+   *
+   * `project_id` is the identity (pl_number + metier), so a line already held
+   * is SKIPPED, not overwritten: sending the same framing row twice must not
+   * duplicate it, and must not silently discard whatever has happened to the
+   * existing row since. The counts come back so the caller can say what really
+   * happened instead of claiming everything landed.
+   */
+  addProjectLines: (incoming) => {
+    if (incoming.length === 0) return { created: 0, skipped: 0 };
+    const held = new Set(get().lines.map((l) => l.project_id));
+    const fresh: ProjectLine[] = [];
+    let skipped = 0;
+    for (const line of incoming) {
+      // Also guards duplicates *within* one call, not just against the store.
+      if (held.has(line.project_id)) {
+        skipped += 1;
+        continue;
+      }
+      held.add(line.project_id);
+      fresh.push(line);
+    }
+    if (fresh.length > 0) set((s) => ({ lines: [...s.lines, ...fresh] }));
+    return { created: fresh.length, skipped };
+  },
   updateLine: (id, patch) =>
     set((s) => ({
       lines: s.lines.map((l) => (l.id === id ? { ...l, ...patch, lastUpdatedAt: new Date().toISOString() } : l)),

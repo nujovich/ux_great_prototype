@@ -1,6 +1,68 @@
 import type { Translations } from './types';
 
 export const es: Translations = {
+  framing: {
+    title: 'Framing File',
+    desc: 'Suba un framing file, revise las líneas procesadas y guarde sus correcciones.',
+    tab: { rfq: 'RFQ', rfi: 'RFI' },
+    section: {
+      plDetails: 'Detalles de PL',
+      customerRequest: 'Solicitud del cliente',
+      vehicleDescription: 'Descripción del vehículo',
+      organDescription: 'Descripción del órgano',
+      scheduleMilestones: 'Hitos del calendario',
+      framework: 'Framework',
+      prototypeDetails: 'Detalles de prototipos',
+      additionalDetails: 'Detalles adicionales',
+      rfiDetails: 'Detalles de RFI',
+    },
+    upload: {
+      label: 'Archivo (solo .xlsx)',
+      button: 'Subir framing file',
+      notXlsx: 'Solo se aceptan archivos .xlsx.',
+      parseError: 'No se encontró ninguna hoja GWF en este archivo.',
+      noHeaderRowError: 'La hoja de framing no tiene fila de encabezado.',
+      genericError: 'No se pudo procesar el archivo. Verifique su formato e intente nuevamente.',
+      success: '{fileName}: se cargaron {rfq} líneas RFQ y {rfi} RFI.',
+      discardedEdits: 'Se descartaron {count} línea(s) con cambios sin guardar por esta carga.',
+      busy: 'Procesando…',
+      startingCode: 'Starting PL Number',
+      startingCodeHelp: 'Todas las líneas se numeran desde aquí: {example}, {next}, …',
+      duplicateFile: '"{fileName}" ya fue cargado. Elimine esa carga para volver a subirlo.',
+      invalidStartingCode: '"{code}" no es un PL Number válido (por ejemplo IF65 o 07AB).',
+    },
+    save: {
+      line: 'Guardar línea',
+      done: 'Se guardaron {count} línea(s).',
+      nothing: 'No hay cambios pendientes.',
+    },
+    table: {
+      filterPlaceholder: 'Filtrar…',
+      selectRow: 'Seleccione una línea para revisarla.',
+      exportCsv: 'Descargar tabla como CSV',
+      rowCount: '{count} línea(s).',
+      rowCountFiltered: 'Mostrando {visible} de {total} línea(s).',
+    },
+    empty: { title: 'Sin líneas de framing', desc: 'Suba un framing file para comenzar.' },
+    uploads: {
+      title: 'Archivos cargados',
+      rowCount: '{count} línea(s)',
+      delete: 'Eliminar {fileName}',
+      confirmTitle: '¿Eliminar esta carga?',
+      confirmBody:
+        '¿Eliminar "{fileName}"? Se eliminarán todas las líneas que solo esta carga aportó y la acción no se puede deshacer.',
+      cancel: 'Cancelar',
+      confirmDelete: 'Sí, eliminar',
+    },
+    bulk: {
+      selectAll: 'Seleccionar todas las líneas visibles',
+      selectRow: 'Seleccionar {plNumber}',
+      send: 'Enviar a Pre-Estimation',
+      sent: 'Se enviaron {created} línea(s) a Pre-Estimation.',
+      skipped: 'Se saltearon {skipped} — ya enviadas, o sin métier al que enviarlas.',
+    },
+    editingHeading: 'Editando PL Number {plNumber} y Project Name {projectName}',
+  },
   nav: {
     home: 'Inicio',
     views: 'Vistas',

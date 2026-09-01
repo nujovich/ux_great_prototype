@@ -1,6 +1,44 @@
 export type Lang = 'es' | 'en';
 
 export interface Translations {
+  framing: {
+    title: string;
+    desc: string;
+    tab: { rfq: string; rfi: string };
+    section: {
+      plDetails: string;
+      customerRequest: string;
+      vehicleDescription: string;
+      organDescription: string;
+      scheduleMilestones: string;
+      framework: string;
+      prototypeDetails: string;
+      additionalDetails: string;
+      rfiDetails: string;
+    };
+    upload: {
+      label: string; button: string; notXlsx: string;
+      parseError: string; noHeaderRowError: string; genericError: string;
+      success: string; discardedEdits: string; busy: string;
+      startingCode: string; startingCodeHelp: string; invalidStartingCode: string;
+      duplicateFile: string;
+    };
+    save: { line: string; done: string; nothing: string };
+    table: {
+      filterPlaceholder: string; selectRow: string;
+      exportCsv: string; rowCount: string; rowCountFiltered: string;
+    };
+    empty: { title: string; desc: string };
+    uploads: {
+      title: string; rowCount: string; delete: string;
+      confirmTitle: string; confirmBody: string; cancel: string; confirmDelete: string;
+    };
+    bulk: {
+      selectAll: string; selectRow: string; send: string;
+      sent: string; skipped: string;
+    };
+    editingHeading: string;
+  };
   nav: {
     home: string;
     views: string;

@@ -1,6 +1,68 @@
 import type { Translations } from './types';
 
 export const en: Translations = {
+  framing: {
+    title: 'Framing File',
+    desc: 'Upload a framing file, review the parsed lines and save your corrections.',
+    tab: { rfq: 'RFQ', rfi: 'RFI' },
+    section: {
+      plDetails: 'PL Details',
+      customerRequest: 'Customer Request',
+      vehicleDescription: 'Vehicle Description',
+      organDescription: 'Organ Description',
+      scheduleMilestones: 'Schedule Milestones',
+      framework: 'Framework',
+      prototypeDetails: 'Prototype Details',
+      additionalDetails: 'Additional Details',
+      rfiDetails: 'RFI Details',
+    },
+    upload: {
+      label: 'File (.xlsx only)',
+      button: 'Upload framing file',
+      notXlsx: 'Only .xlsx files are accepted.',
+      parseError: 'No GWF worksheet found in this file.',
+      noHeaderRowError: 'The framing sheet has no header row.',
+      genericError: 'The file could not be processed. Check its format and try again.',
+      success: '{fileName}: {rfq} RFQ and {rfi} RFI lines loaded.',
+      discardedEdits: '{count} line(s) with unsaved edits were discarded by this upload.',
+      busy: 'Parsing…',
+      startingCode: 'Starting PL Number',
+      startingCodeHelp: 'Every line is numbered from here: {example}, {next}, …',
+      duplicateFile: '"{fileName}" has already been uploaded. Delete that upload first to load it again.',
+      invalidStartingCode: '"{code}" is not a valid PL Number (e.g. IF65 or 07AB).',
+    },
+    save: {
+      line: 'Save line',
+      done: '{count} line(s) saved.',
+      nothing: 'No pending changes.',
+    },
+    table: {
+      filterPlaceholder: 'Filter…',
+      selectRow: 'Select a line to review it.',
+      exportCsv: 'Download table as CSV',
+      rowCount: '{count} row(s).',
+      rowCountFiltered: 'Showing {visible} of {total} row(s).',
+    },
+    empty: { title: 'No framing lines', desc: 'Upload a framing file to get started.' },
+    uploads: {
+      title: 'Uploaded files',
+      rowCount: '{count} line(s)',
+      delete: 'Delete {fileName}',
+      confirmTitle: 'Delete this upload?',
+      confirmBody:
+        'Delete "{fileName}"? This will remove every line it exclusively carries and cannot be undone.',
+      cancel: 'Cancel',
+      confirmDelete: 'Yes, delete',
+    },
+    bulk: {
+      selectAll: 'Select all visible lines',
+      selectRow: 'Select {plNumber}',
+      send: 'Send to Pre-Estimation',
+      sent: '{created} line(s) sent to Pre-Estimation.',
+      skipped: '{skipped} skipped — already sent, or no métier to send them to.',
+    },
+    editingHeading: 'Editing PL Number {plNumber} and Project Name {projectName}',
+  },
   nav: {
     home: 'Home',
     views: 'Views',
